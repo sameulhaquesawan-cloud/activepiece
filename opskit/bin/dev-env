@@ -12,7 +12,8 @@ usage() {
   cat <<'EOF'
 Usage: opskit/bin/dev-env [--help]
 
-Installs missing tools (shellcheck, bats, rclone, age, jq, envsubst) with apt, mikefarah yq v4
+Installs missing tools (shellcheck, bats, rclone, age, jq, envsubst, ssh, node/npx,
+curl, git, openssl) with apt, mikefarah yq v4
 (pinned, checksum-verified), and
 starts the Docker daemon if none is reachable. If HTTPS_PROXY is set, the
 daemon is started with it so image pulls go through the proxy.
@@ -22,6 +23,9 @@ EOF
 apt_package_for() {
   case "$1" in
     envsubst) printf 'gettext-base' ;;
+    ssh) printf 'openssh-client' ;;
+    node) printf 'nodejs' ;;
+    npx) printf 'npm' ;;
     *) printf '%s' "$1" ;;
   esac
 }
@@ -32,9 +36,11 @@ as_root() {
 
 install_tools() {
   local missing=() tool
-  for tool in shellcheck bats rclone age jq envsubst; do
+  for tool in shellcheck bats rclone age jq envsubst ssh node npx curl git openssl; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$(apt_package_for "$tool")")
   done
+  mapfile -t missing < <(printf '%s\n' "${missing[@]}" | sort -u)
+  [ -n "${missing[0]:-}" ] || missing=()
   if [ "${#missing[@]}" -eq 0 ]; then
     echo "[ok] tools present"
     return

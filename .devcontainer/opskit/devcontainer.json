@@ -2,7 +2,8 @@
   "name": "opskit (Activepieces CE explore + ops tooling)",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
   },
   "hostRequirements": {
     "cpus": 2,

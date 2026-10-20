@@ -39,7 +39,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** `ssh_run`/`scp_put` wrappers: BatchMode, `StrictHostKeyChecking=accept-new`, ConnectTimeout, ServerAlive, key-only.
 - **Tests:** bats with a stub `ssh`/`scp` on PATH asserting the exact options.
 
-### [ ] 1.7 — `opskit doctor`
+### [x] 1.7 — `opskit doctor`
 - **Goal:** checks OS (Linux/WSL), Docker + Compose v2, tools (shellcheck, bats, jq, yq v4 flavor, age, rclone, curl, openssl, envsubst, ssh), egress to `cloud.activepieces.com` + `registry.npmjs.org` + image registry; `[ok]/[warn]/[fail]` per line.
 - **Tests:** bats with PATH stubs for present/missing/wrong-yq.
 
