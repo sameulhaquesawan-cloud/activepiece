@@ -140,16 +140,18 @@ setup_remote() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"local retention 14 days: pruned 16"* ]]
   [ "$(find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l)" = "14" ]
-  [ -d "${ROOT}/backups/acme/$(ago_name $((13 * 86400 + 60)))" ] || [ -d "${ROOT}/backups/acme/$(ago_name $((13 * 86400 + 61)))" ]
+  [ "$(find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d -name "$(date -u -d "@$(( $(date +%s) - 14 * 86400 ))" +%Y%m%d)*" | wc -l)" = "0" ]
   rm -rf "$REMOTE_DIR"
 }
 
 @test "remote retention keeps the configured days; zero days still keeps the newest" {
   setup_remote 0 30
   local k
+  local name
   for k in $(seq 1 40); do
-    mkdir -p "${REMOTE_DIR}/acme/$(ago_name $((k * 86400 + 60)))"
-    echo x > "${REMOTE_DIR}/acme/$(ago_name $((k * 86400 + 60)))/f"
+    name="$(ago_name $((k * 86400 + 60)))"
+    mkdir -p "${REMOTE_DIR}/acme/${name}"
+    echo x > "${REMOTE_DIR}/acme/${name}/f"
   done
   run "$AGENT" acme --root "$ROOT"
   [ "$status" -eq 0 ]
