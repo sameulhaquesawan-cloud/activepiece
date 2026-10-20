@@ -1,0 +1,37 @@
+client_id: acme-dental
+name: Acme Dental
+contact: owner@acme-dental.example.com
+domain: auto.acme-dental.example.com
+host:
+  name: vps-acme
+  ip: 203.0.113.10
+  ssh_user: ops
+  mode: dedicated
+image:
+  repo: ghcr.io/activepieces/activepieces
+  tag: 0.92.3
+ap_version: 0.92.3
+workers:
+  replicas: 1
+  memory_limit: 1g
+app:
+  memory_limit: 1g
+timezone: Europe/London
+alerts:
+  channels: [telegram, email]
+  telegram:
+    chat_id: "-1001234567890"
+  email:
+    to: [owner@acme-dental.example.com]
+  quiet_hours: { from: "22:00", to: "07:00" }
+backup:
+  schedule: "30 2 * * *"
+  retention_days: { local: 14, remote: 30 }
+  remote: "b2-acme:acme-backups"
+report:
+  recipients: [owner@acme-dental.example.com]
+  day_of_month: 1
+support:
+  response_hours: 12
+created_at: 2026-10-20
+status: draft

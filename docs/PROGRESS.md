@@ -2,12 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** 1.6 (1.4 waits for owner Q1; see `docs/tasks/phase-1.md`)
+- **Current task:** 1.6 (see `docs/tasks/phase-1.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
 1. Work `docs/tasks/phase-1.md` top to bottom (one task, test, commit, push).
-2. Owner answers Q1 (schema validator) before task 1.4.
 3. Task 1.12 needs the owner: enter base URL + API key in the piece's connection in the Codespace Activepieces.
 
 ## Phases
@@ -27,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 1.4 schemas + validate done.** `opskit/schema/{client,host}.schema.json`, `lib/schema.sh` (pinned `ajv-cli@5.0.0` + `ajv-formats@3.0.1` via npx, YAML→JSON with yq v4, errors as `[fail] field: problem`), `opskit validate <file> [--type]`. `dev-env` installs mikefarah yq v4.44.3 (sha256-verified). Fixtures in `opskit/tests/fixtures/`. 14 new tests. Verify: `opskit/bin/opskit validate opskit/tests/fixtures/clients/valid.yaml`.
 - **2026-10-20 — 1.5 render done.** `lib/render.sh` `render_template <tmpl> <out>`: substitutes only `${NAME}` refs, fails listing unresolved/empty names (never values), atomic write. `dev-env` now installs `envsubst` (gettext-base). 4 new tests. Templates must not rely on compose-time `${...}` interpolation — values are rendered in.
 - **2026-10-20 — 1.3 confirm/validate done.** `lib/confirm.sh` (`confirm_destructive <id> <yes> <action>`: needs `--yes` and the id typed on stdin), `lib/validate.sh` (`is_slug`, `is_domain`, `is_email`, `is_port`, `is_positive_int`). 8 new tests. Verify: `bats opskit/tests/confirm_validate.bats`.
 - **2026-10-20 — 1.2 check done.** `opskit/bin/check [--quick]`: shellcheck on all opskit Bash files + `.claude/hooks`, then `bats --recursive opskit/tests` (`--quick` filters `# bats test_tags=docker`). `OPSKIT_CHECK_ROOT` lets tests run it on a fixture tree. 21 tests pass. Verify: `opskit/bin/check`.

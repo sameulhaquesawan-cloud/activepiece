@@ -4,11 +4,16 @@
 # Tool-neutral: any person or AI agent can run it. Safe to re-run.
 set -euo pipefail
 
+YQ_VERSION="v4.44.3"
+YQ_URL="https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
+YQ_SHA256="a2c097180dd884a8d50c956ee16a9cec070f30a7947cf4ebf87d5f36213e9ed7"
+
 usage() {
   cat <<'EOF'
 Usage: opskit/bin/dev-env [--help]
 
-Installs missing tools (shellcheck, bats, rclone, age, jq, yq, envsubst) with apt and
+Installs missing tools (shellcheck, bats, rclone, age, jq, envsubst) with apt, mikefarah yq v4
+(pinned, checksum-verified), and
 starts the Docker daemon if none is reachable. If HTTPS_PROXY is set, the
 daemon is started with it so image pulls go through the proxy.
 EOF
@@ -27,7 +32,7 @@ as_root() {
 
 install_tools() {
   local missing=() tool
-  for tool in shellcheck bats rclone age jq yq envsubst; do
+  for tool in shellcheck bats rclone age jq envsubst; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$(apt_package_for "$tool")")
   done
   if [ "${#missing[@]}" -eq 0 ]; then
@@ -40,6 +45,26 @@ install_tools() {
   else
     echo "[warn] could not install: ${missing[*]}"
   fi
+}
+
+install_yq() {
+  if yq --version 2>/dev/null | grep -q 'mikefarah.*version v4'; then
+    echo "[ok] yq v4 present"
+    return
+  fi
+  if [ "$(uname -m)" != "x86_64" ]; then
+    echo "[warn] yq v4 auto-install only supports x86_64; install mikefarah yq v4 by hand"
+    return
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  if curl -fsSL -o "$tmp" "$YQ_URL" && echo "${YQ_SHA256}  ${tmp}" | sha256sum -c --quiet -; then
+    as_root install -m 0755 "$tmp" /usr/local/bin/yq
+    echo "[ok] installed yq ${YQ_VERSION} (mikefarah) to /usr/local/bin"
+  else
+    echo "[warn] could not download/verify yq ${YQ_VERSION}"
+  fi
+  rm -f "$tmp"
 }
 
 start_docker() {
@@ -77,6 +102,7 @@ main() {
     *) usage >&2; return 1 ;;
   esac
   install_tools
+  install_yq
   start_docker
 }
 

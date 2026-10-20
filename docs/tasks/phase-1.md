@@ -4,8 +4,8 @@ SPEC: Section 17 Phase 1, Sections 3, 6, 15, 16; owner request 20 Oct 2026 (ADR-
 Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 
 ## Open questions for the owner
-- **Q1 (blocks 1.4):** JSON-schema validator for `client.yaml` / `hosts/*.yaml`. Recommended: `ajv-cli` pinned via `npx` on the operator machine (Node is already needed for pieces; nothing on hosts). Alternative: `check-jsonschema` (Python). New dependency → owner approval.
-- **Q2 (1.7):** `opskit doctor` needs mikefarah `yq` v4; the apt package in the cloud session reports `0.0.0`. Plan: `dev-env` installs the pinned v4 binary from GitHub releases (verify download host is allowed).
+- ~~**Q1**~~ answered: ajv-cli approved (owner, 20 Oct 2026). JSON-schema validator for `client.yaml` / `hosts/*.yaml`. Recommended: `ajv-cli` pinned via `npx` on the operator machine (Node is already needed for pieces; nothing on hosts). Alternative: `check-jsonschema` (Python). New dependency → owner approval.
+- ~~**Q2**~~ done in 1.4: `dev-env` installs pinned, checksum-verified mikefarah yq v4.44.3. `opskit doctor` needs mikefarah `yq` v4; the apt package in the cloud session reports `0.0.0`. Plan: `dev-env` installs the pinned v4 binary from GitHub releases (verify download host is allowed).
 
 ## Tasks
 
@@ -27,7 +27,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Spec refs:** 3.8; rules "Client safety"
 - **Tests:** bats: wrong typed id aborts, `--yes` alone isn't enough for destructive, validators accept/reject fixtures.
 
-### [ ] 1.4 — Schemas + `opskit validate` *(blocked on Q1)*
+### [x] 1.4 — Schemas + `opskit validate`
 - **Goal:** `opskit/schema/client.schema.json` (SPEC 6 fields; Phase 0 values: `AP_EDITION` fixed `ce`, worker replicas default 1, alert channels telegram/email/slack) and `host.schema.json`; `opskit validate <file>` prints field-level messages.
 - **Tests:** valid + ≥ 6 invalid fixtures (missing field, bad slug, bad domain, unknown channel, replicas 0, bad mode) each with the expected message.
 

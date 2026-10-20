@@ -12,7 +12,8 @@ Current: GitHub Codespaces with `.devcontainer/opskit/devcontainer.json` (free m
 | Docker Desktop (WSL2 backend, WSL integration on) | Compose v2 (`docker compose version`) |
 | VS Code + Remote-WSL | Open the repo from WSL so the IDE agent runs Bash |
 | Any AI tool (Claude Code, Codex, Cursor, …) | Claude cloud sessions run `opskit/bin/dev-env` via `.claude/hooks/session-start.sh` |
-| git, openssl, jq, yq, curl, gettext (envsubst), shellcheck, bats, age, rclone, ssh | `opskit doctor` checks all |
+| git, openssl, jq, yq **v4 (mikefarah)**, curl, gettext (envsubst), shellcheck, bats, age, rclone, ssh | `opskit/bin/dev-env` installs them; `opskit doctor` checks all |
+| Node + npx (operator machine) | `opskit validate` runs pinned `ajv-cli` via npx (first use needs network) |
 | Node + bun per upstream `.nvmrc`/docs | Only for upstream dev and V2 custom pieces |
 
 ## 2. Accounts (free unless noted)
