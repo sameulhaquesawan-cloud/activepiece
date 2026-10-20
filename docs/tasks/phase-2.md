@@ -25,7 +25,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Acceptance:** compose: pinned image tag, `AP_EDITION=ce` + telemetry off, worker `AP_FRONTEND_URL=http://app`, `replicas` from config, memory limits, healthchecks, no `ports:` on app/worker/postgres/redis, no `container_name`, volumes `postgres`/`redis` (→ `<id>_postgres`, `<id>_redis`).
 - **Tests:** bats on rendered output for each rule; unresolved var fails.
 
-### [ ] 2.4 — Host transport `lib/host.sh`
+### [x] 2.4 — Host transport `lib/host.sh`
 - **Goal:** `host_run`, `host_put` (local vs ssh via `lib/ssh.sh`), `host_load` (host file + defaults).
 - **Tests:** local runs commands; ssh mode calls stubbed ssh/scp with the host's user/ip/port.
 
