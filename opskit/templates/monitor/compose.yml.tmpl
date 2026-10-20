@@ -1,0 +1,34 @@
+name: opskit-monitor
+services:
+  uptime-kuma:
+    image: ${MONITOR_IMAGE}:${MONITOR_TAG}
+    restart: unless-stopped
+    environment:
+      UPTIME_KUMA_DB_TYPE: sqlite
+    volumes:
+      - data:/app/data
+    networks:
+      edge:
+        aliases:
+          - opskit-monitor
+    deploy:
+      resources:
+        limits:
+          memory: ${MONITOR_MEMORY}
+    healthcheck:
+      test: ["CMD-SHELL", "extra/healthcheck"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+volumes:
+  data:
+networks:
+  edge:
+    name: opskit_edge
+    external: true

@@ -1,0 +1,5 @@
+${MONITOR_DOMAIN} {
+	${CADDY_TLS}
+	encode gzip
+	reverse_proxy opskit-monitor:3001
+}

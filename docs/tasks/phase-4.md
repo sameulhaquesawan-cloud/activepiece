@@ -72,7 +72,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Files likely touched:** `opskit/templates/cron.tmpl`, `opskit/lib/deploy.sh`, tests
 - **Tests required:** rendered cron content; deploy pushes every agent file (stubs); selftest still passes.
 
-### [ ] 4.9 — Uptime Kuma via the kit
+### [x] 4.9 — Uptime Kuma via the kit
 - **Goal:** `opskit monitor deploy <host>`: Uptime Kuma (pinned tag from 4.1) behind the host's Caddy edge at the monitoring domain, data in a named volume, included in host backups; works on a practice host.
 - **Spec refs:** 10.1, 10.2, 7
 - **Files likely touched:** `opskit/lib/commands/monitor.sh`, `opskit/templates/monitor/*`, schema (`hosts/*.yaml` monitor section), tests

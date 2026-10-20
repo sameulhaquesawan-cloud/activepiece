@@ -145,6 +145,37 @@
     "install_cron": {
       "type": "boolean",
       "description": "install backup schedules in the ssh user's crontab (default: true for ssh hosts, false for local practice hosts)"
+    },
+    "monitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain"
+      ],
+      "description": "Uptime Kuma on this host (the owner's monitoring host); see opskit monitor",
+      "properties": {
+        "domain": {
+          "type": "string",
+          "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+        },
+        "image": {
+          "enum": [
+            "louislam/uptime-kuma",
+            "mirror.gcr.io/louislam/uptime-kuma"
+          ],
+          "default": "louislam/uptime-kuma"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "default": "2.5.5"
+        },
+        "memory": {
+          "type": "string",
+          "pattern": "^[0-9]+[mg]$",
+          "default": "512m"
+        }
+      }
     }
   }
 }
