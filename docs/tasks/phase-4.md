@@ -66,7 +66,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Files likely touched:** `opskit/agent/digest.sh`, tests
 - **Tests required:** bats on fixture state files; exactly one message per run.
 
-### [ ] 4.8 — Install monitoring agents via deploy
+### [x] 4.8 — Install monitoring agents via deploy
 - **Goal:** `opskit deploy` ships the new agent scripts and adds detector/health/digest lines to the client `cron` (existing `cron-sync.sh`); practice hosts print the commands instead.
 - **Spec refs:** 10, ADR-014
 - **Files likely touched:** `opskit/templates/cron.tmpl`, `opskit/lib/deploy.sh`, tests

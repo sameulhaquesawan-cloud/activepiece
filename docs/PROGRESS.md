@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.8 (see `docs/tasks/phase-4.md`)
+- **Current task:** 4.9 (see `docs/tasks/phase-4.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4.8 install monitoring agents via deploy (ship `detect-failed-runs.sh`, `health.sh`, `digest.sh`; cron lines every 5 min / hourly / hourly), then 4.9 Uptime Kuma via the kit.
+1. Agent: 4.9 `opskit monitor deploy <host>` — Uptime Kuma 2.5.5 (`mirror.gcr.io` fallback, `UPTIME_KUMA_DB_TYPE=sqlite`) behind the host Caddy edge, practice host first; then 4.10 monitors per client (socket API inside the UK container, ASSUMPTIONS #11).
 2. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage); later a monitoring-host domain (Phase 4 Q1).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 4.8 done.** `deploy_install_agents` (was `deploy_install_backup`): monitoring agents (`alert`, `detect-failed-runs`, `health`, `digest`, `cron-sync`, alert templates, owner + client `alerts.conf`) are always installed; backup parts (backup.sh, owner key, rclone, backup.conf, backup cron line) only when the owner age key exists. Client `cron`: backup nightly, detector `*/5`, health `:17` hourly, digest `:02` hourly (sends at the client's digest hour). Tests: `backup_install.bats` (8, incl. no-key monitoring and exact cron lines); full check incl. selftest passes. Verify: `bats opskit/tests/backup_install.bats`.
 - **2026-10-20 — 4.7 done.** `agent/digest.sh <id>` (cron hourly; sends once a day when the client-local hour = `DIGEST_HOUR`, default 08; `--now` to force): last backup (age, off-server status; > 26 h or not `ok` flagged), PRODUCTION runs in 24 h with failing flows (read-only SQL), open health problems, alerts held in quiet hours (then cleared; kept if the digest is not delivered). Headline names what to check. `alert.sh --body` (≤ 1500 chars) added; `text.jq`/`webhook.jq` render it. Tests: `digest.bats` (8) + real-schema query test in `detect_failed_runs.bats`. Verify: `bats opskit/tests/digest.bats`.
 - **2026-10-20 — 4.6 done.** `agent/health.sh <id>` (hourly, `flock`): disk > 85 % warn / > 95 % critical (`<root>`, `/var/lib/docker`), MemAvailable < 10 % warn, container restart count up (baseline in `state/<id>/health/restarts`) warn, container not running critical, HTTPS cert (SNI to 127.0.0.1) < 14 d warn / < 3 d or unreadable critical, skipped when `TLS_MODE=internal` (rendered into client `alerts.conf`). Each condition alerts once per 24 h per severity and sends one "Recovered" info when it clears. Tests: `health.bats` (9, stubbed df/docker/openssl/meminfo); real run on the explore stack: healthy. Verify: `bats opskit/tests/health.bats`.
 - **2026-10-20 — 4.5 done.** `agent/detect-failed-runs.sh <id>` (standalone, `flock`): read-only SQL as `opskit_ro` on PRODUCTION runs with the SPEC 10.3 statuses finished in `(since, now]` (DB clock; `state/<id>/detector.since`; first run only records the start), grouped per flow → one critical alert per flow (count, status, step display name, error excerpt ≤ 160 chars flattened from `failedStep.message` JSON, run id) with link `APP_URL/projects/<p>/runs/<r>`; `--dedupe-key failed-run:<flowId>` 30 min. Render adds `APP_URL` to client `alerts.conf`. Tests: `detect_failed_runs.bats` (6 docker-tagged on a fixture Postgres with the real role SQL + 1 unit). Known limit: if an alert does not reach the owner, those runs are not re-queried (the next failure of that flow alerts again). Verify: `bats opskit/tests/detect_failed_runs.bats`.
@@ -83,6 +84,7 @@
 - ~~Session hook starts dockerd without proxy~~ fixed 20 Oct 2026 (`opskit/bin/dev-env`).
 - Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.
 - Upstream `main.ts` listens on `::` only; crash-loops on IPv6-less kernels (cloud sandbox). Explore-only shim in `explore/stack`; real hosts unaffected.
+- Host agent logs (`<root>/logs/<id>-{backup,detector,health,digest}.log`) are appended by cron with no rotation (detector ≈ 25 KB/day). Add logrotate in Phase 9 (real VPS).
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->

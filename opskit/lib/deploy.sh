@@ -109,40 +109,51 @@ host_installs_cron() {
   yaml_get "$(host_file "$1")" .install_cron "$default"
 }
 
-# deploy_install_backup <host> <id>: agent scripts, owner key/channels, client backup config, cron
-deploy_install_backup() {
-  local host="$1" id="$2" root out owner script template
+# deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists
+deploy_install_agents() {
+  local host="$1" id="$2" root out owner script template backups="true" cron
   root="$(host_root "$host")"
   out="$(rendered_dir "$id")"
   owner="$(registry_root)/owner"
   if [ ! -s "$(owner_age_pubkey)" ]; then
+    backups="false"
     log_warn "backups NOT installed for ${id}: no owner age public key ($(owner_age_pubkey)); see docs/runbooks/backup-restore.md"
-    return 0
   fi
-  for script in backup.sh alert.sh cron-sync.sh; do
+  for script in alert.sh cron-sync.sh detect-failed-runs.sh health.sh digest.sh; do
     host_put "$host" "${OPSKIT_ROOT}/agent/${script}" "${root}/agent/${script}" 755 || return 1
   done
-  host_put "$host" "$(owner_age_pubkey)" "${root}/agent/owner.age.pub" 644 || return 1
   for template in "${OPSKIT_ROOT}"/templates/alerts/*.jq; do
     host_put "$host" "$template" "${root}/agent/alerts/$(basename "$template")" 644 || return 1
   done
   if [ -f "${owner}/alerts.conf" ]; then
     host_put "$host" "${owner}/alerts.conf" "${root}/agent/alerts.conf" 600 || return 1
   else
-    log_warn "no owner alert channels (${owner}/alerts.conf): backup failures are only logged on the host"
+    log_warn "no owner alert channels (${owner}/alerts.conf): alerts are only logged on the host"
   fi
-  if [ -f "${owner}/rclone.conf" ]; then
-    host_put "$host" "${owner}/rclone.conf" "${root}/agent/rclone.conf" 600 || return 1
-  fi
-  host_put "$host" "${out}/backup.conf" "${root}/clients/${id}/backup.conf" 600 || return 1
   host_put "$host" "${out}/alerts.conf" "${root}/clients/${id}/alerts.conf" 600 || return 1
-  host_put "$host" "${out}/cron" "${root}/clients/${id}/cron" 644 || return 1
+  cron="${out}/cron"
+  if [ "$backups" = "true" ]; then
+    host_put "$host" "${OPSKIT_ROOT}/agent/backup.sh" "${root}/agent/backup.sh" 755 || return 1
+    host_put "$host" "$(owner_age_pubkey)" "${root}/agent/owner.age.pub" 644 || return 1
+    if [ -f "${owner}/rclone.conf" ]; then
+      host_put "$host" "${owner}/rclone.conf" "${root}/agent/rclone.conf" 600 || return 1
+    fi
+    host_put "$host" "${out}/backup.conf" "${root}/clients/${id}/backup.conf" 600 || return 1
+  else
+    cron="${out}/cron.monitoring"
+    grep -v '/agent/backup.sh ' "${out}/cron" > "$cron" || true
+  fi
+  host_put "$host" "$cron" "${root}/clients/${id}/cron" 644 || return 1
   host_run "$host" mkdir -p "${root}/logs" || return 1
   if [ "$(host_installs_cron "$host")" = "true" ]; then
     host_run "$host" "${root}/agent/cron-sync.sh" --root "$root" >/dev/null || { log_fail "cron sync failed on ${host}"; return 1; }
-    log_ok "backup agent + nightly schedule installed ($(yaml_get "$(client_file "$id")" .backup.schedule "30 2 * * *"))"
+    if [ "$backups" = "true" ]; then
+      log_ok "monitoring + backup agents installed; nightly backup ($(yaml_get "$(client_file "$id")" .backup.schedule "30 2 * * *"))"
+    else
+      log_ok "monitoring agents installed (failed runs every 5 min, health hourly, daily digest)"
+    fi
   else
-    log_ok "backup agent installed (no cron on practice host ${host}: run opskit backup ${id})"
+    log_ok "agents installed (no cron on practice host ${host}: run opskit backup ${id}; monitoring scripts by hand)"
   fi
 }
 
@@ -193,9 +204,9 @@ deploy_client() {
   deploy_publish_site "$host" "$id" || return 1
   deploy_check_https "$host" "$id" || return 1
   if [ "${DEPLOY_SKIP_BACKUP:-false}" = "true" ]; then
-    log_warn "backup schedule not installed for ${id} (restore copy)"
+    log_warn "backup and monitoring schedule not installed for ${id} (restore copy)"
   else
-    deploy_install_backup "$host" "$id" || return 1
+    deploy_install_agents "$host" "$id" || return 1
   fi
   deploy_record "$id"
   log_ok "deployed ${id}"

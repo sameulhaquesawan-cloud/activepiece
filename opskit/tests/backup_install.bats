@@ -51,17 +51,43 @@ teardown() {
 
 @test "without the owner key, deploy installs no backup agent and says why" {
   "$OPSKIT" render demo >/dev/null
-  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/missing.pub" run deploy_install_backup local-practice demo
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/missing.pub" run deploy_install_agents local-practice demo
   [ "$status" -eq 0 ]
   [[ "$output" == *"backups NOT installed for demo"* ]]
   [ ! -e "${HOSTROOT}/agent/backup.sh" ]
+  [ ! -e "${HOSTROOT}/clients/demo/backup.conf" ]
+}
+
+@test "without the owner key, monitoring is still installed and scheduled (no backup line)" {
+  "$OPSKIT" render demo >/dev/null
+  yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/missing.pub" run deploy_install_agents local-practice demo
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"monitoring agents installed (failed runs every 5 min, health hourly, daily digest)"* ]]
+  local script
+  for script in alert.sh detect-failed-runs.sh health.sh digest.sh; do
+    [ "$(stat -c %a "${HOSTROOT}/agent/${script}")" = "755" ]
+  done
+  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "3" ]
+  ! grep -q 'agent/backup.sh' "$CRONTAB_DATA"
+}
+
+@test "rendered cron schedules backup nightly, detector every 5 min, health and digest hourly" {
+  "$OPSKIT" render demo >/dev/null
+  local cron="${REG}/clients/demo/rendered/cron" root
+  root="$(yq -r .opskit_root "${REG}/hosts/local-practice.yaml")"
+  [ "$(grep -c . "$cron")" = "4" ]
+  grep -qx "30 2 \* \* \* ${root}/agent/backup.sh demo --root ${root} >> ${root}/logs/demo-backup.log 2>&1 # opskit:demo" "$cron"
+  grep -qx "\*/5 \* \* \* \* ${root}/agent/detect-failed-runs.sh demo --root ${root} >> ${root}/logs/demo-detector.log 2>&1 # opskit:demo" "$cron"
+  grep -qx "17 \* \* \* \* ${root}/agent/health.sh demo --root ${root} >> ${root}/logs/demo-health.log 2>&1 # opskit:demo" "$cron"
+  grep -qx "2 \* \* \* \* ${root}/agent/digest.sh demo --root ${root} >> ${root}/logs/demo-digest.log 2>&1 # opskit:demo" "$cron"
 }
 
 @test "with the owner key, agent + configs land with the right modes; no cron on practice hosts" {
   "$OPSKIT" render demo >/dev/null
   mkdir -p "${REG}/owner"
   printf 'WEBHOOK_URL=http://127.0.0.1:9/hook\n' > "${REG}/owner/alerts.conf"
-  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" run deploy_install_backup local-practice demo
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" run deploy_install_agents local-practice demo
   [ "$status" -eq 0 ]
   [[ "$output" == *"no cron on practice host"* ]]
   [ "$(stat -c %a "${HOSTROOT}/agent/backup.sh")" = "755" ]
@@ -98,12 +124,12 @@ teardown() {
   printf '0 5 * * * /usr/local/bin/someone-elses-job\n' > "$CRONTAB_DATA"
   "$OPSKIT" render demo >/dev/null
   yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
-  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" run deploy_install_backup local-practice demo
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" run deploy_install_agents local-practice demo
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nightly schedule installed (30 2 * * *)"* ]]
-  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" deploy_install_backup local-practice demo >/dev/null
+  [[ "$output" == *"monitoring + backup agents installed; nightly backup (30 2 * * *)"* ]]
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" deploy_install_agents local-practice demo >/dev/null
   grep -qx '0 5 \* \* \* /usr/local/bin/someone-elses-job' "$CRONTAB_DATA"
-  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "1" ]
+  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "4" ]
   rm "${HOSTROOT}/clients/demo/cron"
   "${HOSTROOT}/agent/cron-sync.sh" --root "$HOSTROOT"
   [ "$(grep -c '# opskit:' "$CRONTAB_DATA")" = "0" ]

@@ -1,1 +1,4 @@
 ${BACKUP_SCHEDULE} ${HOST_OPSKIT_ROOT}/agent/backup.sh ${CLIENT_ID} --root ${HOST_OPSKIT_ROOT} >> ${HOST_OPSKIT_ROOT}/logs/${CLIENT_ID}-backup.log 2>&1 # opskit:${CLIENT_ID}
+*/5 * * * * ${HOST_OPSKIT_ROOT}/agent/detect-failed-runs.sh ${CLIENT_ID} --root ${HOST_OPSKIT_ROOT} >> ${HOST_OPSKIT_ROOT}/logs/${CLIENT_ID}-detector.log 2>&1 # opskit:${CLIENT_ID}
+17 * * * * ${HOST_OPSKIT_ROOT}/agent/health.sh ${CLIENT_ID} --root ${HOST_OPSKIT_ROOT} >> ${HOST_OPSKIT_ROOT}/logs/${CLIENT_ID}-health.log 2>&1 # opskit:${CLIENT_ID}
+2 * * * * ${HOST_OPSKIT_ROOT}/agent/digest.sh ${CLIENT_ID} --root ${HOST_OPSKIT_ROOT} >> ${HOST_OPSKIT_ROOT}/logs/${CLIENT_ID}-digest.log 2>&1 # opskit:${CLIENT_ID}
