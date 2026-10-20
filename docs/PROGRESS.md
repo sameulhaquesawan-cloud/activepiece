@@ -6,9 +6,10 @@
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner check-in (end of Phase 2)** together with the Phase 1 owner tests: (a) CI decision (delete upstream workflow files vs. disable 41 one by one) and switch Actions on; (b) real-key test of the OpenAI Compatible piece in the Codespace.
-2. Optional owner practice: in the Codespace terminal run `opskit/bin/opskit selftest` (≈ 1–2 min) — same test that passed here.
-3. Then Phase 3 (backups & restore): `/opskit-start-phase` or `.agents/skills/opskit-start-phase/SKILL.md`.
+1. **Owner:** approve Phase 3 implementation (backup/restore logic) and answer `docs/tasks/phase-3.md` Q1 (off-server target) / Q2 (own age key — guided).
+2. Agent: get opskit-ci green on GitHub (selftest step on the runner) — in progress.
+3. Owner Codespace: run `opskit/bin/dev-env` once, then `opskit/bin/opskit selftest` (old Codespace had the python yq).
+4. Then Phase 3 tasks top to bottom.
 
 ## Phases
 | Phase | Name | Status | Verified |
