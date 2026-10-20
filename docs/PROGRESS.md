@@ -2,12 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** 1.8 waits for GitHub Actions run; next 1.10 (see `docs/tasks/phase-1.md`)
+- **Current task:** Phase 1 wrap-up: owner decisions on CI (1.8) and real-key test (1.12)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Work `docs/tasks/phase-1.md` top to bottom (one task, test, commit, push).
-3. Task 1.12 needs the owner: enter base URL + API key in the piece's connection in the Codespace Activepieces.
+1. **Owner — CI (1.8):** GitHub Actions is off for the whole repo (opskit-ci registered, 0 runs). Decide: (a) delete upstream workflow files in the fork (ledger row, re-delete on sync; agent does it) then switch Actions on, or (b) switch Actions on and disable 41 upstream workflows one by one. Then confirm a green `opskit-ci` run.
+2. **Owner — piece (1.12):** in the Codespace Activepieces, add an "OpenAI Compatible (BYOK)" step, create a connection with your Base URL + API key, pick a model, run once. Agent records the result.
+3. Then `/opskit-verify-phase` for Phase 1 and the end-of-phase check-in.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -26,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 1.10–1.12 openai-compatible piece.** `packages/pieces/custom/openai-compatible` (`@opskit/piece-openai-compatible` 0.1.0): connection Base URL + optional key (validate = GET /models), Ask Model (live model dropdown, `reasoning_effort` default high, token-limit param choice, extra JSON), List Models, Custom API Call. 21 vitest tests, strict tsc build, eslint clean. Archive (96 KB, self-contained) built with the upstream CLI and installed on the Codespace CE via `POST /api/v1/pieces`; keyless OpenRouter connection validated, dropdown listed 468 live models in ~1 s, keyless run failed with the clear 401 message. `bun.lock` changes from the local install are not committed (upstream file). How-to: piece README.
 - **2026-10-20 — 1.9 fork hygiene done.** `lib/fork.sh` `fork_check`: vs the pinned tag, new files must match our path patterns and changed/deleted upstream files must be in the patch ledger; part of `opskit/bin/check` (warns + skips if the tag isn't fetched). `docs/UPSTREAM_SYNC.md` rewritten (ledger re-apply, workflow disabling, Phase 0 facts to re-verify). 6 tests on a throwaway git repo.
 - **2026-10-20 — 1.8 CI file pushed.** `.github/workflows/opskit-ci.yml` (dev-env → doctor → check, on our paths). Not yet seen running — see Known issues.
 - **2026-10-20 — 1.7 doctor done.** `opskit doctor [--offline]`: OS/WSL, Docker daemon + Compose ≥ v2, 13 tools + mikefarah yq v4 (fail), egress to cloud.activepieces.com / npm / GHCR (warn). Found + fixed: no ssh client in cloud session → `dev-env` now also installs openssh-client, nodejs/npm, curl, git, openssl; Codespace config gains the Node 22 feature. 6 tests with stubbed PATH. Verify: `opskit/bin/opskit doctor`.
@@ -49,6 +51,8 @@
 - ~~BLOCKER (cloud session network)~~ resolved 20 Oct 2026: owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com`.
 - **BLOCKER (containers have no internet):** in the cloud session, Docker containers can't resolve or reach the internet (only the host goes through the agent proxy), so the app still can't sync pieces. Giving containers proxy access was denied by the session safety check; needs owner permission.
 - **BLOCKER (session permissions):** auto-mode safety classifier denied `docker` commands and a container→proxy relay. Owner decides whether to allow Docker commands.
+- **GitHub Actions disabled repo-wide:** `opskit-ci` is registered but never runs; 41 upstream workflows also registered (they'd fire on PRs/pushes to main once Actions is on). Owner decision pending (Next steps 1).
+- Full `bun install` fails: a community piece depends on a GitHub tarball (`dust-tt/typescript-sdk`) blocked by the cloud session network policy (403). Filtered installs work.
 - ~~Session hook starts dockerd without proxy~~ fixed 20 Oct 2026 (`opskit/bin/dev-env`).
 - Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.
 - Upstream `main.ts` listens on `::` only; crash-loops on IPv6-less kernels (cloud sandbox). Explore-only shim in `explore/stack`; real hosts unaffected.

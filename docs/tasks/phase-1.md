@@ -43,7 +43,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** checks OS (Linux/WSL), Docker + Compose v2, tools (shellcheck, bats, jq, yq v4 flavor, age, rclone, curl, openssl, envsubst, ssh), egress to `cloud.activepieces.com` + `registry.npmjs.org` + image registry; `[ok]/[warn]/[fail]` per line.
 - **Tests:** bats with PATH stubs for present/missing/wrong-yq.
 
-### [ ] 1.8 — CI `opskit-ci.yml`
+### [~] 1.8 — CI `opskit-ci.yml` (file pushed; GitHub Actions is disabled repo-wide → owner decision)
 - **Goal:** GitHub Actions: shellcheck + bats on push/PR touching our paths. Owner disables upstream workflows (step-by-step in PROGRESS).
 - **Acceptance:** green run on the branch.
 
@@ -51,15 +51,15 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** `opskit/bin/check` includes "only our paths changed vs pinned tag" (allow-list from SPEC 3.1 + ledger rows); `docs/UPSTREAM_SYNC.md` completed.
 - **Acceptance:** `git diff 0.92.3 --stat` shows only our paths + ledger files; check fails on an unledgered upstream edit (fixture).
 
-### [ ] 1.10 — Piece: `openai-compatible` scaffold + auth (owner request)
+### [x] 1.10 — Piece: `openai-compatible` scaffold + auth (owner request)
 - **Goal:** `packages/pieces/custom/openai-compatible` via upstream piece CLI/conventions; auth = Base URL + API key (+ optional extra header name); auth `validate` calls `GET {baseUrl}/models`.
 - **Spec refs:** ADR-013; `packages/pieces/CLAUDE.md`
 - **Tests:** vitest: URL normalisation, validate success/401/unreachable (HTTP mocked).
 
-### [ ] 1.11 — Piece actions: Ask model (live model dropdown, reasoning default high)
+### [x] 1.11 — Piece actions: Ask model (live model dropdown, reasoning default high)
 - **Goal:** action "Ask model" (chat/completions): model dropdown loaded live from `{baseUrl}/models` on open/refresh; reasoning effort dropdown defaulting to `high` (+ `minimal/low/medium`, "don't send" for endpoints that reject it, optional custom value); system prompt, prompt, max output tokens (blank = model max), temperature. "List models" action too.
 - **Tests:** vitest: dropdown options from mocked `/models`, request body carries `reasoning_effort` by default and omits it on "don't send", error mapping.
 
-### [ ] 1.12 — Ship the piece into CE without an own image
+### [~] 1.12 — Ship the piece into CE without an own image (installed + live models verified; owner's real-key run pending)
 - **Goal:** build → package archive → install via CE admin `POST /api/v1/pieces` (`packageType: ARCHIVE`) on the Codespace; flow test against a real endpoint with the owner's key (owner enters the key in the connection, not in git).
 - **Acceptance:** piece visible in the builder; model dropdown lists live models; run succeeds with reasoning `high`; documented in `packages/pieces/custom/openai-compatible/README.md`.
