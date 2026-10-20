@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 2 — Client deployment kit
-- **Current task:** 2.2 (see `docs/tasks/phase-2.md`)
+- **Current task:** 2.3 (see `docs/tasks/phase-2.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 2.2 secrets done.** `lib/secrets.sh`: `secrets_ensure` generates `AP_API_KEY` (hex 64), `AP_POSTGRES_PASSWORD`/`AP_JWT_SECRET` (hex 32), `AP_ENCRYPTION_KEY` (hex 16 = 32 chars, as upstream requires) once into `clients/<id>/secrets.env` (600); aborts on empty/malformed output; never regenerates (damaged file → restore from escrow); `secrets_export`. 7 tests. Also: `opskit validate` now runs npx from a temp dir (inside the installed monorepo npx scanned all workspaces: 24 s → 0.9 s).
 - **2026-10-20 — 2.1 registry + client new done.** `lib/registry.sh` (paths, `yaml_get/set`, validated `require_client/host`, `client_history_add`; `OPSKIT_REGISTRY` override), `templates/client.yaml.tmpl`, `opskit client new <id> --domain --host --contact [--name --timezone]` (draft, dir 700, pinned tag, history). Host schema: `transport ssh|local`, `opskit_root`, `edge` ports/TLS, `practice_quirks`; client schema: `history`, `offboarded_at`, backup remote optional until Phase 3. 3 tests.
 - **2026-10-20 — 1.10–1.12 openai-compatible piece.** `packages/pieces/custom/openai-compatible` (`@opskit/piece-openai-compatible` 0.1.0): connection Base URL + optional key (validate = GET /models), Ask Model (live model dropdown, `reasoning_effort` default high, token-limit param choice, extra JSON), List Models, Custom API Call. 21 vitest tests, strict tsc build, eslint clean. Archive (96 KB, self-contained) built with the upstream CLI and installed on the Codespace CE via `POST /api/v1/pieces`; keyless OpenRouter connection validated, dropdown listed 468 live models in ~1 s, keyless run failed with the clear 401 message. `bun.lock` changes from the local install are not committed (upstream file). How-to: piece README.
 - **2026-10-20 — 1.9 fork hygiene done.** `lib/fork.sh` `fork_check`: vs the pinned tag, new files must match our path patterns and changed/deleted upstream files must be in the patch ledger; part of `opskit/bin/check` (warns + skips if the tag isn't fetched). `docs/UPSTREAM_SYNC.md` rewritten (ledger re-apply, workflow disabling, Phase 0 facts to re-verify). 6 tests on a throwaway git repo.

@@ -16,7 +16,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Goal:** `lib/registry.sh` (paths, load client/host with yq, validate first); `client.yaml.tmpl`; `opskit client new <id> --domain --host [--contact --name]`; host schema gains `transport`, `opskit_root`, `edge` ports/TLS, `practice_quirks`.
 - **Tests:** new client file validates; refuses existing id; bad id/domain rejected.
 
-### [ ] 2.2 — Secrets
+### [x] 2.2 — Secrets
 - **Goal:** `lib/secrets.sh`: generate once with `openssl rand` (API key hex 64, Postgres hex 32, JWT hex 32, encryption key hex 16 = 32 chars), mode 600, abort on any empty/malformed value, never print values.
 - **Tests:** stubbed empty `openssl` aborts; existing secrets are kept on re-run; permissions 600; format checks.
 
