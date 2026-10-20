@@ -1,0 +1,40 @@
+name: opskit-ci
+
+on:
+  push:
+    branches: ['main', 'claude/**', 'sync/**']
+    paths:
+      - 'opskit/**'
+      - '.claude/hooks/**'
+      - '.github/workflows/opskit-ci.yml'
+  pull_request:
+    paths:
+      - 'opskit/**'
+      - '.claude/hooks/**'
+      - '.github/workflows/opskit-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: opskit-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Install tools
+        run: opskit/bin/dev-env
+      - name: Doctor
+        run: opskit/bin/opskit doctor
+      - name: Check (shellcheck + bats)
+        run: opskit/bin/check
