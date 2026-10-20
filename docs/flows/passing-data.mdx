@@ -1,0 +1,96 @@
+---
+title: "Passing Data"
+icon: 'wand-sparkles'
+description: "Using data from previous steps in the current one"
+---
+
+## Data flow
+
+Any Activepieces flow can either have a vertical or horizontal layout that starts with a trigger step followed by any number of action steps.
+
+Data flows from parent steps to the children (Children steps have access to the output data of the parent steps)
+
+## Example Steps
+
+<video src="https://cdn.activepieces.com/videos/docs/data-flow.mp4" controls />
+
+This flow has 3 steps, they can access data as follows:
+
+- **Step 1** is the main data producer to be used in the next steps. Data produced by Step 1 will be accessible in Steps 2 and 3. Some triggers don't produce data though, like Schedules.
+
+- **Step 2** can access data produced by Step 1. After execution, this step will also produce data to be used in the next step(s).
+
+- **Step 3** can access data produced by Steps 1 and 2 as they're its parent steps. This step can produce data but since it's the last step in the flow, it can't be used by other ones.
+
+## Data to Insert Panel
+
+In order to use data from a previous step in your current step, place your cursor in any input, the **Data selector** panel will pop up.
+
+<video src="https://cdn.activepieces.com/videos/docs/insert-panel.mp4" controls />
+
+This panel shows the accessible steps and their data. You can expand the data items to view their content, and you can click the items to insert them in your current settings input.
+
+If an item in this panel has a caret **(›)** to the right, it means you can click on the item to expand its child properties. You can select the parent item or its properties as you need.
+
+When you insert data from this panel, it gets inserted at the cursor's position in the input. This means you can combine static text and dynamic data in any field.
+
+<video src="https://cdn.activepieces.com/videos/docs/passing-data.mp4" controls />
+
+We generally recommend that you expand the items before inserting them to understand the type of data they contain and whether they're the right fit to the input you're filling.
+
+## Testing Steps 
+
+While building flows, we require you to test each step you add before moving to the next step.
+
+This enables you to access the data in the previous step and use it in the next step
+
+This approach protects you from selecting the wrong data and breaking your flows after publishing them.
+
+If a tigger or a step is not tested , you will see a **Test me** on top of it. Click that step to open the side bar and test the step.
+
+For triggers here is what it looks like:
+
+![Trigger Testing](/images/trigger-testing.png "Trigger Testing")
+
+For actions or other steps, here is what it looks like:
+
+![Test Step 1](/images/test-step-1.png "Test Step 1")
+
+To fix this, go to the step and use the **Test Step** button to test it. 
+
+Follow the instructions to know how your step should be tested. 
+
+This is an example of how your steps are tested:
+
+<video src="https://cdn.activepieces.com/videos/docs/test.mp4" controls />
+
+## Advanced Tips
+
+### Switching to Dynamic Values
+
+Dropdowns and some other input types don't let you select data from previous steps. If you'd like to bypass this and use data from previous steps instead, switch the input into a dynamic one using this button:
+
+<video src="https://cdn.activepieces.com/videos/docs/dynamic-values.mp4" controls />
+
+### Working with large files
+
+When a step produces a file, the file isn't copied into every step below it — the step
+passes a reference, and later steps read the file when they need it. For large files
+(big exports, media, storage-to-storage transfers), some actions **stream** the file
+instead of loading it fully into memory, so your flow can move files larger than the
+worker's memory budget. This happens automatically — there's nothing to configure; just
+pick an action that supports it. On self-hosted installs this requires S3 file storage. See
+[Large File Streaming](/build-pieces/piece-reference/large-file-streaming) for the list of
+supported actions, storage requirements, and size limits.
+
+### Accessing data by path
+
+If you can't find the data you're looking for in the **Data to Insert** panel but you'd like to use it, you can write a JSON path instead.
+
+Use the following syntax to write JSON paths:
+
+`{{step_name['output']['path']['to']['property']}}`
+
+The easiest way to get the `step_name['output']` part right is to right-click the step on the canvas and select **Copy reference**. This copies `{{step_name['output']}}`to your clipboard, ready to extend with the rest of the path.
+
+![Data By Path](/images/data-by-path.png "Data By Path")
