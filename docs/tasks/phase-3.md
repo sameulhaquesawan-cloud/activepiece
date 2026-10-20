@@ -27,7 +27,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 - **Goal:** `rclone copy` + verify remote sizes; prune local > 14 d, remote > 30 d (configurable); never prune the newest successful backup.
 - **Tests:** fixture directories with dated names → exactly the configured days kept; rclone `local` remote for tests.
 
-### [ ] 3.4 — Heartbeat + failure alert
+### [x] 3.4 — Heartbeat + failure alert
 - **Goal:** heartbeat only when 3.2+3.3 fully succeed; on failure `agent/alert.sh` sends `{client, severity, what, first_action}` (≤ 300-char excerpts, no secrets) to configured channels.
 - **Tests:** mock HTTP listener receives exactly one alert on failure, none on success.
 

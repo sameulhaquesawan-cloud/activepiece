@@ -13,7 +13,8 @@ client's .env with the owner's age public key (<root>/agent/owner.age.pub), snap
 compose.yml and writes status.json. Then (if configured in <root>/clients/<id>/backup.conf)
 copies off-server with rclone, prunes old backups, sends a heartbeat or an alert.
 
-backup.conf keys: BACKUP_REMOTE (rclone remote:path), KEEP_LOCAL_DAYS (14), KEEP_REMOTE_DAYS (30).
+backup.conf keys: BACKUP_REMOTE (rclone remote:path), KEEP_LOCAL_DAYS (14), KEEP_REMOTE_DAYS (30),
+HEARTBEAT_URL (Uptime Kuma push URL). Alerts: alert.sh next to this script.
 rclone credentials: <root>/agent/rclone.conf (600). Exit: 0 complete, 1 failed, 2 local only.
 EOF
 }
@@ -123,6 +124,43 @@ mark_status() {
   jq --arg v "$value" ".${field} = \$v" "${dir}/status.json" > "$tmp" && mv "$tmp" "${dir}/status.json"
 }
 
+notify() {
+  local severity="$1" what="$2" action="$3"
+  "$(dirname "$0")/alert.sh" --root "$ROOT" --client "$CLIENT" --severity "$severity" --what "$what" --action "$action" \
+    || warn "alert could not be delivered"
+}
+
+heartbeat() {
+  local url
+  url="$(conf_get HEARTBEAT_URL "")"
+  if [ -z "$url" ]; then
+    warn "no heartbeat configured (HEARTBEAT_URL; Uptime Kuma push monitor in Phase 4)"
+    return 0
+  fi
+  if curl -fsS -m 15 -G --data-urlencode "status=up" --data-urlencode "msg=backup ok $(basename "$BACKUP_DIR")" "$url" > /dev/null; then
+    ok "heartbeat sent"
+  else
+    fail "heartbeat failed"
+    return 1
+  fi
+}
+
+# finish <exit code> <reason>: heartbeat on success, alert otherwise, then exit
+finish() {
+  local code="$1" reason="$2"
+  case "$code" in
+    0)
+      if ! heartbeat; then
+        notify critical "Backup of ${CLIENT} finished but the heartbeat could not be sent" "Check network/Uptime Kuma; the backup itself is at ${BACKUP_DIR}"
+        exit 1
+      fi
+      ;;
+    2) notify warn "Backup of ${CLIENT} is local only: ${reason}" "Set BACKUP_REMOTE for ${CLIENT} (client.yaml backup.remote) and redeploy" ;;
+    *) notify critical "Backup of ${CLIENT} failed: ${reason}" "On the host run: ${ROOT}/agent/backup.sh ${CLIENT} and read the [fail] line" ;;
+  esac
+  exit "$code"
+}
+
 postgres_container() {
   docker ps -q --filter "label=com.docker.compose.project=${CLIENT}" --filter "label=com.docker.compose.service=postgres" | head -n 1
 }
@@ -183,7 +221,7 @@ main() {
   find "${ROOT}/backups/${CLIENT}" -maxdepth 1 -name '*.partial' -type d -exec rm -rf {} +
   if ! run_backup; then
     fail "backup of ${CLIENT} failed"
-    exit 1
+    finish 1 "dump or encryption step failed"
   fi
   basename "$BACKUP_DIR" > "${ROOT}/backups/${CLIENT}/latest"
   local offsite=0
@@ -194,14 +232,15 @@ main() {
       rclone_cmd copyto "${BACKUP_DIR}/status.json" "$(conf_get BACKUP_REMOTE "")/${CLIENT}/$(basename "$BACKUP_DIR")/status.json" || true
       ;;
     2) mark_status "$BACKUP_DIR" remote none ;;
-    *) mark_status "$BACKUP_DIR" remote failed; fail "backup of ${CLIENT} is not off-server"; exit 1 ;;
+    *) mark_status "$BACKUP_DIR" remote failed; fail "backup of ${CLIENT} is not off-server"; finish 1 "off-server copy failed" ;;
   esac
   prune_local
-  prune_remote || exit 1
+  prune_remote || finish 1 "remote pruning failed"
   if [ "$offsite" -eq 2 ]; then
-    exit 2
+    finish 2 "no off-server remote configured"
   fi
   ok "backup of ${CLIENT} complete (local + off-server)"
+  finish 0 ""
 }
 
 main "$@"

@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 3 — Backups & restore
-- **Current task:** 3.4 (see `docs/tasks/phase-3.md`)
+- **Current task:** 3.5 (see `docs/tasks/phase-3.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.4 done.** `opskit/agent/alert.sh` (standalone): `[SEVERITY] <client> on <host>: <what> — First action: <action>`, texts cut to 300 chars, channels from `<root>/agent/alerts.conf` (owner: Telegram token/chat, WEBHOOK_URL) and `<root>/clients/<id>/alerts.conf` (client: Telegram chat, Slack webhook, WEBHOOK_URL); reports undelivered if no owner channel. backup.sh: heartbeat (`HEARTBEAT_URL`, Uptime Kuma push `?status=up&msg=…`) only on a complete backup; critical alert on failure, warn on local-only; heartbeat failure = alert + exit 1. Tests with a mock HTTP listener (`tests/helpers/mock_http.py`): 6 tests (one heartbeat on success, exactly one alert on failure, no secrets in payloads, Telegram owner+client).
 - **2026-10-20 — 3.3 done.** backup agent: `backup.conf` (`BACKUP_REMOTE`, `KEEP_LOCAL_DAYS` 14, `KEEP_REMOTE_DAYS` 30; parsed, never sourced), `rclone.conf` (600) in `<root>/agent`; `rclone copy` + byte-for-byte size verification; retention by backup-name timestamp, newest never pruned; exit 0 complete / 1 failed / 2 local only (not counted). Real run with an rclone local remote + 5 new tests (exactly 14 local / 30 remote kept).
 - **2026-10-20 — 3.1 + 3.2 done.** Owner: "go Phase 3, decide later (backup target), ok (age key guide later)". 3.1: Redis-only state analysed (ASSUMPTIONS #8). 3.2: `opskit/agent/backup.sh <id> [--root]` — flock per client, `pg_dump -Fc` via the client's postgres container + `pg_restore --list` check, `.env` → `env.age` with `<root>/agent/owner.age.pub`, compose snapshot, `status.json`, umask 077, `.partial` dir renamed on success / removed on failure, `latest` pointer. bootstrap now installs `age` + `rclone`. Real run on a selftest stack (240 KB dump, env decrypts with test key) + 6 stubbed tests.
 - **2026-10-20 — CI fix: selftest cleanup as non-root.** On GitHub the selftest itself passed (115 s) but cleanup failed: Caddy (root in its container) leaves root-owned files in the bind-mounted data/config dirs, which a non-root runner/Codespace user cannot delete. Cleanup now removes them through a container; verified as a non-root user here (pass, no leftovers).
