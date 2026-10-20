@@ -1,0 +1,162 @@
+# .factory/AGENTS.md — Automation Ops Kit (fork of activepieces/activepieces)
+
+This repo is the owner's fork of Activepieces (open-source Zapier alternative, MIT Community Edition) plus **opskit**: tooling to deploy, back up, monitor, upgrade, document and report on one Activepieces stack per client, a flow template library, and custom pieces built into the owner's own Docker image.
+
+**Two instruction sets apply.** Upstream's `AGENTS.md`/`CLAUDE.md` govern upstream code. This file (including the rules below) and `docs/SPEC.md` govern opskit. On conflict: upstream conventions for how to edit upstream files; SPEC for what opskit does.
+
+## Document map
+| File | Use it for | Authority |
+|---|---|---|
+| `docs/SPEC.md` | Requirements, phases (Section 17) | **Source of truth** |
+| `docs/EXPLORATION_REPORT.md` | Phase 0 findings (CE feature matrix, verify answers, RAM) | Informs later phases; blockers go to the owner |
+| `docs/DECISIONS.md` | ADRs | Binding unless superseded |
+| `docs/TECH_ARCHITECTURE.md` | Stack layout, repo structure, command pattern, sizing | Must follow |
+| `docs/USER_FLOWS.md` | Operator flows and edge cases | Derived from SPEC |
+| `docs/ENVIRONMENT.md` | Tools, accounts, variables | Must follow |
+| `docs/UPSTREAM_CHANGES.md` / `docs/UPSTREAM_SYNC.md` | Pinned tag, patch ledger, sync procedure | Must follow |
+| `docs/RESEARCH.md` | Facts behind the SPEC | Background |
+| `docs/PROGRESS.md`, `docs/tasks/phase-N.md`, `docs/ASSUMPTIONS.md` | Status, current tasks, assumptions | Update every task |
+
+**Conflict order:** SPEC > DECISIONS > TECH_ARCHITECTURE > other docs.
+
+## Session start
+1. Read `docs/PROGRESS.md` and the current `docs/tasks/phase-N.md`.
+2. Read only the referenced SPEC/doc sections.
+3. State: phase, task, files to touch (flag any upstream file).
+
+## Golden rules
+- **Phase 0 = install & explore Activepieces as it is** (`/explore`): no opskit code, no upstream changes. Then continue; ask the owner only when blocked or unclear.
+- ONE task at a time; never jump ahead. SPEC silent → simplest option consistent with SPEC 3, log in ASSUMPTIONS.
+- Never invent Activepieces env vars, tables, APIs or piece CLI commands: check the pinned source/docs/running instance first; *(verify)* items must be verified and recorded.
+- **Community Edition only**: never `AP_EDITION=ee`, never touch `packages/ee/`.
+- **Client safety**: no secrets in git; destructive actions need `--yes`, typed client id, and owner approval.
+- Never mark done unless `opskit/bin/check` passes (and `opskit/bin/opskit selftest` from Phase 2).
+- Never remove or weaken a test. Don't edit SPEC or anything in `.factory/` without approval.
+- Stop and ask before: new dependencies, upstream file edits, anything touching a real client host.
+
+## Stack
+Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. Opskit: Bash (shellcheck, bats), JSON schema, envsubst/yq/jq, Caddy, ufw, age, rclone, Uptime Kuma; GitHub Actions + GHCR. Laptop: Windows + WSL2 Ubuntu + Docker Desktop, 12 GB RAM — run all commands in WSL.
+
+## Repo layout (ours)
+`opskit/bin` · `opskit/lib` · `opskit/schema` · `opskit/templates` · `opskit/agent` (host scripts) · `opskit/flows` · `opskit/hub` · `opskit/tests` · `opskit/clients` + `opskit/hosts` (git-ignored) · `packages/pieces/custom/` · `.github/workflows/opskit-*.yml` · `explore/` (Phase 0 scratch, git-ignored) · `docs/`
+
+## Commands (WSL)
+`opskit/bin/check` · `opskit/bin/check --quick` · `opskit/bin/opskit doctor` · `opskit/bin/opskit selftest` · `docker compose -p <id> ps`
+
+## End of every task
+Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conventional commit.
+
+## Rules (always apply)
+
+### Workflow rules
+
+#### Task loop
+1. Plan: list files to create/modify and the approach (max ~10 bullets). Wait for approval if the task touches upstream (non-opskit) files, dependencies, secret generation, backup/restore/upgrade logic, anything destructive, or any real client host.
+2. Implement in small steps. After each meaningful step, run `opskit/bin/check --quick`.
+3. Verify: `opskit/bin/check`, plus the manual check described in the task file.
+4. Record: update `docs/PROGRESS.md`; add an ADR to `docs/DECISIONS.md` if an architectural choice was made.
+
+#### Scope control
+- Only work on the current task in `docs/tasks/phase-N.md`.
+- If you notice a bug outside scope, log it in PROGRESS.md "Known issues". Don't fix it silently.
+- Features marked V2/Future in the spec: do not implement. Only keep the data model/interfaces ready.
+
+#### Anti-hallucination
+- Before using a library function, confirm it exists in the installed version (read the installed package's types/source or the official docs for that version).
+- Before calling an internal function, search the codebase to confirm its name and signature. Don't assume.
+- Don't claim something works unless you ran it. Say "not verified" otherwise.
+- If a command fails, read the actual error output before changing code. Don't guess-and-retry repeatedly; after 3 failed attempts, stop and report.
+
+#### Context hygiene
+- When the conversation gets long, update PROGRESS.md with exact next steps and recommend starting a new task.
+- Keep files under ~300 lines; split by responsibility.
+
+### Architecture rules (mirror of SPEC Section 3)
+
+- Our code lives only in `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, `docs/`, IDE config. Everything else is upstream (`04-upstream-fork.md`).
+- One client = one stack: own compose project (`-p <client_id>`), `.env`, volumes `<id>_postgres`/`<id>_redis`, domain, backups. Never share data between stacks.
+- `client.yaml` (validated by `opskit/schema/client.schema.json`) drives rendering; never hand-edit compose/.env on servers — change config, re-render, redeploy.
+- Rendered stacks always: pinned image tag, `AP_EDITION=ce`, worker `AP_FRONTEND_URL=http://app`, worker replicas from config (default 1), memory limits, healthchecks, only Caddy publishing ports.
+- Hosts talk to the owner only through the ops-hub (heartbeats, alerts, reports); fallback email if the hub is unreachable.
+- Scripts are Bash, `set -euo pipefail`, idempotent; host agent scripts in `opskit/agent/` are standalone (no repo needed on hosts).
+- Custom pieces follow upstream piece conventions and ship only via our CI image.
+- Follow `docs/TECH_ARCHITECTURE.md` Section 3 layout and command pattern.
+
+### Security & client-data rules
+
+#### Never read, print, or commit
+- `.env` files, `opskit/clients/**`, `opskit/hosts/**`, private keys (age, SSH), DB dumps, rclone configs, tokens.
+
+#### Always
+- Generate secrets with `openssl rand`; abort if any required secret is empty.
+- Destructive actions (delete volume/stack, restore over data, drop DB, prune remote backups early) need `--yes` + typed client id + owner approval in chat.
+- Hosts: SSH keys only, root login disabled, ufw 22/80/443, Postgres/Redis never published, `.env` mode 600.
+- Encrypt `.env` escrow with the owner's age public key; never store the private key in the repo or on hosts.
+- Detectors/reports use a read-only DB role and read-only SQL.
+- Alert/report payloads: no secrets, no full personal data; error excerpts ≤ 300 chars.
+- Gemini free tier only with practice data; client AI steps use client-owned keys.
+- Never set `AP_EDITION=ee`, never touch `packages/ee/`, never add a license key.
+
+### Upstream fork rules
+
+- Upstream `AGENTS.md`/`CLAUDE.md` govern upstream code; follow them if an approved patch touches upstream files.
+- `main` = pinned release tag + our commits; `upstream` remote fetch-only; never merge upstream automatically; sync only via `docs/UPSTREAM_SYNC.md` when the owner asks.
+- Upstream GitHub Actions stay disabled in the fork; our CI lives in `.github/workflows/opskit-*.yml`.
+- Changing any upstream file needs approval + ledger row in `docs/UPSTREAM_CHANGES.md` + test, in one commit.
+- Items marked *(verify)* in SPEC must be verified against the pinned version (source, docs, running instance) and recorded in `docs/ASSUMPTIONS.md` before code depends on them.
+
+### Ops script rules
+
+- Every script: `#!/usr/bin/env bash`, `set -euo pipefail`, `IFS=$'\n\t'` where lists are parsed, shellcheck clean, `--help`.
+- Quote all variables; no `eval`; no parsing `ls`; use `mktemp` + `trap` cleanup.
+- Remote actions via `opskit/lib/ssh.sh` helpers only (BatchMode, StrictHostKeyChecking=accept-new, timeouts).
+- Docker commands always with `-p <client_id>`; never `docker system prune` or volume removal outside offboard/restore flows.
+- Print a one-line summary per step (`[ok]`, `[warn]`, `[fail]`); exit non-zero on failure.
+- Templates render with `envsubst`/`yq` from validated config; fail on unresolved `${...}`.
+- Keep functions small; shared logic in `opskit/lib/`.
+
+### Reliability rules (backups, alerts, upgrades)
+
+- A backup counts only if: dump + encrypted `.env` exist locally and remotely, sizes > 0, and a heartbeat reached the ops-hub.
+- Restores go into a fresh stack; never over a running stack without `--overwrite --yes`.
+- Monthly automated restore test per client; result appears in the care report.
+- Failed-run detector: read-only SQL, runs every 5 min, de-duplicates (30 min window), includes flow name + run link.
+- Every alert names client, severity (`info|warn|critical`), what happened, first action to take; owner always gets Telegram.
+- Upgrades: backup → staging on new image → smoke tests → promote → smoke → rollback on any failure; record history.
+- Never lose `AP_ENCRYPTION_KEY`: escrow before first deploy; verify decryption in restore tests.
+
+### Custom pieces & flow template rules
+
+- Custom pieces live in `packages/pieces/custom/<name>`; use upstream's piece CLI/framework and naming; each action/trigger has tests; no secrets in code (piece auth props only).
+- Pieces are shipped only through `opskit-image.yml` builds; image tags `<upstream-tag>-ops.<n>`.
+- Flow templates: `flow.json` (exported, placeholders instead of real IDs/keys), `README.md`, `test/` payloads, `CHECKLIST.md`; every template includes a failure-notification convention.
+- Templates must import into a fresh CE stack of the pinned version before they count as done.
+
+### Testing & quality rules
+
+#### Definition of Done
+- [ ] `opskit/bin/check` passes (shellcheck + bats; `--quick` skips docker integration)
+- [ ] From Phase 2: `opskit/bin/opskit selftest` passes (local WSL stack; no real clients)
+- [ ] New logic has tests; bugs get a failing test first
+- [ ] PROGRESS.md updated with manual verification steps
+
+#### What must have tests
+- Secret generation never empty; config/schema validation errors
+- Compose/.env/Caddy rendering (worker URL, replicas, limits, CE edition, pinned tag)
+- Shared-host port/route allocation and capacity warning
+- Backup → restore round trip incl. stored connection decrypting; retention pruning
+- Failed-run detector query + de-duplication; alert payload per channel
+- Upgrade promote and rollback paths
+- Care report numbers vs fixture DB
+- Custom piece actions (upstream test runner)
+
+#### Tools
+shellcheck, bats-core, docker compose in WSL for integration tests, mock ops-hub (small HTTP listener), fixture Postgres data. Never test against real client hosts.
+
+### Git rules
+
+- Conventional commits (upstream uses commitlint): `feat(opskit): …`, `fix(opskit): …`, `feat(pieces): …`, `test: …`, `docs: …`, `chore: …`.
+- Commit after each completed task; never a broken state. Branches: `phase-N-name`; upstream syncs on `sync/<tag>`.
+- Never commit `.env`, keys, `opskit/clients/`, `opskit/hosts/`, dumps, rclone configs.
+- Never push to `upstream`; our pushes go to `origin` only.
+- Commit before risky changes so they can be reverted.
