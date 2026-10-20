@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: end-to-end check on this machine: throwaway host + client → deploy → backup → restore → teardown
 
-for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip practice; do
+for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e practice; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -15,7 +15,9 @@ pair from 18080/18443 — override with OPSKIT_PRACTICE_HTTP_PORT / _HTTPS_PORT)
 "selftest-<random>" client in a temp registry, then: bootstrap edge → client new →
 deploy → re-deploy (must keep the same containers) → seed 3 flows + a stored connection →
 backup (off-server copy to a local rclone remote) → restore into "<id>-rt" → the copy has the
-flows and the connection decrypts → teardown of only what it created.
+flows and the connection decrypts → a deliberately failing flow produces exactly one Telegram
+alert (mock API) via the failed-run detector (skipped when pieces are offline unless
+OPSKIT_REQUIRE_PIECES=1) → teardown of only what it created.
 --keep leaves everything running for inspection (prints how to remove it).
 Needs Docker and network access for image pulls. Touches no real client.
 EOF
@@ -83,6 +85,7 @@ cmd_main() {
   OPSKIT_OWNER_AGE_KEY="${SELFTEST_DIR}/owner.key" "${OPSKIT_ROOT}/bin/opskit" restore "$SELFTEST_ID" --target "${SELFTEST_ID}-rt" \
     || die "selftest: restore into ${SELFTEST_ID}-rt failed"
   rt_verify selftest "${SELFTEST_ID}-rt" "${SELFTEST_ID}-rt.localhost" "$https_port" || die "selftest: restored copy is incomplete"
+  e2e_monitoring selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: monitoring end-to-end check failed"
   if [ "$SELFTEST_KEEP" = "true" ]; then
     log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: docker compose -p ${SELFTEST_ID} down -v; docker compose -p ${SELFTEST_ID}-rt down -v; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
   fi

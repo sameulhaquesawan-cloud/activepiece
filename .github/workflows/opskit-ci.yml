@@ -24,7 +24,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
         with:
@@ -37,4 +37,6 @@ jobs:
       - name: Doctor
         run: opskit/bin/opskit doctor
       - name: Check (shellcheck + bats)
+        env:
+          OPSKIT_REQUIRE_PIECES: '1'
         run: opskit/bin/check
