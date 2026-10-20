@@ -54,7 +54,7 @@ run_shellcheck() {
 
 run_bats() {
   local quick="$1"
-  local args=(--recursive)
+  local args=(--recursive --print-output-on-failure)
   if [ "$quick" = "true" ]; then
     args+=(--filter-tags '!docker')
   fi
