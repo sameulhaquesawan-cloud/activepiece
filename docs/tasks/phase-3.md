@@ -45,5 +45,5 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 ### [x] 3.8 — Round-trip acceptance test (docker)
 - **Goal:** selftest-style: demo client + 3 flows + a stored connection (via API) → backup → restore into a new stack → flows present, connection decrypts (connection test via API) → teardown.
 
-### [ ] 3.9 — Monthly restore test job + docs
+### [x] 3.9 — Monthly restore test job + docs
 - **Goal:** `opskit restore-test <id>` (temporary stack, 3.8 checks, result recorded for the care report); runbook `docs/runbooks/backup-restore.md`; ADR-015; PROGRESS.

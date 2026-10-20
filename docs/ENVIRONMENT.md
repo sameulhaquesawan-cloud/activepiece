@@ -31,6 +31,9 @@ GitHub (fork, Actions, GHCR) · Telegram bot via @BotFather (demo alerts) · Gem
 | Slack webhook URL | host agent config (secret) | Slack app → Incoming Webhooks |
 | rclone remote | host | `rclone config` (B2 key id/app key) |
 | age public key | repo `opskit/keys/owner.age.pub` (public only) | `age-keygen`; private key offline |
+| `OPSKIT_OWNER_AGE_KEY` | operator machine only (restore, restore-test) | path to the age **private** key; default `~/.config/opskit/owner.key` (mode 600); never on hosts, never in git |
+| `OPSKIT_OWNER_AGE_PUB` | operator machine (deploy) | override for the public key path (tests/selftest) |
+| owner channels / rclone | `opskit/owner/alerts.conf`, `opskit/owner/rclone.conf` (git-ignored, 600) | copied to each host's `agent/` by `opskit deploy` |
 
 ## 4. Rules
 - Never commit `.env`, private keys, `opskit/clients/`, dumps, IPs of client hosts.

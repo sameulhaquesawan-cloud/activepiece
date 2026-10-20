@@ -24,12 +24,12 @@ Any Linux machine with the repo (Codespace, WSL, cloud AI session). Run `opskit/
 2. Adjust `opskit/clients/acme/client.yaml` if needed (worker replicas, memory, alert channels), then `opskit validate opskit/clients/acme/client.yaml`.
 3. `opskit deploy acme` — prints one `[ok]` line per step; ends with `[ok] deployed acme`.
 4. Open `https://auto.acme.com`, create the client's admin account.
-5. **Escrow the secrets now** (`opskit/clients/acme/secrets.env` — the encryption key cannot be recovered): Phase 3 automates this with `age`; until then store the file in your password manager.
+5. Backups: `opskit deploy` installs the nightly backup (database + `.env` encrypted to your age key, off-server copy). Run `opskit backup acme` once now and check `opskit backups acme`. See `docs/runbooks/backup-restore.md`.
 
 ## Everyday
 - Update after editing `client.yaml`: `opskit deploy acme` (safe to re-run; unchanged stacks are not restarted).
 - Pause / resume: `opskit client pause acme` / `opskit client resume acme`.
-- Offboard: final backup + flow export (manual until Phase 3) → `opskit client offboard acme --yes` (type `acme`). After `offboard_retention_days` (30): `opskit client offboard acme --purge --yes`.
+- Offboard: `opskit backup acme` + flow export → `opskit client offboard acme --yes` (type `acme`). After `offboard_retention_days` (30): `opskit client offboard acme --purge --yes`.
 
 ## When something fails
 | Message | Meaning / first action |

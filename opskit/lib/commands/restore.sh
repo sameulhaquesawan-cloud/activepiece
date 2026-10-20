@@ -9,18 +9,21 @@ done
 restore_usage() {
   cat <<'USAGE'
 Usage: opskit restore <client id> [--from <backup name>|latest] [--target <new id>] [--domain <domain>]
-                      [--overwrite --yes]
+                      [--host <host>] [--overwrite --yes]
 
 --target <new id>  restore into a NEW client stack on the same host (default: <id>-restore);
                    needs --domain unless the host uses internal TLS (practice: <new id>.localhost)
 --target <id>      restore over the client itself: always needs --overwrite --yes
                    plus the client id typed to confirm (all current data is replaced)
+--host <host>      put the restored stack on another registered host (default: the client's host),
+                   e.g. a new server after losing the old one; the backup comes from the old host
+                   if it is reachable, else from the off-server remote
 Needs the owner's age private key: $OPSKIT_OWNER_AGE_KEY or ~/.config/opskit/owner.key
 USAGE
 }
 
 cmd_main() {
-  local source="${1:-}" from="latest" target="" domain="" overwrite="false" yes="false"
+  local source="${1:-}" from="latest" target="" domain="" host="" overwrite="false" yes="false"
   case "$source" in
     -h|--help) restore_usage; return 0 ;;
     ""|-*) restore_usage >&2; return 1 ;;
@@ -31,10 +34,11 @@ cmd_main() {
       --from) from="${2:-}"; shift 2 ;;
       --target) target="${2:-}"; shift 2 ;;
       --domain) domain="${2:-}"; shift 2 ;;
+      --host) host="${2:-}"; shift 2 ;;
       --overwrite) overwrite="true"; shift ;;
       --yes) yes="true"; shift ;;
       *) restore_usage >&2; return 1 ;;
     esac
   done
-  restore_client "$source" "$from" "${target:-${source}-restore}" "$domain" "$overwrite" "$yes"
+  restore_client "$source" "$from" "${target:-${source}-restore}" "$domain" "$host" "$overwrite" "$yes"
 }

@@ -1,14 +1,14 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 3 — Backups & restore
-- **Current task:** 3.9 (see `docs/tasks/phase-3.md`)
+- **Current phase:** Phase 3 — Backups & restore (done; owner check-in)
+- **Current task:** none — Phase 3 complete, waiting for the owner check-in before Phase 4
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 3.9 `opskit restore-test <id>`, runbook `docs/runbooks/backup-restore.md` (incl. owner age-key guide), ADR-015; then Phase 3 verification and owner check-in.
-2. Owner (later, guided): create your own age key; choose the off-server target (Q1/Q2 in `docs/tasks/phase-3.md`).
-3. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest`.
+1. **Owner check-in (end of Phase 3):** read the summary in chat; when ready, follow `docs/runbooks/backup-restore.md` section A (your own age key, ~5 min) and choose the off-server storage (section B; Backblaze B2 recommended). Neither blocks Phase 4.
+2. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest` (now includes backup → restore, ~2 min).
+3. Agent, after the owner says go: Phase 4 (monitoring & alerts) — run `/opskit-start-phase` to create `docs/tasks/phase-4.md`.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -16,7 +16,7 @@
 | 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
 | 1 | Opskit foundation (+ openai-compatible piece) | Done | Owner tests passed 20 Oct 2026; opskit-ci green (run 4) |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
-| 3 | Backups & restore | In progress (owner approved 20 Oct 2026) | — |
+| 3 | Backups & restore | Done (owner check-in pending) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Not started | — |
 | 4b | Go to market (owner-led) | Not started | — |
 | 5 | Flow template library | Not started | — |
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.9 done; Phase 3 complete.** `opskit restore-test <id>|--all` (`lib/commands/restore-test.sh`): latest backup → throwaway practice host on this machine (temp registry overlay; `lib/practice.sh` now shared with selftest) → restore with all checks → teardown → one JSON line in `clients/<id>/restore-tests.jsonl` (pass/fail, backup, counts, seconds, reason ≤ 300 chars). `opskit restore --host <host>` restores onto another host (backup from the old host, else off-server; owner rclone config pushed to the new host) incl. disaster move of the same id (`--overwrite --yes`). Restore copies keep data 1 day after offboard. Docs: `docs/runbooks/backup-restore.md` (owner age-key guide, off-server, alerts, disaster), ADR-015, ENVIRONMENT (`OPSKIT_OWNER_AGE_KEY`), deploy runbook updated. Tests: 14 restore + 4 restore-test bats; real run: restore-test passed in 37 s (3 flows, 1 connection decrypts), wrong key recorded as fail, no leftovers. Verify: `bats opskit/tests/restore.bats opskit/tests/restore_test.bats`; `opskit selftest --keep` then `OPSKIT_REGISTRY=<dir> OPSKIT_OWNER_AGE_KEY=<dir>/owner.key opskit/bin/opskit restore-test <id>`.
 - **2026-10-20 — 3.8 done.** `opskit selftest` is now the round-trip acceptance test: deploy → seed (sign-up + 3 flows via the API, 1 stored connection, ASSUMPTIONS #9) → backup to a local rclone remote → `opskit restore --target <id>-rt` → the copy signs in with the same user, lists the 3 flows and the connection (API) and the connection decrypts → teardown of both stacks. New `lib/verify.sh` (`stack_psql`, `stack_data_counts`, `stack_connections_decrypt`, read-only) used by restore: it now fails if any stored connection does not decrypt. `lib/roundtrip.sh` = seed/verify fixtures. Full selftest 117 s; full `opskit/bin/check` (incl. docker) passes. Verify: `opskit/bin/opskit selftest`.
 - **2026-10-20 — 3.7 done.** `opskit restore <id> [--from <name>|latest] [--target <new id>] [--domain d] [--overwrite --yes]` (`lib/restore.sh`, `lib/commands/restore.sh`; `host_get`/`scp_get`; `restored` history event; `DEPLOY_SKIP_BACKUP` so copies get no cron). Finds the backup on the host (else fetches it from the off-server remote), decrypts `env.age` on the operator machine with the owner key (`OPSKIT_OWNER_AGE_KEY` or `~/.config/opskit/owner.key`), validates the 4 secrets, creates the target with the *original* secrets, starts postgres+redis, `pg_restore --exit-on-error`, then the normal deploy checks (health, worker, HTTPS) and prints flow/connection/run counts. Same id always needs `--overwrite --yes` + typed id (also when stopped: volumes still hold data). Copy target defaults to `<id>-restore`, domain `<target>.localhost` only on internal-TLS hosts. 10 tests (`opskit/tests/restore.bats`); real run on a selftest stack: copy restore 33 s and overwrite restore both green. Verify: `bats opskit/tests/restore.bats`.
 - **2026-10-20 — 3.6 done.** `opskit backup <id>` (runs the host agent; 0 complete / 2 local only / 1 failed) and `opskit backups <id>` (host list from status.json + off-server dirs via the host's rclone). Verified on a selftest stack; 3 tests.
@@ -78,6 +79,17 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 3 — 20 Oct 2026
+| Acceptance (SPEC 17 Phase 3) | Evidence |
+|---|---|
+| Backup of a demo client with 3 flows restores into a new stack where the flows and a stored connection work (proves `AP_ENCRYPTION_KEY` escrow) | `opskit selftest` round trip: same sign-in, 3 flows via API, connection listed via API and decrypts (ASSUMPTIONS #9: connection stored via SQL, pieces offline); `restore` fails if any connection does not decrypt |
+| Pruning keeps exactly the configured days (fixture test) | `opskit/tests/backup_agent.bats` (local 14 / remote 30, newest kept) |
+| Restore refuses to overwrite a running stack without `--overwrite --yes` | `opskit/tests/restore.bats` (needs `--overwrite`, `--yes`, typed id; wrong id refused) + manual run |
+| Failed backup triggers an alert payload (mock channel endpoint) | `opskit/tests/backup_alerts.bats` (mock HTTP listener: one alert on failure, none on success) |
+| Monthly restore test, result for the care report | `opskit restore-test` real run passed; `restore-tests.jsonl` |
+| `opskit/bin/check` passes | full run incl. docker tests |
+Not verified here: a real off-server provider (B2/Drive — owner decision Q1), cron on a real VPS, and the owner's real age key (guide in the runbook). Both land in Phase 9 at the latest.
+
 ### Phase 2 — 20 Oct 2026
 | Acceptance (SPEC 17, after R5) | Evidence |
 |---|---|

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: end-to-end check on this machine: throwaway host + client → deploy → backup → restore → teardown
 
-for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip; do
+for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip practice; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -11,7 +11,7 @@ selftest_usage() {
 Usage: opskit selftest [--keep]
 
 Creates a throwaway practice host (local, Caddy internal TLS on the first free port
-pair from 18080/18443 — override with OPSKIT_SELFTEST_HTTP_PORT / _HTTPS_PORT) and a
+pair from 18080/18443 — override with OPSKIT_PRACTICE_HTTP_PORT / _HTTPS_PORT) and a
 "selftest-<random>" client in a temp registry, then: bootstrap edge → client new →
 deploy → re-deploy (must keep the same containers) → seed 3 flows + a stored connection →
 backup (off-server copy to a local rclone remote) → restore into "<id>-rt" → the copy has the
@@ -23,38 +23,9 @@ EOF
 
 selftest_cleanup() {
   [ "${SELFTEST_KEEP:-false}" = "true" ] && return 0
-  local id
-  for id in ${SELFTEST_ID:+"$SELFTEST_ID" "${SELFTEST_ID}-rt"}; do
-    [ -f "${SELFTEST_ROOT}/clients/${id}/compose.yml" ] || continue
-    docker compose -p "$id" --project-directory "${SELFTEST_ROOT}/clients/${id}" \
-      -f "${SELFTEST_ROOT}/clients/${id}/compose.yml" down -v --remove-orphans >/dev/null 2>&1 || true
-  done
-  [ -z "${SELFTEST_EDGE:-}" ] || docker rm -f "$SELFTEST_EDGE" >/dev/null 2>&1 || true
-  [ -z "${SELFTEST_DIR:-}" ] || remove_tree "$SELFTEST_DIR"
-}
-
-remove_tree() {
-  local dir="$1"
-  if [ -d "${dir}/host-root/caddy" ]; then
-    docker run --rm -v "${dir}/host-root/caddy:/caddy" --entrypoint sh caddy:2.10.0 \
-      -c 'rm -rf /caddy/data /caddy/config' >/dev/null 2>&1 || true
-  fi
-  rm -rf "$dir" 2>/dev/null || log_warn "selftest: could not fully remove ${dir}"
-}
-
-port_free() {
-  ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
-}
-
-free_port_pair() {
-  local http
-  for http in $(seq 18080 10 18980); do
-    if port_free "$http" && port_free "$((http + 363))"; then
-      printf '%s %s' "$http" "$((http + 363))"
-      return 0
-    fi
-  done
-  return 1
+  [ -n "${SELFTEST_DIR:-}" ] || return 0
+  practice_teardown "$SELFTEST_ROOT" "${SELFTEST_EDGE:-}" ${SELFTEST_ID:+"$SELFTEST_ID" "${SELFTEST_ID}-rt"}
+  practice_remove_tree "$SELFTEST_DIR"
 }
 
 selftest_containers() {
@@ -77,29 +48,8 @@ cmd_main() {
   SELFTEST_ID="selftest-$(openssl rand -hex 3)"
   SELFTEST_EDGE="opskit-caddy-${SELFTEST_ID}"
   trap selftest_cleanup EXIT
-  local shim="false" start ports http_port https_port
-  [ -e /proc/net/if_inet6 ] || shim="true"
-  ports="$(free_port_pair)" || die "selftest: no free port pair in 18080-18980"
-  http_port="${OPSKIT_SELFTEST_HTTP_PORT:-${ports% *}}"
-  https_port="${OPSKIT_SELFTEST_HTTPS_PORT:-${ports#* }}"
-  mkdir -p "${SELFTEST_DIR}/hosts"
-  cat > "${SELFTEST_DIR}/hosts/selftest.yaml" <<EOF
-host_id: selftest
-ip: 127.0.0.1
-ssh_user: ops
-mode: dedicated
-cpus: 2
-ram_gb: 4
-transport: local
-opskit_root: ${SELFTEST_ROOT}
-edge:
-  http_port: ${http_port}
-  https_port: ${https_port}
-  tls: internal
-  container: ${SELFTEST_EDGE}
-practice_quirks:
-  ipv4_listen_shim: ${shim}
-EOF
+  local start https_port
+  https_port="$(practice_host_write "$SELFTEST_DIR" selftest "$SELFTEST_ROOT" "$SELFTEST_EDGE")" || die "selftest: no practice host"
   export OPSKIT_REGISTRY="$SELFTEST_DIR"
   mkdir -p "${SELFTEST_DIR}/owner" "${SELFTEST_DIR}/offsite"
   age-keygen -o "${SELFTEST_DIR}/owner.key" 2>/dev/null

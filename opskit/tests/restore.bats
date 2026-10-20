@@ -116,4 +116,58 @@ teardown() {
   [ "$(yq '.status' "$file")" = "draft" ]
   [ "$(yq '.history[0].event' "$file")" = "restored" ]
   [ "$(yq '.history | length' "$file")" = "1" ]
+  [ "$(yq '.offboard_retention_days' "$file")" = "1" ]
+}
+
+@test "restore --host refuses an unknown host" {
+  run "$OPSKIT" restore demo --target demo-copy --host nowhere
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"nowhere"* ]]
+  [ ! -e "${REG}/clients/demo-copy" ]
+}
+
+@test "restore --host copies the backup to the other host and records it there" {
+  OTHER="$(mktemp -d)"
+  yq ".host_id = \"other\" | .opskit_root = \"${OTHER}\"" "${REG}/hosts/local-practice.yaml" > "${REG}/hosts/other.yaml"
+  run "$OPSKIT" restore demo --target demo-copy --host other
+  [[ "$output" == *"copied backup ${NAME} from local-practice to other"* ]]
+  [ -s "${OTHER}/backups/demo/${NAME}/db.dump" ]
+  [ "$(yq '.host.name' "${REG}/clients/demo-copy/client.yaml")" = "other" ]
+  [ "$(yq '.host.name' "${REG}/clients/demo/client.yaml")" = "local-practice" ]
+  rm -rf "$OTHER"
+}
+
+@test "restore fetches the backup from the off-server remote when the host lacks it" {
+  local remote
+  remote="$(mktemp -d)"
+  mkdir -p "${remote}/demo"
+  mv "${HOSTROOT}/backups/demo/${NAME}" "${remote}/demo/"
+  rm "${HOSTROOT}/backups/demo/latest"
+  mkdir -p "${HOSTROOT}/agent"
+  printf '[offsite]\ntype = local\n' > "${HOSTROOT}/agent/rclone.conf"
+  yq -i ".backup.remote = \"offsite:${remote}\"" "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" restore demo --target demo-copy
+  [[ "$output" == *"fetched ${NAME} from off-server"* ]]
+  [[ "$output" == *"secrets restored from escrow"* ]]
+  [ -s "${HOSTROOT}/backups/demo/${NAME}/db.dump" ]
+  rm -rf "$remote"
+}
+
+@test "disaster restore moves the client to a new host using the off-server copy" {
+  local remote
+  remote="$(mktemp -d)"
+  OTHER="$(mktemp -d)"
+  mkdir -p "${remote}/demo" "${REG}/owner"
+  mv "${HOSTROOT}/backups/demo/${NAME}" "${remote}/demo/"
+  rm "${HOSTROOT}/backups/demo/latest"
+  printf '[offsite]\ntype = local\n' > "${REG}/owner/rclone.conf"
+  yq -i ".backup.remote = \"offsite:${remote}\"" "${REG}/clients/demo/client.yaml"
+  yq ".host_id = \"other\" | .opskit_root = \"${OTHER}\"" "${REG}/hosts/local-practice.yaml" > "${REG}/hosts/other.yaml"
+  run bash -c "echo demo | '$OPSKIT' restore demo --target demo --host other --overwrite --yes"
+  [[ "$output" == *"fetched ${NAME} from off-server"*"to other"* ]]
+  [[ "$output" == *"demo now lives on other"* ]]
+  [ -s "${OTHER}/agent/rclone.conf" ]
+  [ -s "${OTHER}/backups/demo/${NAME}/db.dump" ]
+  [ "$(yq '.host.name' "${REG}/clients/demo/client.yaml")" = "other" ]
+  rm -rf "$remote" "$OTHER"
 }
