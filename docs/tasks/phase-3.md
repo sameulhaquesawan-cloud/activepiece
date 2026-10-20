@@ -35,7 +35,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 - **Goal:** `opskit deploy` copies `agent/*.sh`, the owner's age public key and per-client backup config to the host and installs `/etc/cron.d/opskit-<id>` (ssh hosts) / user crontab note (practice hosts).
 - **Tests:** rendered cron content; deploy pushes agent files (stubs).
 
-### [ ] 3.6 — `opskit backup <id>` (on demand) + `opskit backups <id>` (list)
+### [x] 3.6 — `opskit backup <id>` (on demand) + `opskit backups <id>` (list)
 - **Goal:** run the host agent now; list local/remote backups with sizes and status.
 
 ### [ ] 3.7 — `opskit restore <id> --from <ts> [--target <new-id>] [--overwrite --yes]`
