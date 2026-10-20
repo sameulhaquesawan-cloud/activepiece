@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 2 — Client deployment kit
-- **Current task:** 2.8 (see `docs/tasks/phase-2.md`)
+- **Current task:** 2.9 (see `docs/tasks/phase-2.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 2.8 selftest done.** `opskit selftest [--keep]`: temp registry + local host (free port pair from 18080/18443, Caddy internal TLS, IPv4 shim auto when the kernel lacks IPv6) + `selftest-<hex>` client → edge bootstrap → deploy → re-deploy must keep the same containers → teardown of only its own project/edge/temp dir (trap). Passed in 78 s here, nothing left behind; docker-tagged bats test; full `opskit/bin/check` (with docker tests) passes in ~3 min.
 - **2026-10-20 — 2.7 lifecycle done.** `opskit client pause|resume|offboard <id> [--purge --yes]`: pause (deployed → paused, compose stop), resume (start + health), offboard (`--yes` + typed id; stop, remove Caddy site, `offboarded_at`; warns final backup/flow export are manual until Phase 3), purge (only offboarded and after `offboard_retention_days`, `--yes` + typed id; `down -v`, remove host dir + site; registry kept). Verified for real on the practice host + 6 stubbed tests.
 - **2026-10-20 — 2.6 deploy done.** `lib/deploy.sh` + `opskit deploy <id>`: render → push compose/.env (600) to `<root>/clients/<id>` → `docker compose -p <id> up -d --remove-orphans` → app healthy (image healthcheck) → worker poll seen in app logs → Caddy site + reload → HTTPS health (internal TLS checked on the host, ACME from the operator machine) → status deployed + history (only on first deploy or tag change). Verified for real on a local practice host: first deploy 25 s, re-deploy keeps identical container IDs, volumes `demo_postgres/demo_redis/demo_cache`. 5 unit tests; full run is the selftest (2.8).
 - **2026-10-20 — 2.5 host bootstrap done.** `opskit/agent/bootstrap.sh` (standalone, idempotent, `--dry-run`): Ubuntu 24.04 check, docker.io + docker-compose-v2 + ufw + unattended-upgrades, ssh user → docker group, ufw deny-in + ssh/80/443, auto-upgrades, 2 GB swap if RAM ≤ 4 GB, sshd key-only/no-root check (`--harden-ssh` writes a drop-in only if authorized_keys exists), edge: `<root>/caddy/etc/{Caddyfile,sites/}`, network `opskit_edge`, pinned `caddy:2.10.0` container. `opskit host bootstrap <host> [--dry-run] [--harden-ssh]`: ssh hosts copy + `sudo -n` (needs passwordless sudo), local hosts `--edge-only`. 5 tests incl. real Caddy HTTPS (docker-tagged). Real VPS run not verified (Phase 9).

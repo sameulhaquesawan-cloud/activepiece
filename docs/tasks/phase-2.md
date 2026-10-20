@@ -41,7 +41,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Goal:** pause/resume = compose stop/start + status; offboard = stop + status `offboarded` + `offboarded_at`; `--purge` (only after `offboard_retention_days`, `--yes` + typed id) removes the stack and its volumes.
 - **Tests:** status transitions; purge refused before retention / without confirmation.
 
-### [ ] 2.8 — `opskit selftest`
+### [x] 2.8 — `opskit selftest`
 - **Goal:** demo client on a local practice host (high edge ports, Caddy internal CA, `*.localhost`): render → deploy → health + worker → re-deploy idempotent → teardown (selftest-owned project only).
 - **Acceptance:** passes in the cloud session; bats test tagged docker.
 
