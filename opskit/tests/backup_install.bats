@@ -82,6 +82,16 @@ teardown() {
   grep -qx 'EMAIL_TO=ops@acme.example,boss@acme.example' "${REG}/clients/demo/rendered/alerts.conf"
 }
 
+@test "render writes the client's time zone and quiet hours" {
+  yq -i '.timezone = "Europe/London" | .alerts.quiet_hours = {"from": "22:00", "to": "07:00"}' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -eq 0 ]
+  local conf="${REG}/clients/demo/rendered/alerts.conf"
+  grep -qx 'TIMEZONE=Europe/London' "$conf"
+  grep -qx 'QUIET_FROM=22:00' "$conf"
+  grep -qx 'QUIET_TO=07:00' "$conf"
+}
+
 @test "cron sync keeps foreign lines, adds each client once, and drops removed clients" {
   printf '0 5 * * * /usr/local/bin/someone-elses-job\n' > "$CRONTAB_DATA"
   "$OPSKIT" render demo >/dev/null

@@ -41,6 +41,9 @@ stack_render_backup() {
       printf 'HEARTBEAT_URL=%s\n' "$(yaml_get "$cfile" .backup.heartbeat_url)"
     } > "${out}/backup.conf"
     {
+      printf 'TIMEZONE=%s\n' "$(yaml_get "$cfile" .timezone UTC)"
+      printf 'QUIET_FROM=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.from)"
+      printf 'QUIET_TO=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.to)"
       if grep -qx telegram <<< "$channels"; then
         printf 'TELEGRAM_CHAT_ID=%s\n' "$(yaml_get "$cfile" .alerts.telegram.chat_id)"
       fi

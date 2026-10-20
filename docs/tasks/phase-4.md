@@ -33,7 +33,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Tests required:** one bats test per channel against mock HTTP / mock SMTP listeners; secret-looking text never appears in payloads.
 - **Manual verification:** `alert.sh --client demo --severity warn --what test --action none` against the mock listeners.
 
-### [ ] 4.3 — De-duplication + quiet hours
+### [x] 4.3 — De-duplication + quiet hours
 - **Goal:** `--dedupe-key <k> --window <min>` (state file per client, 30 min default) and quiet hours from `client.yaml` (`alerts.quiet_hours`, `timezone`) per Q4; held alerts go to `<root>/state/<id>/held.jsonl`.
 - **Spec refs:** 10.6, reliability rules
 - **Files likely touched:** `opskit/agent/alert.sh`, `opskit/lib/stack.sh` (render quiet hours/timezone into client `alerts.conf`), tests
