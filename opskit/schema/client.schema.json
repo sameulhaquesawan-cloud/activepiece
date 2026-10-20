@@ -4,108 +4,347 @@
   "title": "opskit client.yaml",
   "type": "object",
   "additionalProperties": false,
-  "required": ["client_id", "name", "contact", "domain", "host", "image", "ap_version", "timezone", "alerts", "backup", "status"],
+  "required": [
+    "client_id",
+    "name",
+    "contact",
+    "domain",
+    "host",
+    "image",
+    "ap_version",
+    "timezone",
+    "alerts",
+    "backup",
+    "status"
+  ],
   "properties": {
-    "client_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$", "description": "slug, also the compose project name" },
-    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-    "contact": { "type": "string", "format": "email" },
-    "domain": { "type": "string", "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$" },
+    "client_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$",
+      "description": "slug, also the compose project name"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "contact": {
+      "type": "string",
+      "format": "email"
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$"
+    },
     "host": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "ip", "ssh_user", "mode"],
+      "required": [
+        "name",
+        "ip",
+        "ssh_user",
+        "mode"
+      ],
       "properties": {
-        "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" },
-        "ip": { "type": "string", "format": "ipv4" },
-        "ssh_user": { "type": "string", "pattern": "^[a-z_][a-z0-9_-]{0,31}$", "not": { "const": "root" } },
-        "ssh_port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 22 },
-        "mode": { "enum": ["dedicated", "shared"] }
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$"
+        },
+        "ip": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "ssh_user": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_-]{0,31}$",
+          "not": {
+            "const": "root"
+          }
+        },
+        "ssh_port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "default": 22
+        },
+        "mode": {
+          "enum": [
+            "dedicated",
+            "shared"
+          ]
+        }
       }
     },
     "image": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repo", "tag"],
+      "required": [
+        "repo",
+        "tag"
+      ],
       "properties": {
-        "repo": { "enum": ["ghcr.io/activepieces/activepieces", "activepieces/activepieces"], "default": "ghcr.io/activepieces/activepieces" },
-        "tag": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+        "repo": {
+          "enum": [
+            "ghcr.io/activepieces/activepieces",
+            "activepieces/activepieces"
+          ],
+          "default": "ghcr.io/activepieces/activepieces"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
       }
     },
-    "ap_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "ap_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
     "workers": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "replicas": { "type": "integer", "minimum": 1, "maximum": 10, "default": 1 },
-        "memory_limit": { "$ref": "#/$defs/memory" }
+        "replicas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1
+        },
+        "memory_limit": {
+          "$ref": "#/$defs/memory"
+        }
       }
     },
     "app": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "memory_limit": { "$ref": "#/$defs/memory" } }
+      "properties": {
+        "memory_limit": {
+          "$ref": "#/$defs/memory"
+        }
+      }
     },
-    "port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
-    "timezone": { "type": "string", "pattern": "^(UTC|[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2})$" },
+    "port": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535
+    },
+    "timezone": {
+      "type": "string",
+      "pattern": "^(UTC|[A-Z][A-Za-z_]+(/[A-Za-z0-9_+-]+){1,2})$"
+    },
     "alerts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["channels"],
+      "required": [
+        "channels"
+      ],
       "properties": {
-        "channels": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["telegram", "email", "slack"] } },
+        "channels": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "telegram",
+              "email",
+              "slack"
+            ]
+          }
+        },
         "telegram": {
-          "type": "object", "additionalProperties": false, "required": ["chat_id"],
-          "properties": { "chat_id": { "type": "string", "pattern": "^-?[0-9]{3,20}$" } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chat_id"
+          ],
+          "properties": {
+            "chat_id": {
+              "type": "string",
+              "pattern": "^-?[0-9]{3,20}$"
+            }
+          }
         },
         "email": {
-          "type": "object", "additionalProperties": false, "required": ["to"],
-          "properties": { "to": { "type": "array", "minItems": 1, "items": { "type": "string", "format": "email" } } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "to"
+          ],
+          "properties": {
+            "to": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "email"
+              }
+            }
+          }
         },
         "slack": {
-          "type": "object", "additionalProperties": false, "required": ["webhook_secret"],
-          "properties": { "webhook_secret": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$", "description": "name of the host secret holding the webhook URL, never the URL" } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "webhook_secret"
+          ],
+          "properties": {
+            "webhook_secret": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+              "description": "name of the host secret holding the webhook URL, never the URL"
+            }
+          }
         },
         "quiet_hours": {
-          "type": "object", "additionalProperties": false, "required": ["from", "to"],
-          "properties": { "from": { "$ref": "#/$defs/hhmm" }, "to": { "$ref": "#/$defs/hhmm" } }
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "$ref": "#/$defs/hhmm"
+            },
+            "to": {
+              "$ref": "#/$defs/hhmm"
+            }
+          }
         }
       }
     },
     "backup": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["remote"],
+      "required": [],
       "properties": {
-        "schedule": { "type": "string", "pattern": "^[0-9*,/-]+( [0-9*,/-]+){4}$", "default": "30 2 * * *" },
+        "schedule": {
+          "type": "string",
+          "pattern": "^[0-9*,/-]+( [0-9*,/-]+){4}$",
+          "default": "30 2 * * *"
+        },
         "retention_days": {
-          "type": "object", "additionalProperties": false,
+          "type": "object",
+          "additionalProperties": false,
           "properties": {
-            "local": { "type": "integer", "minimum": 1, "maximum": 365, "default": 14 },
-            "remote": { "type": "integer", "minimum": 1, "maximum": 3650, "default": 30 }
+            "local": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 14
+            },
+            "remote": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3650,
+              "default": 30
+            }
           }
         },
-        "remote": { "type": "string", "pattern": "^[A-Za-z0-9_-]+:[A-Za-z0-9_./-]*$", "description": "rclone remote:path" }
+        "remote": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+:[A-Za-z0-9_./-]*$",
+          "description": "rclone remote:path"
+        }
       }
     },
     "report": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "recipients": { "type": "array", "items": { "type": "string", "format": "email" } },
-        "day_of_month": { "type": "integer", "minimum": 1, "maximum": 28, "default": 1 }
+        "recipients": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "day_of_month": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 28,
+          "default": 1
+        }
       }
     },
     "support": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "response_hours": { "type": "integer", "minimum": 1, "maximum": 168, "default": 12 } }
+      "properties": {
+        "response_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 168,
+          "default": 12
+        }
+      }
     },
-    "offboard_retention_days": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 },
-    "created_at": { "type": "string", "format": "date" },
-    "status": { "enum": ["draft", "deployed", "paused", "offboarded"] }
+    "offboard_retention_days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 365,
+      "default": 30
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "deployed",
+        "paused",
+        "offboarded"
+      ]
+    },
+    "offboarded_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "at",
+          "event"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "event": {
+            "enum": [
+              "created",
+              "deployed",
+              "paused",
+              "resumed",
+              "offboarded",
+              "purged"
+            ]
+          },
+          "tag": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      }
+    }
   },
   "$defs": {
-    "memory": { "type": "string", "pattern": "^[1-9][0-9]{0,5}[mg]$" },
-    "hhmm": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+    "memory": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{0,5}[mg]$"
+    },
+    "hhmm": {
+      "type": "string",
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+    }
   }
 }

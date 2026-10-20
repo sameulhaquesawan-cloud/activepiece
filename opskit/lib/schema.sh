@@ -26,7 +26,7 @@ validate_against_schema() {
     log_fail "$(basename "$file"): not a valid YAML/JSON mapping"
     return 1
   fi
-  errors="$(npm_config_update_notifier=false npx -y -p "ajv-cli@${AJV_CLI_VERSION}" -p "ajv-formats@${AJV_FORMATS_VERSION}" \
+  errors="$(cd "$tmp" && npm_config_update_notifier=false npx -y -p "ajv-cli@${AJV_CLI_VERSION}" -p "ajv-formats@${AJV_FORMATS_VERSION}" \
     ajv validate --spec=draft2020 -c ajv-formats --all-errors --errors=json -s "$schema" -d "$json" 2>&1 >/dev/null)" || status=$?
   if [ "$status" -eq 0 ]; then
     rm -rf "$tmp"

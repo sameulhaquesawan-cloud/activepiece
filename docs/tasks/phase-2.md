@@ -12,7 +12,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 
 ## Tasks
 
-### [ ] 2.1 — Registry + `opskit client new`
+### [x] 2.1 — Registry + `opskit client new`
 - **Goal:** `lib/registry.sh` (paths, load client/host with yq, validate first); `client.yaml.tmpl`; `opskit client new <id> --domain --host [--contact --name]`; host schema gains `transport`, `opskit_root`, `edge` ports/TLS, `practice_quirks`.
 - **Tests:** new client file validates; refuses existing id; bad id/domain rejected.
 

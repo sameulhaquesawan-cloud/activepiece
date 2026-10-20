@@ -1,0 +1,8 @@
+host_id: local-practice
+ip: 127.0.0.1
+ssh_user: ops
+mode: dedicated
+cpus: 4
+ram_gb: 8
+transport: local
+edge: { http_port: 18080, https_port: 18443, tls: internal }
