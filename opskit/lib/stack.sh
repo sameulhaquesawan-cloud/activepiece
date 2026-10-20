@@ -41,6 +41,8 @@ stack_render_backup() {
       printf 'HEARTBEAT_URL=%s\n' "$(yaml_get "$cfile" .backup.heartbeat_url)"
     } > "${out}/backup.conf"
     {
+      printf 'APP_URL=%s\n' "$(stack_frontend_url "$(yaml_get "$cfile" .domain)" \
+        "$(yaml_get "$(host_file "$(yaml_get "$cfile" .host.name)")" .edge.https_port 443)")"
       printf 'TIMEZONE=%s\n' "$(yaml_get "$cfile" .timezone UTC)"
       printf 'QUIET_FROM=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.from)"
       printf 'QUIET_TO=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.to)"

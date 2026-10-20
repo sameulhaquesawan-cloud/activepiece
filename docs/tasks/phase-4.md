@@ -47,7 +47,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Acceptance checks:** `opskit_ro` can read runs, cannot `INSERT`/`UPDATE`/`DELETE`, cannot log in over TCP; re-deploy changes nothing.
 - **Tests required:** docker-tagged bats on a selftest stack.
 
-### [ ] 4.5 — Failed-run detector
+### [x] 4.5 — Failed-run detector
 - **Goal:** `agent/detect-failed-runs.sh <id>` (cron every 5 min, `flock`): runs with status in FAILED, INTERNAL_ERROR, TIMEOUT, MEMORY_LIMIT_EXCEEDED, QUOTA_EXCEEDED, LOG_SIZE_EXCEEDED finished since the last check → one alert per flow per 30 min (count if several) with flow name, run id, error excerpt ≤ 300 chars, run link.
 - **Spec refs:** 10.3, reliability rules
 - **Files likely touched:** `opskit/agent/detect-failed-runs.sh`, tests, fixture SQL
