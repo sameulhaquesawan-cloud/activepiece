@@ -9,8 +9,9 @@ Usage: opskit/bin/check [--quick] [--help]
 
   --quick   skip tests tagged "docker" (integration tests that start containers)
 
-Runs shellcheck on all Bash files under opskit/ (plus .claude/hooks) and the
-bats tests in opskit/tests. Exits non-zero if anything fails.
+Runs shellcheck on all Bash files under opskit/ (plus .claude/hooks), the fork
+hygiene check (only our paths + ledgered upstream files differ from the pinned
+tag) and the bats tests in opskit/tests. Exits non-zero if anything fails.
 EOF
 }
 
@@ -18,6 +19,8 @@ REPO_ROOT="${OPSKIT_CHECK_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && p
 OPSKIT_DIR="${REPO_ROOT}/opskit"
 # shellcheck source=../lib/log.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/log.sh"
+# shellcheck source=../lib/fork.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/fork.sh"
 
 bash_files() {
   local file
@@ -77,6 +80,7 @@ main() {
   esac
   local failed=0
   run_shellcheck || failed=1
+  fork_check "$REPO_ROOT" || failed=1
   run_bats "$quick" || failed=1
   if [ "$failed" -ne 0 ]; then
     log_fail "check failed"

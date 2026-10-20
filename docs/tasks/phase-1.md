@@ -47,7 +47,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** GitHub Actions: shellcheck + bats on push/PR touching our paths. Owner disables upstream workflows (step-by-step in PROGRESS).
 - **Acceptance:** green run on the branch.
 
-### [ ] 1.9 — Fork hygiene check + docs
+### [x] 1.9 — Fork hygiene check + docs
 - **Goal:** `opskit/bin/check` includes "only our paths changed vs pinned tag" (allow-list from SPEC 3.1 + ledger rows); `docs/UPSTREAM_SYNC.md` completed.
 - **Acceptance:** `git diff 0.92.3 --stat` shows only our paths + ledger files; check fails on an unledgered upstream edit (fixture).
 

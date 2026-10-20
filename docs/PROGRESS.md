@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** 1.8 (see `docs/tasks/phase-1.md`)
+- **Current task:** 1.8 waits for GitHub Actions run; next 1.10 (see `docs/tasks/phase-1.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -26,6 +26,8 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 1.9 fork hygiene done.** `lib/fork.sh` `fork_check`: vs the pinned tag, new files must match our path patterns and changed/deleted upstream files must be in the patch ledger; part of `opskit/bin/check` (warns + skips if the tag isn't fetched). `docs/UPSTREAM_SYNC.md` rewritten (ledger re-apply, workflow disabling, Phase 0 facts to re-verify). 6 tests on a throwaway git repo.
+- **2026-10-20 — 1.8 CI file pushed.** `.github/workflows/opskit-ci.yml` (dev-env → doctor → check, on our paths). Not yet seen running — see Known issues.
 - **2026-10-20 — 1.7 doctor done.** `opskit doctor [--offline]`: OS/WSL, Docker daemon + Compose ≥ v2, 13 tools + mikefarah yq v4 (fail), egress to cloud.activepieces.com / npm / GHCR (warn). Found + fixed: no ssh client in cloud session → `dev-env` now also installs openssh-client, nodejs/npm, curl, git, openssl; Codespace config gains the Node 22 feature. 6 tests with stubbed PATH. Verify: `opskit/bin/opskit doctor`.
 - **2026-10-20 — 1.6 ssh done.** `lib/ssh.sh`: `ssh_run <user> <host> <port> <cmd...>` (args `%q`-quoted) and `scp_put`; BatchMode, accept-new, no password/keyboard auth, ConnectTimeout 10, keepalives, optional `OPSKIT_KNOWN_HOSTS`; target validation before any call. 6 tests with stub ssh/scp.
 - **2026-10-20 — 1.4 schemas + validate done.** `opskit/schema/{client,host}.schema.json`, `lib/schema.sh` (pinned `ajv-cli@5.0.0` + `ajv-formats@3.0.1` via npx, YAML→JSON with yq v4, errors as `[fail] field: problem`), `opskit validate <file> [--type]`. `dev-env` installs mikefarah yq v4.44.3 (sha256-verified). Fixtures in `opskit/tests/fixtures/`. 14 new tests. Verify: `opskit/bin/opskit validate opskit/tests/fixtures/clients/valid.yaml`.
