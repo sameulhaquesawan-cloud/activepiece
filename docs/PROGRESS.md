@@ -1,8 +1,8 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 2 — Client deployment kit
-- **Current task:** Phase 2 done — owner check-in (+ Phase 1 owner tests)
+- **Current phase:** Phase 3 — Backups & restore
+- **Current task:** 3.3 (see `docs/tasks/phase-3.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -17,7 +17,7 @@
 | 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
 | 1 | Opskit foundation (+ openai-compatible piece) | Done except owner tests (CI 1.8, real-key 1.12) | — |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
-| 3 | Backups & restore | Not started | — |
+| 3 | Backups & restore | In progress (owner approved 20 Oct 2026) | — |
 | 4 | Monitoring & alerts | Not started | — |
 | 4b | Go to market (owner-led) | Not started | — |
 | 5 | Flow template library | Not started | — |
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.1 + 3.2 done.** Owner: "go Phase 3, decide later (backup target), ok (age key guide later)". 3.1: Redis-only state analysed (ASSUMPTIONS #8). 3.2: `opskit/agent/backup.sh <id> [--root]` — flock per client, `pg_dump -Fc` via the client's postgres container + `pg_restore --list` check, `.env` → `env.age` with `<root>/agent/owner.age.pub`, compose snapshot, `status.json`, umask 077, `.partial` dir renamed on success / removed on failure, `latest` pointer. bootstrap now installs `age` + `rclone`. Real run on a selftest stack (240 KB dump, env decrypts with test key) + 6 stubbed tests.
 - **2026-10-20 — CI fix: selftest cleanup as non-root.** On GitHub the selftest itself passed (115 s) but cleanup failed: Caddy (root in its container) leaves root-owned files in the bind-mounted data/config dirs, which a non-root runner/Codespace user cannot delete. Cleanup now removes them through a container; verified as a non-root user here (pass, no leftovers).
 - **2026-10-20 — Phase 1 owner tests.** (1.12) Owner's real key via Chrome: connection to an OpenAI-compatible provider (freeinference.org), dropdown loaded 6 live models, Ask Model with glm-5.3-flash and reasoning high returned "Hello! 👋", finishReason stop, reasoning text captured — piece verified. (1.8) Owner chose "a": 41 upstream workflows deleted (ledger #4), Actions enabled; opskit-ci runs on push. Codespace selftest failed only because that Codespace still had the old python `yq` (created before dev-env pinned yq v4) → `validate` now names the fix (`opskit/bin/dev-env`) and selftest runs `doctor --offline` first.
 - **2026-10-20 — Incident: 3 docs truncated, restored.** A Python append helper (`open(p,'w').write(open(p).read()+…)`) emptied the file before reading it, so `docs/SPEC.md` (since f0d6bc9309), `docs/DECISIONS.md` and `docs/ASSUMPTIONS.md` were left with only the appended text. Restored from git history (SPEC 271 lines, ADR-001…014, assumptions 1–7) with all intended edits re-applied; new `opskit/tests/docs_integrity.bats` fails if they shrink or lose entries.

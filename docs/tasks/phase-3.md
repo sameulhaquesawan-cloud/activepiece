@@ -16,10 +16,10 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 
 ## Tasks
 
-### [ ] 3.1 — Verify what must be backed up
+### [x] 3.1 — Verify what must be backed up
 - **Goal:** read-only check on a running stack: which state is in Postgres vs Redis (repeatable schedule jobs, delays/paused runs, webhook queue); does the app rebuild schedules from Postgres on start? Record in ASSUMPTIONS; adjust design if Redis holds durable state.
 
-### [ ] 3.2 — `agent/backup.sh` (dump + escrow + local layout)
+### [x] 3.2 — `agent/backup.sh` (dump + escrow + local layout)
 - **Goal:** standalone, `flock`, `pg_dump` via the postgres container (`-Fc` or gzip SQL), `age -r <owner pubkey>` on `.env`, compose snapshot, `status.json` (sizes, duration, ok); never writes secrets in clear outside `.env`.
 - **Tests:** bats with stub `docker`/`age`; real run tagged docker on a selftest stack.
 

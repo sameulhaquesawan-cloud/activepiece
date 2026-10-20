@@ -99,10 +99,10 @@ check_os() {
 
 install_packages() {
   run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
-  run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker.io docker-compose-v2 ufw unattended-upgrades curl
+  run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker.io docker-compose-v2 ufw unattended-upgrades curl age rclone
   run systemctl enable --now docker
   run usermod -aG docker "$SSH_USER"
-  ok "packages: docker, compose v2, ufw, unattended-upgrades (user ${SSH_USER} in docker group)"
+  ok "packages: docker, compose v2, ufw, unattended-upgrades, age, rclone (user ${SSH_USER} in docker group)"
 }
 
 setup_firewall() {
