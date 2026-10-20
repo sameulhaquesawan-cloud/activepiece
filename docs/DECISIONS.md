@@ -52,5 +52,11 @@ Format: Context → Decision → Alternatives → Consequences. Never delete; ma
 - **Decision:** Backup → staging restore on new image → smoke tests → promote → rollback on failure.
 
 ### ADR-010: Two IDE packages share docs
-- **Status:** accepted
+- **Status:** superseded by ADR-011
 - **Decision:** Kilo: `AGENTS.fork.md` + `kilo.jsonc` + `.kilo/`. Factory: `.factory/AGENTS.md` + `.factory/skills/`. Same `docs/`, same nested AGENTS.md in our folders.
+
+### ADR-011: Build with Claude Code (cloud sessions) instead of Factory/Kilo
+- **Status:** accepted (20 Oct 2026)
+- **Context:** Owner moved the build from Factory IDE to Claude Code cloud sessions. Upstream already ships `.claude/` (rules, `settings.json`) and `.claude/skills` as a symlink to `.agents/skills`.
+- **Decision:** Opskit rules in `.claude/CLAUDE.md` (new file, upstream has none); our skills in `.agents/skills/opskit-*` (prefixed, new folders only); nested `CLAUDE.md` in `opskit/`, `opskit/agent/`, `opskit/flows/`, `packages/pieces/custom/`; SessionStart hook `.claude/hooks/session-start.sh` registered in upstream `.claude/settings.json` (ledger #1). `.factory/` removed.
+- **Consequences:** One upstream file edited (settings.json); re-apply on upstream sync.

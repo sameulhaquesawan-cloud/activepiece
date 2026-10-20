@@ -7,7 +7,7 @@
 
 ## 0. Instructions for the AI coding agent (READ FIRST)
 
-1. **This repo is a fork of `activepieces/activepieces`.** Upstream's own `AGENTS.md`/`CLAUDE.md` govern upstream code. Our product rules are in this SPEC, the IDE entry file (`AGENTS.fork.md` for Kilo, `.factory/AGENTS.md` for Factory) and the rules they load.
+1. **This repo is a fork of `activepieces/activepieces`.** Upstream's own `AGENTS.md`/`CLAUDE.md` govern upstream code. Our product rules are in this SPEC, and `.claude/CLAUDE.md` (Claude Code), which holds the always-on rules.
 2. **Phase 0 installs and explores Activepieces as it is:** fork, set it up locally in WSL2 the free way, build the starter flows by hand, fill `docs/EXPLORATION_REPORT.md`. No ops-kit code and no upstream changes in Phase 0. Then continue to Phase 1 — pause and ask the owner **only** if something blocks the plan.
 3. **Build phase by phase** using Section 17; each phase must pass its acceptance criteria before the next starts.
 4. **Community Edition only.** Never set `AP_EDITION=ee`, never import, copy, or modify anything in `packages/ee/` (commercial license), never add a license key.
@@ -66,7 +66,7 @@ Single multi-tenant install (needs paid Projects), UI white-label (paid), Kubern
 
 ## 3. Architecture rules (non-negotiable)
 
-1. **Fork layout.** Our paths: `opskit/` (bin, lib, templates, flows, clients [git-ignored], tests), `packages/pieces/custom/` (custom pieces), `.github/workflows/opskit-*.yml`, `docs/`, IDE config (`AGENTS.fork.md`, `kilo.jsonc`, `.kilo/`, `.kilocodeignore` or `.factory/`), `README-START-HERE.md`. Everything else is upstream.
+1. **Fork layout.** Our paths: `opskit/` (bin, lib, templates, flows, clients [git-ignored], tests), `packages/pieces/custom/` (custom pieces), `.github/workflows/opskit-*.yml`, `docs/`, Claude Code config (`.claude/CLAUDE.md`, `.claude/hooks/`, `.agents/skills/opskit-*`, nested `CLAUDE.md` files in our folders), `README-START-HERE.md`. Everything else is upstream.
 2. **Upstream untouched by default.** Changes to upstream files need owner approval + ledger row + test. Upstream GitHub Actions are disabled in the fork (Settings → Actions) so they don't run or fail on our pushes; our workflows are separate files.
 3. **Pinned releases, manual sync.** `main` = upstream release tag + our commits; `upstream` remote is fetch-only; updates follow `docs/UPSTREAM_SYNC.md`. No automated merges.
 4. **Community Edition.** Every rendered `.env` sets `AP_EDITION=ce` explicitly *(verify value)*; code-step sandboxing uses the CE-supported mode chosen in Phase 0 *(verify: `AP_EXECUTION_MODE`)*.

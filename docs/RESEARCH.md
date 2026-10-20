@@ -32,9 +32,3 @@
   Sources: https://vixi.agency/blog/n8n-commercial-license-agencies · https://docs.n8n.io/privacy-and-security/sustainable-use-license
 - Upwork n8n specialists bill ~$40–100/hr in 2026.
   Source: https://ciphernutz.com/blog/hire-n8n-expert-cost-pricing-guide
-
-## 5. Factory Droid (for the Factory package)
-- AGENTS.md is always-on; Droid searches from cwd to git root and also reads context dirs `.factory/`, `.agents/`, `.agent/`; nested files refine for subtrees; ~80k char initial budget.
-  Source: https://docs.factory.ai/harness/agents-md.md
-- Skills in `.factory/skills/<name>/SKILL.md` work as `/slash` commands and are auto-invoked; `.factory/commands/*.md` still work; custom droids in `.factory/droids/`.
-  Sources: https://docs.factory.ai/harness/skills.md · https://docs.factory.ai/harness/custom-slash-commands.md · https://docs.factory.ai/harness/subagents

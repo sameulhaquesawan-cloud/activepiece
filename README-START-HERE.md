@@ -12,8 +12,8 @@ All commands run in **WSL2 Ubuntu** (not PowerShell). Open the repo in VS Code v
 6. Check none of these exist yet: `.factory`, `opskit`, `explore`, `packages/pieces/custom`, and in `docs/`: `SPEC.md`, `DECISIONS.md`, `TECH_ARCHITECTURE.md`, `USER_FLOWS.md`, `ENVIRONMENT.md`, `RESEARCH.md`, `PROGRESS.md`, `ASSUMPTIONS.md`, `UPSTREAM_CHANGES.md`, `UPSTREAM_SYNC.md`, `EXPLORATION_REPORT.md`, `docs/tasks`. If any exists, stop and tell Droid.
 7. Unzip this package into the repo root (don't replace existing files).
 8. `git add -A && git commit -m "docs(opskit): add specs and droid rules"`
-9. In Droid: `/explore` (a project skill) → Phase 0: pin to the latest release, install Activepieces CE locally the official way, explore it as it is, build the starter flows by hand, fill `docs/EXPLORATION_REPORT.md`.
-10. Droid continues with `/start-phase` for Phase 1 (the 8 agreed improvements follow in Phases 1–9). It asks you only if something is blocked or unclear.
-11. Repeat `/next-task`; end of phase: `/verify-phase` then `/security-review`. New session: `/resume`.
+9. In Droid: `/opskit-explore` (a project skill) → Phase 0: pin to the latest release, install Activepieces CE locally the official way, explore it as it is, build the starter flows by hand, fill `docs/EXPLORATION_REPORT.md`.
+10. Droid continues with `/opskit-start-phase` for Phase 1 (the 8 agreed improvements follow in Phases 1–9). It asks you only if something is blocked or unclear.
+11. Repeat `/opskit-next-task`; end of phase: `/opskit-verify-phase` then `/opskit-security-review`. New session: `/opskit-resume`.
 
 Community Edition only — never set `AP_EDITION=ee` or use anything in `packages/ee/`.

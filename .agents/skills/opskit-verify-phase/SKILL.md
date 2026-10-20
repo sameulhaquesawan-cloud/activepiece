@@ -1,5 +1,5 @@
 ---
-name: verify-phase
+name: opskit-verify-phase
 description: Check the current phase against spec acceptance criteria
 ---
 

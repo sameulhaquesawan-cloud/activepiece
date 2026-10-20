@@ -1,5 +1,5 @@
 ---
-name: fix-bug
+name: opskit-fix-bug
 description: Diagnose and fix a bug methodically
 ---
 

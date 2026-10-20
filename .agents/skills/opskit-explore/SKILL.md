@@ -1,5 +1,5 @@
 ---
-name: explore
+name: opskit-explore
 description: Phase 0 — clone/set up the upstream project, explore it as it is, and write the exploration report
 ---
 
@@ -11,4 +11,4 @@ description: Phase 0 — clone/set up the upstream project, explore it as it is,
 4. Try the features listed in Phase 0 with safe sample data (owner's own, public-domain, or generated). Record results, timings and output quality.
 5. Do NOT change the app and do NOT write product code in this phase.
 6. Fill every section of `docs/EXPLORATION_REPORT.md`, update `docs/PROGRESS.md`, commit.
-7. If anything contradicts the SPEC or blocks later phases (a feature doesn't work, an unavoidable cost, a missing capability), write it in PROGRESS "Known issues" and ask the owner before continuing. Otherwise continue with `/start-phase` for Phase 1.
+7. If anything contradicts the SPEC or blocks later phases (a feature doesn't work, an unavoidable cost, a missing capability), write it in PROGRESS "Known issues" and ask the owner before continuing. Otherwise continue with `/opskit-start-phase` for Phase 1.

@@ -1,5 +1,5 @@
 ---
-name: start-phase
+name: opskit-start-phase
 description: Break the next spec phase into small tasks and create its task file
 ---
 

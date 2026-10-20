@@ -1,5 +1,5 @@
 ---
-name: next-task
+name: opskit-next-task
 description: Implement the next unchecked task in the current phase
 ---
 

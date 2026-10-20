@@ -1,8 +1,8 @@
-# .factory/AGENTS.md — Automation Ops Kit (fork of activepieces/activepieces)
+# .claude/CLAUDE.md — Automation Ops Kit (fork of activepieces/activepieces)
 
 This repo is the owner's fork of Activepieces (open-source Zapier alternative, MIT Community Edition) plus **opskit**: tooling to deploy, back up, monitor, upgrade, document and report on one Activepieces stack per client, a flow template library, and custom pieces built into the owner's own Docker image.
 
-**Two instruction sets apply.** Upstream's `AGENTS.md`/`CLAUDE.md` govern upstream code. This file (including the rules below) and `docs/SPEC.md` govern opskit. On conflict: upstream conventions for how to edit upstream files; SPEC for what opskit does.
+**Two instruction sets apply.** Upstream's root `AGENTS.md`/`CLAUDE.md` govern upstream code. This file (including the rules below) and `docs/SPEC.md` govern opskit. On conflict: upstream conventions for how to edit upstream files; SPEC for what opskit does.
 
 ## Document map
 | File | Use it for | Authority |
@@ -19,28 +19,28 @@ This repo is the owner's fork of Activepieces (open-source Zapier alternative, M
 
 **Conflict order:** SPEC > DECISIONS > TECH_ARCHITECTURE > other docs.
 
-## Session start
+## Session start (or run `/opskit-resume`)
 1. Read `docs/PROGRESS.md` and the current `docs/tasks/phase-N.md`.
 2. Read only the referenced SPEC/doc sections.
 3. State: phase, task, files to touch (flag any upstream file).
 
 ## Golden rules
-- **Phase 0 = install & explore Activepieces as it is** (`/explore`): no opskit code, no upstream changes. Then continue; ask the owner only when blocked or unclear.
+- **Phase 0 = install & explore Activepieces as it is** (`/opskit-explore`): no opskit code, no upstream changes. Then continue; ask the owner only when blocked or unclear.
 - ONE task at a time; never jump ahead. SPEC silent → simplest option consistent with SPEC 3, log in ASSUMPTIONS.
 - Never invent Activepieces env vars, tables, APIs or piece CLI commands: check the pinned source/docs/running instance first; *(verify)* items must be verified and recorded.
 - **Community Edition only**: never `AP_EDITION=ee`, never touch `packages/ee/`.
 - **Client safety**: no secrets in git; destructive actions need `--yes`, typed client id, and owner approval.
 - Never mark done unless `opskit/bin/check` passes (and `opskit/bin/opskit selftest` from Phase 2).
-- Never remove or weaken a test. Don't edit SPEC or anything in `.factory/` without approval.
+- Never remove or weaken a test. Don't edit SPEC or anything in `.claude/` without approval.
 - Stop and ask before: new dependencies, upstream file edits, anything touching a real client host.
 
 ## Stack
-Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. Opskit: Bash (shellcheck, bats), JSON schema, envsubst/yq/jq, Caddy, ufw, age, rclone, Uptime Kuma; GitHub Actions + GHCR. Laptop: Windows + WSL2 Ubuntu + Docker Desktop, 12 GB RAM — run all commands in WSL.
+Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. Opskit: Bash (shellcheck, bats), JSON schema, envsubst/yq/jq, Caddy, ufw, age, rclone, Uptime Kuma; GitHub Actions + GHCR. Run everything in Linux: the Claude Code cloud session (Docker daemon started by the SessionStart hook) or WSL2 Ubuntu on the owner's Windows laptop (12 GB RAM).
 
 ## Repo layout (ours)
 `opskit/bin` · `opskit/lib` · `opskit/schema` · `opskit/templates` · `opskit/agent` (host scripts) · `opskit/flows` · `opskit/hub` · `opskit/tests` · `opskit/clients` + `opskit/hosts` (git-ignored) · `packages/pieces/custom/` · `.github/workflows/opskit-*.yml` · `explore/` (Phase 0 scratch, git-ignored) · `docs/`
 
-## Commands (WSL)
+## Commands (Linux shell)
 `opskit/bin/check` · `opskit/bin/check --quick` · `opskit/bin/opskit doctor` · `opskit/bin/opskit selftest` · `docker compose -p <id> ps`
 
 ## End of every task
@@ -73,7 +73,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 
 ### Architecture rules (mirror of SPEC Section 3)
 
-- Our code lives only in `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, `docs/`, IDE config. Everything else is upstream (`04-upstream-fork.md`).
+- Our code lives only in `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, `docs/`, IDE config. Everything else is upstream.
 - One client = one stack: own compose project (`-p <client_id>`), `.env`, volumes `<id>_postgres`/`<id>_redis`, domain, backups. Never share data between stacks.
 - `client.yaml` (validated by `opskit/schema/client.schema.json`) drives rendering; never hand-edit compose/.env on servers — change config, re-render, redeploy.
 - Rendered stacks always: pinned image tag, `AP_EDITION=ce`, worker `AP_FRONTEND_URL=http://app`, worker replicas from config (default 1), memory limits, healthchecks, only Caddy publishing ports.
@@ -136,7 +136,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 
 #### Definition of Done
 - [ ] `opskit/bin/check` passes (shellcheck + bats; `--quick` skips docker integration)
-- [ ] From Phase 2: `opskit/bin/opskit selftest` passes (local WSL stack; no real clients)
+- [ ] From Phase 2: `opskit/bin/opskit selftest` passes (local Docker stack; no real clients)
 - [ ] New logic has tests; bugs get a failing test first
 - [ ] PROGRESS.md updated with manual verification steps
 
@@ -151,12 +151,12 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 - Custom piece actions (upstream test runner)
 
 #### Tools
-shellcheck, bats-core, docker compose in WSL for integration tests, mock ops-hub (small HTTP listener), fixture Postgres data. Never test against real client hosts.
+shellcheck, bats-core, docker compose (cloud session or WSL) for integration tests, mock ops-hub (small HTTP listener), fixture Postgres data. Never test against real client hosts.
 
 ### Git rules
 
 - Conventional commits (upstream uses commitlint): `feat(opskit): …`, `fix(opskit): …`, `feat(pieces): …`, `test: …`, `docs: …`, `chore: …`.
-- Commit after each completed task; never a broken state. Branches: `phase-N-name`; upstream syncs on `sync/<tag>`.
+- Commit after each completed task; never a broken state. Work on the branch the session names (cloud: `claude/...`); the owner merges finished phases to `main` by PR. Upstream syncs on `sync/<tag>`.
 - Never commit `.env`, keys, `opskit/clients/`, `opskit/hosts/`, dumps, rclone configs.
 - Never push to `upstream`; our pushes go to `origin` only.
 - Commit before risky changes so they can be reverted.

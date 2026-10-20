@@ -1,11 +1,11 @@
 ---
-name: security-review
+name: opskit-security-review
 description: Review changed code for security and permission problems
 ---
 
 # Security review
 
-Review all files changed in the current phase (`git diff main...HEAD`). Check against the Security, Ops script and Reliability rules in `.factory/AGENTS.md`:
+Review all files changed in the current phase (`git diff main...HEAD`). Check against the Security, Ops script and Reliability rules in `.claude/CLAUDE.md`:
 
 1. No secrets, `.env`, keys, dumps, `opskit/clients/` or `opskit/hosts/` content committed or printed.
 2. Secret generation aborts on empty values; `.env` files written with mode 600.

@@ -8,7 +8,7 @@
 | Windows 10/11 + WSL2 Ubuntu 24.04 | `wsl --install -d Ubuntu-24.04` |
 | Docker Desktop (WSL2 backend, WSL integration on) | Compose v2 (`docker compose version`) |
 | VS Code + Remote-WSL | Open the repo from WSL so the IDE agent runs Bash |
-| Kilo Code **or** Factory Droid CLI | Factory: install/run `droid` inside WSL |
+| Claude Code (cloud session at claude.ai/code, or CLI in WSL) | Cloud sessions get tools + Docker from `.claude/hooks/session-start.sh` |
 | git, openssl, jq, yq, curl, gettext (envsubst), shellcheck, bats, age, rclone, ssh | `opskit doctor` checks all |
 | Node + bun per upstream `.nvmrc`/docs | Only for custom pieces and upstream dev (Phase 0/8) |
 | ngrok (free) | Local webhook testing only |

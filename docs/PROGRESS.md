@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 0 — Fork, set up & explore Activepieces
-- **Current task:** none (run `/start-phase`)
+- **Current task:** none (run `/opskit-start-phase`)
 - **Last updated:** YYYY-MM-DD
 
 ## Phases
@@ -26,4 +26,4 @@
 <!-- Bugs or gaps found outside current task scope. -->
 
 ## Phase verification reports
-<!-- Output of /verify-phase goes here. -->
+<!-- Output of /opskit-verify-phase goes here. -->
