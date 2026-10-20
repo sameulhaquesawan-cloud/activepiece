@@ -6,7 +6,7 @@
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner:** open a GitHub Codespace with the `opskit` configuration on this branch (steps: `docs/HANDOFF.md` Option A). Decided 20 Oct 2026: Codespaces now, laptop (Option B) when the free quota runs out. Reason: containers in the Claude cloud session have no internet (relay denied twice by the session safety check).
+1. ~~Owner opens Codespace~~ done 20 Oct 2026 (`verbose-trout`, port 8080 public; 771 pieces load). Decided 20 Oct 2026: Codespaces now, laptop (Option B) when the free quota runs out. Reason: containers in the Claude cloud session have no internet (relay denied twice by the session safety check).
 2. In the Codespace (any AI in its terminal): `opskit/bin/explore-stack up` runs automatically; confirm pieces load, build 1–2 starter flows (webhook + schedule; branches, loop, delay, code, HTTP; AI step with Gemini free key, practice data), run logs/retries/failure display, flow import/export, templates, 20 test runs + `docker stats`, stored-connection decrypt after restore, hello-world piece in dev mode.
 3. Finish `docs/EXPLORATION_REPORT.md`, mark Phase 0 done, run `/opskit-start-phase` (or follow `.agents/skills/opskit-start-phase/SKILL.md`) for Phase 1.
 
@@ -35,6 +35,7 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- Codespace `verbose-trout` (4-core) runs the explore stack; an older broken codespace `symmetrical-fishstick` should be deleted by the owner. devcontainer memory requirement lowered 8gb→4gb so 2-core machines are offered (8gb excluded them).
 - ~~BLOCKER (cloud session network)~~ resolved 20 Oct 2026: owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com`.
 - **BLOCKER (containers have no internet):** in the cloud session, Docker containers can't resolve or reach the internet (only the host goes through the agent proxy), so the app still can't sync pieces. Giving containers proxy access was denied by the session safety check; needs owner permission.
 - **BLOCKER (session permissions):** auto-mode safety classifier denied `docker` commands and a container→proxy relay. Owner decides whether to allow Docker commands.
