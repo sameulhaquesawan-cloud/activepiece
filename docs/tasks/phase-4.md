@@ -4,6 +4,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 **Accept (SPEC 17):** a deliberately failing demo flow produces exactly one Telegram alert within 10 minutes with flow name and run link; stopping a client stack triggers an uptime alert; a missed backup heartbeat triggers the watchdog after 26 h (time-shifted test); Slack and email adapters pass payload tests; alerts still arrive when no ops-hub exists.
 
 ## Open questions for the owner
+**Answered 20 Oct 2026: owner accepted all recommendations** — Q1 separate small VPS (domain later; local practice host until then), Q2 (a) automatic — 4.1 found it needs **no** new tool: the helper runs inside the Uptime Kuma container (ASSUMPTIONS #11), Q3 email via `curl`, Q4 quiet hours as proposed.
 - **Q1 — Where does Uptime Kuma run?** (SPEC App. B #1) Recommended: one small separate VPS (~€4/month) at `status.<yourbrand>.com`, so monitoring survives a client server going down. Needed only for the first real client (Phase 9); until then everything is tested on a local practice host. Tell me your brand domain when you have it.
 - **Q2 — Creating monitors automatically.** Uptime Kuma 1.x has no REST API for monitors (only its web socket, *verify in 4.1*). Options: (a) **automatic** with a small helper that talks to that socket — needs one new pinned dev tool on your machine (e.g. `socket.io-client` or Python `uptime-kuma-api`); (b) **semi-manual**: `opskit monitor plan <id>` prints exactly what to click, you paste the push URL into `client.yaml`. Recommended: (a) — the uptime acceptance test needs monitors created by code anyway. I will ask before adding the dependency.
 - **Q3 — Email sending.** SPEC says msmtp on hosts. Recommended instead: `curl` (already installed on every host) speaks SMTP, so no new host package. You will need an SMTP account later (e.g. Brevo free, 300 mails/day, or a Gmail app password). OK?
@@ -16,7 +17,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 
 ## Tasks
 
-### [ ] 4.1 — Verify monitoring facts (no code)
+### [x] 4.1 — Verify monitoring facts (no code)
 - **Goal:** pin and record: Uptime Kuma image + tag (Docker Hub was rate-limited at planning time — retry / mirror), its monitor API (1.x socket vs 2.x), push-monitor settings for a 26 h window, notification types (Telegram, webhook); the run link format in 0.92.3 (planning read: `/projects/<projectId>/runs/<runId>`); `flow_run.failedStep` shape and where the error message lives; `pg_hba` of `pgvector/pgvector:0.8.0-pg14`; whether a selftest stack can run a webhook + code flow offline (piece metadata was missing in 3.8).
 - **Spec refs:** 10.1–10.3, 0 (never invent APIs)
 - **Files likely touched:** `docs/ASSUMPTIONS.md`, `docs/EXPLORATION_REPORT.md` (addendum)

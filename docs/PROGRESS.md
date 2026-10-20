@@ -2,13 +2,12 @@
 
 ## Current status
 - **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.1 after owner review of `docs/tasks/phase-4.md` (Q1–Q4)
+- **Current task:** 4.2 (see `docs/tasks/phase-4.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner:** review `docs/tasks/phase-4.md` and answer Q1–Q4 (or say "ok" to the recommendations).
-2. Agent: then 4.1 (verify Uptime Kuma image/API, run link, `failedStep`, `pg_hba`) and continue top to bottom.
-3. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage).
+1. Agent: 4.2 alert core — channel adapters (Telegram, Slack, email via curl SMTP, webhook) + templates in `opskit/templates/alerts/`, then 4.3 onwards in order.
+2. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage); later a monitoring-host domain (Phase 4 Q1).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -17,7 +16,7 @@
 | 1 | Opskit foundation (+ openai-compatible piece) | Done | Owner tests passed 20 Oct 2026; opskit-ci green (run 4) |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
-| 4 | Monitoring & alerts | Planned — task file awaiting owner review | — |
+| 4 | Monitoring & alerts | In progress (owner accepted Q1–Q4 recommendations 20 Oct 2026) | — |
 | 4b | Go to market (owner-led) | Not started | — |
 | 5 | Flow template library | Not started | — |
 | 6 | Safe upgrades | Not started | — |
@@ -27,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 4.1 done.** Verified monitoring facts (ASSUMPTIONS #10–14): Uptime Kuma 2.5.5 via `mirror.gcr.io` (Docker Hub 429), `UPTIME_KUMA_DB_TYPE=sqlite`; monitors/notifications created via its socket API from inside its own container (no new dependency, live probe OK incl. 26 h push monitor and push URL); run link `/projects/<projectId>/runs/<runId>`; `failedStep` shape; only PRODUCTION runs alert; passwordless read-only role works via local-socket trust; pieces offline in the cloud session. Owner accepted Q1–Q4 recommendations. Verify: read ASSUMPTIONS #10–14.
 - **2026-10-20 — Phase 4 planned.** Owner said "go Phase 4"; opskit-ci run 13 green. `docs/tasks/phase-4.md`: 12 tasks, questions Q1 (monitoring host), Q2 (automatic monitor creation needs a dev tool), Q3 (email via curl instead of msmtp), Q4 (quiet hours). Planning facts: explore stack `pg_hba` = `local all all trust`, TCP needs scram; web route `/runs/:runId` with project prefix; Docker Hub returned 429 for `louislam/uptime-kuma` (retry in 4.1).
 - **2026-10-20 — 3.9 done; Phase 3 complete.** `opskit restore-test <id>|--all` (`lib/commands/restore-test.sh`): latest backup → throwaway practice host on this machine (temp registry overlay; `lib/practice.sh` now shared with selftest) → restore with all checks → teardown → one JSON line in `clients/<id>/restore-tests.jsonl` (pass/fail, backup, counts, seconds, reason ≤ 300 chars). `opskit restore --host <host>` restores onto another host (backup from the old host, else off-server; owner rclone config pushed to the new host) incl. disaster move of the same id (`--overwrite --yes`). Restore copies keep data 1 day after offboard. Docs: `docs/runbooks/backup-restore.md` (owner age-key guide, off-server, alerts, disaster), ADR-015, ENVIRONMENT (`OPSKIT_OWNER_AGE_KEY`), deploy runbook updated. Tests: 14 restore + 4 restore-test bats; real run: restore-test passed in 37 s (3 flows, 1 connection decrypts), wrong key recorded as fail, no leftovers. Verify: `bats opskit/tests/restore.bats opskit/tests/restore_test.bats`; `opskit selftest --keep` then `OPSKIT_REGISTRY=<dir> OPSKIT_OWNER_AGE_KEY=<dir>/owner.key opskit/bin/opskit restore-test <id>`.
 - **2026-10-20 — 3.8 done.** `opskit selftest` is now the round-trip acceptance test: deploy → seed (sign-up + 3 flows via the API, 1 stored connection, ASSUMPTIONS #9) → backup to a local rclone remote → `opskit restore --target <id>-rt` → the copy signs in with the same user, lists the 3 flows and the connection (API) and the connection decrypts → teardown of both stacks. New `lib/verify.sh` (`stack_psql`, `stack_data_counts`, `stack_connections_decrypt`, read-only) used by restore: it now fails if any stored connection does not decrypt. `lib/roundtrip.sh` = seed/verify fixtures. Full selftest 117 s; full `opskit/bin/check` (incl. docker) passes. Verify: `opskit/bin/opskit selftest`.
