@@ -22,6 +22,7 @@ EOF
 teardown() {
   if [ -n "${EDGE:-}" ]; then
     docker rm -f "$EDGE" >/dev/null 2>&1 || true
+    docker run --rm -v "${WORK}:/work" --entrypoint sh caddy:2.10.0 -c 'rm -rf /work/root/caddy' >/dev/null 2>&1 || true
   fi
   rm -rf "$REG" "$WORK"
 }

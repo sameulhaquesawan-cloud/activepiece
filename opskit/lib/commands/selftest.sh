@@ -21,7 +21,16 @@ selftest_cleanup() {
       -f "${SELFTEST_ROOT}/clients/${SELFTEST_ID}/compose.yml" down -v --remove-orphans >/dev/null 2>&1 || true
   fi
   [ -z "${SELFTEST_EDGE:-}" ] || docker rm -f "$SELFTEST_EDGE" >/dev/null 2>&1 || true
-  [ -z "${SELFTEST_DIR:-}" ] || rm -rf "$SELFTEST_DIR"
+  [ -z "${SELFTEST_DIR:-}" ] || remove_tree "$SELFTEST_DIR"
+}
+
+remove_tree() {
+  local dir="$1"
+  if [ -d "${dir}/host-root/caddy" ]; then
+    docker run --rm -v "${dir}/host-root/caddy:/caddy" --entrypoint sh caddy:2.10.0 \
+      -c 'rm -rf /caddy/data /caddy/config' >/dev/null 2>&1 || true
+  fi
+  rm -rf "$dir" 2>/dev/null || log_warn "selftest: could not fully remove ${dir}"
 }
 
 port_free() {
