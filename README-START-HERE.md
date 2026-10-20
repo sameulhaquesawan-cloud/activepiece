@@ -21,4 +21,4 @@ Read **`docs/HANDOFF.md`** first: a copy-paste prompt, reading order, machine se
 | `/opskit-resume` | Rebuild context in a new session |
 
 ## Rules in one breath
-Source of truth: `docs/SPEC.md`. Agent rules: `.claude/CLAUDE.md`. Community Edition only — never set `AP_EDITION=ee` or use anything in `packages/ee/` or `packages/server/api/src/app/ee/`. No secrets in git. Upstream remote is fetch-only; upstream GitHub Actions stay disabled in the repo settings.
+Source of truth: `docs/SPEC.md`. Agent rules: `.claude/CLAUDE.md`. Community Edition only — never set `AP_EDITION=ee` or use anything in `packages/ee/` or `packages/server/api/src/app/ee/`. No secrets in git. Upstream remote is fetch-only; upstream GitHub workflow files are deleted from the fork (only `opskit-*` workflows run).

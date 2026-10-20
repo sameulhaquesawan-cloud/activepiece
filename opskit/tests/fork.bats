@@ -70,3 +70,17 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"[warn] fork: pinned tag"* ]]
 }
+
+@test "a glob ledger row covers deleted upstream files it matches, nothing else" {
+  mkdir -p "${REPO}/.github/workflows"
+  echo w > "${REPO}/.github/workflows/ci.yml"
+  git -C "$REPO" add .github && git -C "$REPO" commit -qm wf && git -C "$REPO" tag -f 1.2.3 >/dev/null
+  rm "${REPO}/.github/workflows/ci.yml"
+  echo '| 4 | 2026-10-20 | `.github/workflows/*` (except ours) | removed |' >> "${REPO}/docs/UPSTREAM_CHANGES.md"
+  run fork_check "$REPO"
+  [ "$status" -eq 0 ]
+  echo patched >> "${REPO}/packages/server/app.ts"
+  run fork_check "$REPO"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"packages/server/app.ts"* ]]
+}

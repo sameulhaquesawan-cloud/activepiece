@@ -10,7 +10,7 @@ Runs on any Linux machine with the repo (Codespace, WSL, cloud AI session). Clie
    - #2 `.claude/settings.json`: `ponytail@ponytail` and `craftspace@craftspace` = `false`, no `mcpServers`
    - #3 `.devcontainer/opskit/` is ours — check upstream didn't add a folder with that name
    Never touch `packages/ee/` or `packages/server/api/src/app/ee/`.
-5. New upstream GitHub workflows: list `.github/workflows/` changes (`git diff --name-status <old tag> <tag> -- .github/workflows`) and keep them disabled in the fork (Actions tab → workflow → ⋯ → Disable workflow).
+5. Upstream GitHub workflows (ledger #4): delete them again — `find .github/workflows -type f ! -name 'opskit-*' -print0 | xargs -0 git rm -q` — so only `opskit-*` workflows exist.
 6. Update the pin table in `docs/UPSTREAM_CHANGES.md` (tag, SHA, date) and the image tag default in `opskit/schema/client.schema.json` fixtures if needed.
 7. Re-verify the Phase 0 facts the kit depends on and record changes in `docs/ASSUMPTIONS.md`: `flow_run` columns/statuses (`FAILED_STATES`), health endpoint, worker registration, the 4 secrets in `tools/deploy.sh`, IPv6 listen address, piece sync source, `POST /api/v1/pieces` (archive install for `openai-compatible`).
 8. `opskit/bin/check` (includes the fork check against the new tag) and, from Phase 2, `opskit/bin/opskit selftest`.

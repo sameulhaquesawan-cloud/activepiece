@@ -18,6 +18,16 @@ fork_ledger_paths() {
     | awk -F'|' 'NR > 3 && NF > 4 { print $4 }' | grep -oE '`[^`]+`' | tr -d '`' | sort -u
 }
 
+fork_ledger_allows() {
+  local path="$1" ledger="$2" entry
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
+    # shellcheck disable=SC2053
+    [[ "$path" == $entry ]] && return 0
+  done <<< "$ledger"
+  return 1
+}
+
 fork_is_our_new_path() {
   local path="$1" pattern
   for pattern in "${OPSKIT_NEW_FILE_PATTERNS[@]}"; do
@@ -39,7 +49,7 @@ fork_check() {
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     if git -C "$root" cat-file -e "${tag}:${path}" 2>/dev/null; then
-      if ! grep -qxF "$path" <<< "$ledger"; then
+      if ! fork_ledger_allows "$path" "$ledger"; then
         log_fail "fork: upstream file changed without a ledger row: ${path}"
         violations=$((violations + 1))
       fi
