@@ -44,6 +44,9 @@ stack_render_backup() {
       if grep -qx telegram <<< "$channels"; then
         printf 'TELEGRAM_CHAT_ID=%s\n' "$(yaml_get "$cfile" .alerts.telegram.chat_id)"
       fi
+      if grep -qx email <<< "$channels"; then
+        printf 'EMAIL_TO=%s\n' "$(yq -r '.alerts.email.to // [] | join(",")' "$cfile")"
+      fi
       if grep -qx slack <<< "$channels"; then
         slack_secret="$(yaml_get "$cfile" .alerts.slack.webhook_secret)"
         printf 'SLACK_WEBHOOK_URL=%s\n' "$(channel_secret "$id" "$slack_secret")"

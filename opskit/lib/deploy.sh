@@ -111,7 +111,7 @@ host_installs_cron() {
 
 # deploy_install_backup <host> <id>: agent scripts, owner key/channels, client backup config, cron
 deploy_install_backup() {
-  local host="$1" id="$2" root out owner script
+  local host="$1" id="$2" root out owner script template
   root="$(host_root "$host")"
   out="$(rendered_dir "$id")"
   owner="$(registry_root)/owner"
@@ -123,6 +123,9 @@ deploy_install_backup() {
     host_put "$host" "${OPSKIT_ROOT}/agent/${script}" "${root}/agent/${script}" 755 || return 1
   done
   host_put "$host" "$(owner_age_pubkey)" "${root}/agent/owner.age.pub" 644 || return 1
+  for template in "${OPSKIT_ROOT}"/templates/alerts/*.jq; do
+    host_put "$host" "$template" "${root}/agent/alerts/$(basename "$template")" 644 || return 1
+  done
   if [ -f "${owner}/alerts.conf" ]; then
     host_put "$host" "${owner}/alerts.conf" "${root}/agent/alerts.conf" 600 || return 1
   else

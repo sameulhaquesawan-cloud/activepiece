@@ -34,6 +34,7 @@ GitHub (fork, Actions, GHCR) · Telegram bot via @BotFather (demo alerts) · Gem
 | `OPSKIT_OWNER_AGE_KEY` | operator machine only (restore, restore-test) | path to the age **private** key; default `~/.config/opskit/owner.key` (mode 600); never on hosts, never in git |
 | `OPSKIT_OWNER_AGE_PUB` | operator machine (deploy) | override for the public key path (tests/selftest) |
 | owner channels / rclone | `opskit/owner/alerts.conf`, `opskit/owner/rclone.conf` (git-ignored, 600) | copied to each host's `agent/` by `opskit deploy` |
+| owner email (SMTP) | `opskit/owner/alerts.conf`: `SMTP_URL` (e.g. `smtp://smtp-relay.brevo.com:587`), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, optional `SMTP_TLS` (`starttls` default; `none` only for a local test relay), optional `OWNER_EMAIL` | SMTP provider (Brevo free / Gmail app password); sent with `curl`, no msmtp |
 
 ## 4. Rules
 - Never commit `.env`, private keys, `opskit/clients/`, dumps, IPs of client hosts.

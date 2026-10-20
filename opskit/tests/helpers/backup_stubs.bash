@@ -3,6 +3,7 @@ make_backup_host() {
   STUB="$(mktemp -d)"
   mkdir -p "${ROOT}/agent" "${ROOT}/clients/acme"
   cp "${OPSKIT_ROOT}/agent/backup.sh" "${OPSKIT_ROOT}/agent/alert.sh" "${ROOT}/agent/"
+  cp -r "${OPSKIT_ROOT}/templates/alerts" "${ROOT}/agent/alerts"
   echo "age1testpublickeyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" > "${ROOT}/agent/owner.age.pub"
   printf 'AP_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef\n' > "${ROOT}/clients/acme/.env"
   echo "name: acme" > "${ROOT}/clients/acme/compose.yml"

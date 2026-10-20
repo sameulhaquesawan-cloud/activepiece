@@ -25,7 +25,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Tests required:** none (research)
 - **Manual verification:** read the ASSUMPTIONS rows.
 
-### [ ] 4.2 — Alert core: channel adapters, severity, templates
+### [x] 4.2 — Alert core: channel adapters, severity, templates
 - **Goal:** split `agent/alert.sh` into adapters (Telegram, Slack, email via `curl` SMTP if Q3 OK, generic webhook) with message templates in `opskit/templates/alerts/` (text + JSON per channel); severity `info|warn|critical`; owner always gets Telegram; ≤ 300-char excerpts; no secrets.
 - **Spec refs:** 10.5, 10.6, 3.9
 - **Files likely touched:** `opskit/agent/alert.sh`, `opskit/templates/alerts/*`, `opskit/tests/alert_channels.bats`, `opskit/tests/helpers/mock_smtp.py`

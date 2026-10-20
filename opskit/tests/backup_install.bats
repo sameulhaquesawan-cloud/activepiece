@@ -69,6 +69,17 @@ teardown() {
   [ "$(stat -c %a "${HOSTROOT}/clients/demo/backup.conf")" = "600" ]
   cmp -s "${KEYDIR}/owner.age.pub" "${HOSTROOT}/agent/owner.age.pub"
   [ ! -e "$CRONTAB_DATA" ]
+  local template
+  for template in text telegram slack email webhook; do
+    cmp -s "${OPSKIT_ROOT}/templates/alerts/${template}.jq" "${HOSTROOT}/agent/alerts/${template}.jq"
+  done
+}
+
+@test "render writes the client's email recipients when email is a channel" {
+  yq -i '.alerts.channels = ["telegram","email"] | .alerts.telegram.chat_id = "-100123" | .alerts.email.to = ["ops@acme.example","boss@acme.example"]' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -eq 0 ]
+  grep -qx 'EMAIL_TO=ops@acme.example,boss@acme.example' "${REG}/clients/demo/rendered/alerts.conf"
 }
 
 @test "cron sync keeps foreign lines, adds each client once, and drops removed clients" {
