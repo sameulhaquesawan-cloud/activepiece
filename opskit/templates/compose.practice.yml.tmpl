@@ -1,0 +1,6 @@
+services:
+  app:
+    environment:
+      NODE_OPTIONS: --require /opt/opskit-ipv4-shim.js
+    volumes:
+      - ./ipv4-shim.js:/opt/opskit-ipv4-shim.js:ro

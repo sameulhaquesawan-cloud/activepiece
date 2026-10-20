@@ -1,0 +1,5 @@
+${CLIENT_DOMAIN} {
+	${CADDY_TLS}
+	encode gzip
+	reverse_proxy ${CLIENT_ID}-app:80
+}
