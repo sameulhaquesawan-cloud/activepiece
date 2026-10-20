@@ -14,7 +14,8 @@ compose.yml and writes status.json. Then (if configured in <root>/clients/<id>/b
 copies off-server with rclone, prunes old backups, sends a heartbeat or an alert.
 
 backup.conf keys: BACKUP_REMOTE (rclone remote:path), KEEP_LOCAL_DAYS (14), KEEP_REMOTE_DAYS (30),
-HEARTBEAT_URL (Uptime Kuma push URL). Alerts: alert.sh next to this script.
+HEARTBEAT_URL (Uptime Kuma push URL), HEARTBEAT_CACERT (practice hosts: Caddy's local root CA).
+Alerts: alert.sh next to this script.
 rclone credentials: <root>/agent/rclone.conf (600). Exit: 0 complete, 1 failed, 2 local only.
 EOF
 }
@@ -131,13 +132,16 @@ notify() {
 }
 
 heartbeat() {
-  local url
+  local url cacert
   url="$(conf_get HEARTBEAT_URL "")"
   if [ -z "$url" ]; then
     warn "no heartbeat configured (HEARTBEAT_URL; Uptime Kuma push monitor in Phase 4)"
     return 0
   fi
-  if curl -fsS -m 15 -G --data-urlencode "status=up" --data-urlencode "msg=backup ok $(basename "$BACKUP_DIR")" "$url" > /dev/null; then
+  local tls=()
+  cacert="$(conf_get HEARTBEAT_CACERT "")"
+  [ -z "$cacert" ] || tls=(--cacert "$cacert")
+  if curl -fsS -m 15 "${tls[@]}" -G --data-urlencode "status=up" --data-urlencode "msg=backup ok $(basename "$BACKUP_DIR")" "$url" > /dev/null; then
     ok "heartbeat sent"
   else
     fail "heartbeat failed"

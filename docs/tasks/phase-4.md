@@ -78,7 +78,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Files likely touched:** `opskit/lib/commands/monitor.sh`, `opskit/templates/monitor/*`, schema (`hosts/*.yaml` monitor section), tests
 - **Tests required:** rendering tests; docker-tagged: Uptime Kuma answers through Caddy.
 
-### [ ] 4.10 — Monitors per client (depends on Q2)
+### [x] 4.10 — Monitors per client (depends on Q2)
 - **Goal:** `opskit monitor sync <id>`: HTTP monitor on `/api/v1/health` (60 s) + backup push monitor (26 h) + owner Telegram notification; writes the push URL into `client.yaml` `backup.heartbeat_url` and redeploys the backup config. `opskit offboard` removes them.
 - **Spec refs:** 10.1, 10.2, 9
 - **Acceptance checks:** stopping a client stack → Uptime Kuma notification (mock webhook in tests); missed heartbeat → watchdog alert (time-shifted: short interval in the test, 26 h asserted in rendered settings).

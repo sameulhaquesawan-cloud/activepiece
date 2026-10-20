@@ -2,12 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.10 (see `docs/tasks/phase-4.md`)
+- **Current task:** 4.11 (see `docs/tasks/phase-4.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4.10 `opskit monitor sync <id>` — owner Telegram notification, HTTP monitor on `/api/v1/health` (60 s), backup push monitor (26 h) → `backup.heartbeat_url` in client.yaml + redeploy backup config; `monitor remove <id>` on offboard. Docker tests extend `opskit/tests/monitor.bats` (stack stop → notification to a mock webhook; push watchdog with a short interval).
-2. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage); later a monitoring-host domain (Phase 4 Q1).
+1. Agent: 4.11 end-to-end acceptance — a deliberately failing demo flow → detector → exactly one Telegram message (mock) within 10 min with flow name + run link; second run sends nothing; no ops-hub. Pieces are offline in the cloud session (ASSUMPTIONS #14): run the real flow where pieces load (CI/Codespace) and fall back to an honest skip message here.
+2. Agent: 4.12 runbook `docs/runbooks/monitoring.md` (Telegram bot + chat id, SMTP, Uptime Kuma first login, UptimeRobot), ADR-016, ENVIRONMENT, phase verification.
+3. Owner (any time, not blocking): Phase 3 runbook sections A (own age key) and B (off-server storage); a monitoring-host domain (Phase 4 Q1).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -26,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 4.10 done.** `opskit monitor sync <id>` / `monitor remove <id>` (`lib/monitor_sync.sh`, `templates/monitor/sync.js`): in the owner's Uptime Kuma (the one host with a `monitor` section, or `OPSKIT_MONITOR_HOST`) creates/updates "opskit owner" notification (owner Telegram, else owner webhook), "<id> uptime" (HTTP `/api/v1/health`, 60 s; practice clients via `http://<id>-app` on the edge network) and "<id> backup" (push, 26 h); edits keep history and the push token; saves `backup.heartbeat_url` and pushes the new `backup.conf` to the client host. Practice heartbeats trust Caddy's local root CA (`HEARTBEAT_CACERT`, rendered only for internal TLS; backup.sh `--cacert`). `client offboard` removes the monitors (best effort). Real runs: app stop → owner Telegram "[… uptime] [🔴 Down]" after 55 s; 20 s push window → "[… backup] [🔴 Down] No heartbeat in the time window". Tests: docker `monitor.bats` (6, ~2 min, mock Telegram reachable from containers via the edge gateway) + `monitor_render.bats` (12). Verify: `bats opskit/tests/monitor.bats`.
 - **2026-10-20 — 4.9 done.** `opskit monitor deploy <host>` (`lib/monitor.sh`, `lib/commands/monitor.sh`, `templates/monitor/{compose.yml.tmpl,site.caddy.tmpl,admin.js}`; host schema `monitor: {domain, image (official or mirror.gcr.io), tag 2.5.5, memory 512m}`): Uptime Kuma as compose project `opskit-monitor` on `opskit_edge` (alias `opskit-monitor`, no published port, SQLite, healthcheck), admin account via its socket API from inside the container (password generated once into `hosts/<host>.monitor/admin.env`, 600), Caddy site, HTTPS check. Fresh deploy 26 s; re-run idempotent. Tests: `monitor_render.bats` (7) + docker `monitor.bats` (2). ASSUMPTIONS #15. Verify: `bats opskit/tests/monitor.bats`.
 - **2026-10-20 — 4.8 done.** `deploy_install_agents` (was `deploy_install_backup`): monitoring agents (`alert`, `detect-failed-runs`, `health`, `digest`, `cron-sync`, alert templates, owner + client `alerts.conf`) are always installed; backup parts (backup.sh, owner key, rclone, backup.conf, backup cron line) only when the owner age key exists. Client `cron`: backup nightly, detector `*/5`, health `:17` hourly, digest `:02` hourly (sends at the client's digest hour). Tests: `backup_install.bats` (8, incl. no-key monitoring and exact cron lines); full check incl. selftest passes. Verify: `bats opskit/tests/backup_install.bats`.
 - **2026-10-20 — 4.7 done.** `agent/digest.sh <id>` (cron hourly; sends once a day when the client-local hour = `DIGEST_HOUR`, default 08; `--now` to force): last backup (age, off-server status; > 26 h or not `ok` flagged), PRODUCTION runs in 24 h with failing flows (read-only SQL), open health problems, alerts held in quiet hours (then cleared; kept if the digest is not delivered). Headline names what to check. `alert.sh --body` (≤ 1500 chars) added; `text.jq`/`webhook.jq` render it. Tests: `digest.bats` (8) + real-schema query test in `detect_failed_runs.bats`. Verify: `bats opskit/tests/digest.bats`.

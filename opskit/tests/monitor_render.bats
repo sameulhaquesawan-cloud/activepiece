@@ -14,6 +14,8 @@ setup() {
   source "${OPSKIT_ROOT}/lib/ssh.sh"
   source "${OPSKIT_ROOT}/lib/host.sh"
   source "${OPSKIT_ROOT}/lib/monitor.sh"
+  source "${OPSKIT_ROOT}/lib/stack.sh"
+  source "${OPSKIT_ROOT}/lib/monitor_sync.sh"
   OUT="${REG}/hosts/local-practice.monitor"
 }
 
@@ -80,4 +82,62 @@ teardown() {
   run "$OPSKIT" monitor deploy
   [ "$status" -eq 1 ]
   [[ "$output" == *"Usage: opskit monitor"* ]]
+}
+
+@test "the monitoring host is the single host with a monitor section" {
+  [ "$(monitor_host_for)" = "local-practice" ]
+  yq '.host_id = "second"' "${REG}/hosts/local-practice.yaml" > "${REG}/hosts/second.yaml"
+  run monitor_host_for
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"several monitoring hosts"* ]]
+  [ "$(OPSKIT_MONITOR_HOST=second monitor_host_for)" = "second" ]
+  rm "${REG}/hosts/second.yaml"
+  yq -i 'del(.monitor)' "${REG}/hosts/local-practice.yaml"
+  run monitor_host_for
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no monitoring host"* ]]
+}
+
+@test "clients are checked over public HTTPS; practice clients over the edge network" {
+  new_demo_client demo auto.acme.com
+  [ "$(monitor_client_url demo)" = "http://demo-app/api/v1/health" ]
+  yq -i '.edge.tls = "acme" | .edge.https_port = 443' "${REG}/hosts/local-practice.yaml"
+  [ "$(monitor_client_url demo)" = "https://auto.acme.com/api/v1/health" ]
+}
+
+@test "Uptime Kuma notifies the owner's Telegram, else the owner webhook, else refuses" {
+  mkdir -p "${REG}/owner"
+  printf 'WEBHOOK_URL=https://hooks.example.com/x\n' > "${REG}/owner/alerts.conf"
+  [ "$(monitor_owner_notification | jq -r .type)" = "webhook" ]
+  printf 'TELEGRAM_BOT_TOKEN=123:abc\nTELEGRAM_CHAT_ID=111\n' >> "${REG}/owner/alerts.conf"
+  local n
+  n="$(monitor_owner_notification)"
+  [ "$(jq -r .type <<< "$n")" = "telegram" ]
+  [ "$(jq -r .telegramChatID <<< "$n")" = "111" ]
+  [ "$(jq -r .telegramServerUrl <<< "$n")" = "https://api.telegram.org" ]
+  rm "${REG}/owner/alerts.conf"
+  run monitor_owner_notification
+  [ "$status" -eq 1 ]
+}
+
+@test "sync input asks for a 60 s uptime check and a 26 h backup window by default" {
+  new_demo_client demo auto.acme.com
+  mkdir -p "${REG}/owner" "${OUT}"
+  printf 'TELEGRAM_BOT_TOKEN=123:abc\nTELEGRAM_CHAT_ID=111\n' > "${REG}/owner/alerts.conf"
+  monitor_admin_secrets local-practice
+  local input
+  input="$(monitor_sync_input demo local-practice)"
+  [ "$(jq -r '.monitors[] | select(.type == "http") | "\(.name) \(.interval) \(.url)"' <<< "$input")" = "demo uptime 60 http://demo-app/api/v1/health" ]
+  [ "$(jq -r '.monitors[] | select(.type == "push") | "\(.name) \(.interval)"' <<< "$input")" = "demo backup 93600" ]
+  [ "$(jq -r .admin.username <<< "$input")" = "opskit" ]
+}
+
+@test "practice clients get Caddy's local CA for the backup heartbeat" {
+  new_demo_client demo
+  "$OPSKIT" render demo >/dev/null
+  grep -qx "HEARTBEAT_CACERT=$(yq -r '.opskit_root // "/opt/opskit"' "${REG}/hosts/local-practice.yaml")/caddy/data/caddy/pki/authorities/local/root.crt" \
+    "${REG}/clients/demo/rendered/backup.conf"
+  yq -i '.edge.tls = "acme"' "${REG}/hosts/local-practice.yaml"
+  "$OPSKIT" render demo >/dev/null
+  ! grep -q HEARTBEAT_CACERT "${REG}/clients/demo/rendered/backup.conf"
 }

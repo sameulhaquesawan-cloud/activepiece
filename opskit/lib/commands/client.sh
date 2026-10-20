@@ -23,6 +23,10 @@ source "${OPSKIT_ROOT}/lib/ssh.sh"
 source "${OPSKIT_ROOT}/lib/host.sh"
 # shellcheck source=../deploy.sh
 source "${OPSKIT_ROOT}/lib/deploy.sh"
+# shellcheck source=../monitor.sh
+source "${OPSKIT_ROOT}/lib/monitor.sh"
+# shellcheck source=../monitor_sync.sh
+source "${OPSKIT_ROOT}/lib/monitor_sync.sh"
 
 client_usage() {
   cat <<'EOF'
@@ -132,6 +136,12 @@ purge_allowed_from() {
   date -u -d "${since} + ${days} days" +%Y-%m-%d
 }
 
+client_stop_monitoring() {
+  local id="$1"
+  monitor_host_for >/dev/null 2>&1 || return 0
+  monitor_remove "$id" || log_warn "remove the monitors of ${id} by hand in Uptime Kuma (or re-run: opskit monitor remove ${id})"
+}
+
 client_offboard() {
   local id="${1:-}" purge="false" yes="false" host
   shift || true
@@ -159,11 +169,12 @@ client_offboard() {
     return 0
   fi
   [ "$(client_status "$id")" != "offboarded" ] || die "client ${id} is already offboarded"
-  log_warn "before offboarding: take a final backup and export the flows (automated in Phase 3)"
+  log_warn "before offboarding: take a final backup (opskit backup ${id}) and export the flows"
   confirm_destructive "$id" "$yes" "take ${id} offline (stop stack, remove HTTPS site)" || return 1
   stack_compose "$host" "$id" stop >/dev/null 2>&1 || die "could not stop ${id}"
   client_remove_site "$host" "$id"
   client_stop_backups "$host" "$id"
+  client_stop_monitoring "$id"
   yaml_set "$(client_file "$id")" ".status = \"offboarded\" | .offboarded_at = \"$(date -u +%Y-%m-%d)\""
   client_history_add "$id" offboarded
   log_ok "client ${id} offboarded; data kept until $(purge_allowed_from "$id"), then: opskit client offboard ${id} --purge --yes"

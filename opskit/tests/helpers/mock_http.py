@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -26,7 +27,7 @@ class Recorder(BaseHTTPRequestHandler):
         pass
 
 
-server = HTTPServer(("127.0.0.1", 0), Recorder)
+server = HTTPServer((os.environ.get("MOCK_BIND", "127.0.0.1"), 0), Recorder)
 with open(PORT_FILE, "w") as handle:
     handle.write(str(server.server_port))
 server.serve_forever()
