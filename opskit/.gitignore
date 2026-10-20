@@ -5,6 +5,8 @@
 .env
 *.age
 *.sql
+!/templates/**/*.sql
+!/templates/*.sql
 *.sql.gz
 logs/
 *.log

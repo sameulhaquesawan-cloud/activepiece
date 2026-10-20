@@ -31,3 +31,11 @@ load helpers/common
   run git check-ignore -q owner/rclone.conf
   [ "$status" -eq 0 ]
 }
+
+@test "no file under templates, agent, lib or bin is git-ignored (dump patterns must not hide code)" {
+  cd "$OPSKIT_ROOT"
+  run bash -c 'find templates agent lib bin schema -type f | git check-ignore --stdin'
+  [ -z "$output" ]
+  run git check-ignore -q backups/acme/db.sql
+  [ "$status" -eq 0 ]
+}
