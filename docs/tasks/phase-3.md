@@ -42,7 +42,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 - **Goal:** fetch backup (remote or host), decrypt `env.age` with the owner's private key on the operator machine, create a fresh stack (same secrets → stored connections decrypt), load the dump, start, smoke checks (health, worker, a flow listed).
 - **Acceptance:** refuses a running target without `--overwrite --yes` + typed id.
 
-### [ ] 3.8 — Round-trip acceptance test (docker)
+### [x] 3.8 — Round-trip acceptance test (docker)
 - **Goal:** selftest-style: demo client + 3 flows + a stored connection (via API) → backup → restore into a new stack → flows present, connection decrypts (connection test via API) → teardown.
 
 ### [ ] 3.9 — Monthly restore test job + docs

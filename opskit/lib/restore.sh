@@ -97,12 +97,13 @@ restore_database() {
 }
 
 restore_report() {
-  local host="$1" target="$2" container counts
-  container="$(stack_compose "$host" "$target" ps -q postgres | head -n 1)"
-  # shellcheck disable=SC2016
-  counts="$(host_run "$host" docker exec "$container" sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA -c "select (select count(*) from flow), (select count(*) from app_connection), (select count(*) from flow_run)"')"
-  IFS='|' read -r RESTORED_FLOWS RESTORED_CONNECTIONS RESTORED_RUNS <<< "$counts"
+  local host="$1" target="$2" counts decrypt
+  counts="$(stack_data_counts "$host" "$target")" || return 1
+  read -r RESTORED_FLOWS RESTORED_CONNECTIONS RESTORED_RUNS <<< "$counts"
   log_ok "restored data: ${RESTORED_FLOWS} flows, ${RESTORED_CONNECTIONS} connections, ${RESTORED_RUNS} runs"
+  decrypt="$(stack_connections_decrypt "$host" "$target")" \
+    || { log_fail "stored connections do not decrypt in ${target} (ok/failed: ${decrypt:-?}): wrong AP_ENCRYPTION_KEY"; return 1; }
+  log_ok "all ${decrypt%% *} stored connections decrypt with the restored key"
 }
 
 # restore_client <source id> <from> <target id> <domain> <overwrite> <yes>
@@ -138,7 +139,7 @@ restore_client() {
   else
     DEPLOY_SKIP_BACKUP=true deploy_client "$target" || return 1
   fi
-  restore_report "$host" "$target"
+  restore_report "$host" "$target" || return 1
   [ "$target" = "$source" ] && client_history_add "$target" restored "" "from ${name}"
   log_ok "restore of ${source}/${name} into ${target} complete"
 }

@@ -2,14 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 3 — Backups & restore
-- **Current task:** 3.8 (see `docs/tasks/phase-3.md`)
+- **Current task:** 3.9 (see `docs/tasks/phase-3.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 3.8 round-trip acceptance test (docker): selftest-style client + 3 flows + a stored connection via the API → backup → `opskit restore --target` → flows present, connection still decrypts.
-2. Agent: 3.9 `opskit restore-test <id>`, runbook `docs/runbooks/backup-restore.md` (incl. owner age-key guide), ADR-015; then Phase 3 verification and owner check-in.
-3. Owner (later, guided): create your own age key; choose the off-server target (Q1/Q2 in `docs/tasks/phase-3.md`).
-4. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest`.
+1. Agent: 3.9 `opskit restore-test <id>`, runbook `docs/runbooks/backup-restore.md` (incl. owner age-key guide), ADR-015; then Phase 3 verification and owner check-in.
+2. Owner (later, guided): create your own age key; choose the off-server target (Q1/Q2 in `docs/tasks/phase-3.md`).
+3. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest`.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -28,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.8 done.** `opskit selftest` is now the round-trip acceptance test: deploy → seed (sign-up + 3 flows via the API, 1 stored connection, ASSUMPTIONS #9) → backup to a local rclone remote → `opskit restore --target <id>-rt` → the copy signs in with the same user, lists the 3 flows and the connection (API) and the connection decrypts → teardown of both stacks. New `lib/verify.sh` (`stack_psql`, `stack_data_counts`, `stack_connections_decrypt`, read-only) used by restore: it now fails if any stored connection does not decrypt. `lib/roundtrip.sh` = seed/verify fixtures. Full selftest 117 s; full `opskit/bin/check` (incl. docker) passes. Verify: `opskit/bin/opskit selftest`.
 - **2026-10-20 — 3.7 done.** `opskit restore <id> [--from <name>|latest] [--target <new id>] [--domain d] [--overwrite --yes]` (`lib/restore.sh`, `lib/commands/restore.sh`; `host_get`/`scp_get`; `restored` history event; `DEPLOY_SKIP_BACKUP` so copies get no cron). Finds the backup on the host (else fetches it from the off-server remote), decrypts `env.age` on the operator machine with the owner key (`OPSKIT_OWNER_AGE_KEY` or `~/.config/opskit/owner.key`), validates the 4 secrets, creates the target with the *original* secrets, starts postgres+redis, `pg_restore --exit-on-error`, then the normal deploy checks (health, worker, HTTPS) and prints flow/connection/run counts. Same id always needs `--overwrite --yes` + typed id (also when stopped: volumes still hold data). Copy target defaults to `<id>-restore`, domain `<target>.localhost` only on internal-TLS hosts. 10 tests (`opskit/tests/restore.bats`); real run on a selftest stack: copy restore 33 s and overwrite restore both green. Verify: `bats opskit/tests/restore.bats`.
 - **2026-10-20 — 3.6 done.** `opskit backup <id>` (runs the host agent; 0 complete / 2 local only / 1 failed) and `opskit backups <id>` (host list from status.json + off-server dirs via the host's rclone). Verified on a selftest stack; 3 tests.
 - **2026-10-20 — 3.5 done.** `opskit deploy` installs the backup system: `agent/{backup,alert,cron-sync}.sh` (755), owner key `opskit/keys/owner.age.pub` (override `OPSKIT_OWNER_AGE_PUB`; missing → clear warning, no backups), `opskit/owner/{alerts,rclone}.conf` (git-ignored, 600), rendered `backup.conf`/`alerts.conf` (600, from client.yaml + `clients/<id>/channels.env` for the Slack URL) and `cron` per client; `cron-sync.sh` rebuilds the ssh user's crontab (keeps foreign lines, one tagged line per client); practice hosts skip cron unless `install_cron: true`. Offboard removes the client's schedule. Selftest now also runs a backup to an rclone local remote and decrypts `env.age` with a throwaway owner key. 5 new tests; full check incl. docker passes.

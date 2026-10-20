@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: restore a backup into a fresh stack (or over the client with --overwrite --yes)
 
-for lib in validate schema registry render secrets stack ssh host deploy confirm restore; do
+for lib in validate schema registry render secrets stack ssh host deploy confirm verify restore; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
