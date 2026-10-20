@@ -52,3 +52,28 @@ stack_connections_decrypt() {
   printf '%s\n' "$result"
   [[ "$result" =~ ^[0-9]+\ 0$ ]]
 }
+
+# ro_psql <host> <postgres container> <sql>: as opskit_ro with read-only switched off (permissions must hold)
+ro_psql() {
+  # shellcheck disable=SC2016
+  host_run "$1" docker exec "$2" sh -c 'psql -U opskit_ro -d "$POSTGRES_DB" -tA -c "set default_transaction_read_only = off" -c "$1" 2>&1' _ "$3" || true
+}
+
+# stack_readonly_check <host> <id>: opskit_ro reads runs, cannot write, create or log in over the network
+stack_readonly_check() {
+  local host="$1" id="$2" pg out problems=""
+  pg="$(stack_service_container "$host" "$id" postgres)"
+  [ -n "$pg" ] || { log_fail "postgres of ${id} is not running"; return 1; }
+  [[ "$(ro_psql "$host" "$pg" 'select count(*) from flow_run')" =~ [0-9]+$ ]] || problems+="cannot read flow_run; "
+  [[ "$(ro_psql "$host" "$pg" 'delete from flow_run')" == *"permission denied"* ]] || problems+="can delete runs; "
+  [[ "$(ro_psql "$host" "$pg" 'create table opskit_probe (i int)')" == *"permission denied"* ]] || problems+="can create tables; "
+  [[ "$(ro_psql "$host" "$pg" 'select count(*) from app_connection')" == *"permission denied"* ]] || problems+="can read connections; "
+  # shellcheck disable=SC2016
+  out="$(host_run "$host" docker exec "$pg" sh -c 'psql -h "$(hostname -i | cut -d" " -f1)" -U opskit_ro -d "$POSTGRES_DB" -w -tAc "select 1" 2>&1' || true)"
+  [[ "$out" == *"password"* ]] || problems+="can log in over the network; "
+  if [ -n "$problems" ]; then
+    log_fail "read-only role of ${id}: ${problems%; }"
+    return 1
+  fi
+  log_ok "read-only role of ${id}: reads runs, cannot write, create, read connections or log in over the network"
+}

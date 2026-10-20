@@ -159,6 +159,18 @@ deploy_record() {
 }
 
 # deploy_client <id>
+# deploy_readonly_role <host> <id>: passwordless opskit_ro for detectors; local socket only (ASSUMPTIONS #13)
+deploy_readonly_role() {
+  local host="$1" id="$2" container
+  container="$(stack_compose "$host" "$id" ps -q postgres | head -n 1)"
+  [ -n "$container" ] || { log_fail "postgres of ${id} is not running"; return 1; }
+  # shellcheck disable=SC2016
+  host_run "$host" docker exec -i "$container" sh -c 'psql -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -v db="$POSTGRES_DB"' \
+    < "${OPSKIT_ROOT}/templates/readonly-role.sql" >/dev/null \
+    || { log_fail "could not set up the read-only database role for ${id}"; return 1; }
+  log_ok "read-only database role opskit_ro ready"
+}
+
 deploy_client() {
   local id="$1" host status since
   require_client "$id" || return 1
@@ -177,6 +189,7 @@ deploy_client() {
   log_ok "stack ${id} up on ${host}"
   deploy_wait_healthy "$host" "$id" || return 1
   deploy_wait_worker "$host" "$id" "$since" || return 1
+  deploy_readonly_role "$host" "$id" || return 1
   deploy_publish_site "$host" "$id" || return 1
   deploy_check_https "$host" "$id" || return 1
   if [ "${DEPLOY_SKIP_BACKUP:-false}" = "true" ]; then

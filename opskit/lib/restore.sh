@@ -141,7 +141,7 @@ restore_database() {
   container="$(stack_compose "$host" "$target" ps -q postgres | head -n 1)"
   dump="$(backup_dir_on "$host" "$source" "$name")/db.dump"
   # shellcheck disable=SC2016
-  host_run "$host" sh -c 'docker exec -i "$1" sh -c '"'"'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --exit-on-error'"'"' < "$2"' _ "$container" "$dump" \
+  host_run "$host" sh -c 'docker exec -i "$1" sh -c '"'"'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-privileges --exit-on-error'"'"' < "$2"' _ "$container" "$dump" \
     || { log_fail "pg_restore failed"; return 1; }
   log_ok "database restored from ${source}/${name}"
 }

@@ -71,6 +71,7 @@ cmd_main() {
     die "selftest: re-deploy recreated containers (not idempotent)"
   fi
   log_ok "re-deploy idempotent (same containers)"
+  stack_readonly_check selftest "$SELFTEST_ID" || die "selftest: read-only database role is not safe"
   rt_seed selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: seeding test data failed"
   "${SELFTEST_ROOT}/agent/backup.sh" "$SELFTEST_ID" --root "$SELFTEST_ROOT" | grep -E '^\[(ok|warn)\] (copied|backup of)' \
     || die "selftest: backup failed"

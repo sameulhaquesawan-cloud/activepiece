@@ -40,7 +40,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Acceptance checks:** same key twice in the window → one alert; quiet hours across midnight handled; critical never held.
 - **Tests required:** bats with `OPSKIT_NOW` time-shifting.
 
-### [ ] 4.4 — Read-only database role
+### [x] 4.4 — Read-only database role
 - **Goal:** `opskit deploy` creates/updates `opskit_ro` (LOGIN, no password, `SELECT` on `flow`, `flow_version`, `flow_run`, `project`, read-only default transaction) idempotently; agents use `psql -U opskit_ro` inside the postgres container.
 - **Spec refs:** 15, security rules
 - **Files likely touched:** `opskit/lib/deploy.sh` (or new `lib/dbrole.sh`), tests

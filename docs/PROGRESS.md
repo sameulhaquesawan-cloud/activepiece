@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.4 (see `docs/tasks/phase-4.md`)
+- **Current task:** 4.5 (see `docs/tasks/phase-4.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4.4 read-only DB role `opskit_ro` created by deploy (passwordless, local socket only, SELECT on flow/flow_version/flow_run/project), then 4.5 onwards in order.
+1. Agent: 4.5 failed-run detector `agent/detect-failed-runs.sh` (PRODUCTION runs, SPEC 10.3 statuses, one alert per flow per 30 min with run link, via `opskit_ro`), then 4.6 onwards in order.
 2. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage); later a monitoring-host domain (Phase 4 Q1).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 4.4 done.** Deploy creates/refreshes `opskit_ro` from `opskit/templates/readonly-role.sql` (no password → local-socket login only; `SELECT` on flow, flow_version, flow_run, project; read-only default; 30 s statement timeout; `REVOKE CREATE ON SCHEMA public FROM PUBLIC` — app user is superuser, unaffected; drifted grants reset each deploy). **Fix found on the way:** backups now carry grants for `opskit_ro`, which broke `pg_restore --exit-on-error` into a fresh stack; restore now uses `--no-privileges` (deploy re-applies the role). `stack_readonly_check` (verify.sh) runs in selftest: reads runs, cannot delete/create/read connections/log in over the network; negative control (extra grant) fails it. Tests: `readonly_role.bats` + selftest. Verify: `opskit/bin/opskit selftest`.
 - **2026-10-20 — 4.3 done.** `alert.sh --dedupe-key <k> [--window <min>]` (default 30; state `<root>/state/<id>/dedupe/`, `flock`; key forgotten when the owner was not reached so the next run retries) and quiet hours from client `alerts.conf` (`TIMEZONE`, `QUIET_FROM`, `QUIET_TO`, rendered from `client.yaml`): info/warn for client channels are appended to `state/<id>/held.jsonl` for the digest, critical and owner channels always go out, `--no-quiet` for the digest. `OPSKIT_NOW` drives the clock in tests. Tests: `alert_dedupe_quiet.bats` (10, incl. midnight crossing and summer time) + render test. Verify: `bats opskit/tests/alert_dedupe_quiet.bats`.
 - **2026-10-20 — 4.2 done.** `agent/alert.sh` channel adapters: owner + client Telegram, Slack, email (SMTP via `curl`, credentials via `curl -K -` not argv, STARTTLS required unless `SMTP_TLS=none`, recipients from `EMAIL_TO`), JSON webhook; optional `--link` (http/https only). Payloads come from `opskit/templates/alerts/*.jq` (+ README with severities), shipped by deploy to `<root>/agent/alerts/`; render writes `EMAIL_TO` for the email channel. Subject lines strip newlines (no header injection). Tests: `alert_channels.bats` (10, mock HTTP + new mock SMTP `tests/helpers/mock_smtp.py`), backup alert/install tests updated; selftest 123 s. Verify: `bats opskit/tests/alert_channels.bats`.
 - **2026-10-20 — 4.1 done.** Verified monitoring facts (ASSUMPTIONS #10–14): Uptime Kuma 2.5.5 via `mirror.gcr.io` (Docker Hub 429), `UPTIME_KUMA_DB_TYPE=sqlite`; monitors/notifications created via its socket API from inside its own container (no new dependency, live probe OK incl. 26 h push monitor and push URL); run link `/projects/<projectId>/runs/<runId>`; `failedStep` shape; only PRODUCTION runs alert; passwordless read-only role works via local-socket trust; pieces offline in the cloud session. Owner accepted Q1–Q4 recommendations. Verify: read ASSUMPTIONS #10–14.

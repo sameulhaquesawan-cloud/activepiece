@@ -9,6 +9,7 @@ load helpers/common
   [[ "$output" == *"[ok] worker registered"* ]]
   [[ "$output" == *"[ok] HTTPS health OK"* ]]
   [[ "$output" == *"[ok] re-deploy idempotent"* ]]
+  [[ "$output" == *"read-only role of "*": reads runs, cannot write"* ]]
   [[ "$output" == *"[ok] round trip: seeded 3 flows"* ]]
   [[ "$output" == *"[ok] all 1 stored connections decrypt with the restored key"* ]]
   [[ "$output" == *"has the 3 flows, sign-in works and the connection decrypts"* ]]
