@@ -1,5 +1,6 @@
 /clients/
 /hosts/
+/owner/
 *.env
 .env
 *.age

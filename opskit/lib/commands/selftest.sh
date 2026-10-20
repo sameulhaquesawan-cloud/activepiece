@@ -92,11 +92,17 @@ practice_quirks:
   ipv4_listen_shim: ${shim}
 EOF
   export OPSKIT_REGISTRY="$SELFTEST_DIR"
+  mkdir -p "${SELFTEST_DIR}/owner" "${SELFTEST_DIR}/offsite"
+  age-keygen -o "${SELFTEST_DIR}/owner.key" 2>/dev/null
+  age-keygen -y "${SELFTEST_DIR}/owner.key" > "${SELFTEST_DIR}/owner.age.pub"
+  export OPSKIT_OWNER_AGE_PUB="${SELFTEST_DIR}/owner.age.pub"
+  printf '[offsite]\ntype = local\n' > "${SELFTEST_DIR}/owner/rclone.conf"
   start="$(date +%s)"
   log_info "selftest: ${SELFTEST_ID} in ${SELFTEST_DIR}"
   "${OPSKIT_ROOT}/bin/opskit" host bootstrap selftest | grep -E '^\[(ok|warn|fail)\] edge' || die "selftest: edge bootstrap failed"
   "${OPSKIT_ROOT}/bin/opskit" client new "$SELFTEST_ID" --domain "${SELFTEST_ID}.localhost" --host selftest --contact selftest@example.com >/dev/null \
     || die "selftest: client new failed"
+  yq -i ".backup.remote = \"offsite:${SELFTEST_DIR}/offsite\"" "${SELFTEST_DIR}/clients/${SELFTEST_ID}/client.yaml"
   "${OPSKIT_ROOT}/bin/opskit" deploy "$SELFTEST_ID" || die "selftest: deploy failed"
   local before after
   before="$(selftest_containers)"
@@ -106,6 +112,13 @@ EOF
     die "selftest: re-deploy recreated containers (not idempotent)"
   fi
   log_ok "re-deploy idempotent (same containers)"
+  "${SELFTEST_ROOT}/agent/backup.sh" "$SELFTEST_ID" --root "$SELFTEST_ROOT" | grep -E '^\[(ok|warn)\] (copied|backup of)' \
+    || die "selftest: backup failed"
+  local latest
+  latest="$(cat "${SELFTEST_ROOT}/backups/${SELFTEST_ID}/latest")"
+  age -d -i "${SELFTEST_DIR}/owner.key" "${SELFTEST_DIR}/offsite/${SELFTEST_ID}/${latest}/env.age" | grep -q '^AP_ENCRYPTION_KEY=' \
+    || die "selftest: off-server env.age does not decrypt with the owner key"
+  log_ok "backup off-server and env escrow decrypts"
   if [ "$SELFTEST_KEEP" = "true" ]; then
     log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: docker compose -p ${SELFTEST_ID} down -v; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
   fi

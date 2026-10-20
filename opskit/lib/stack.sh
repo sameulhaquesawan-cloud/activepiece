@@ -19,6 +19,39 @@ stack_frontend_url() {
   fi
 }
 
+channel_secret() {
+  local id="$1" name="$2" file
+  file="$(client_dir "$id")/channels.env"
+  [ -n "$name" ] && [ -f "$file" ] || return 0
+  sed -n "s/^${name}=//p" "$file" | tail -n 1
+}
+
+# stack_render_backup <id>: backup.conf + client alerts.conf (both 600) for the host agent
+stack_render_backup() {
+  local id="$1" cfile out channels slack_secret
+  cfile="$(client_file "$id")"
+  out="$(rendered_dir "$id")"
+  channels="$(yq -r '.alerts.channels[]' "$cfile")"
+  (
+    umask 077
+    {
+      printf 'BACKUP_REMOTE=%s\n' "$(yaml_get "$cfile" .backup.remote)"
+      printf 'KEEP_LOCAL_DAYS=%s\n' "$(yaml_get "$cfile" .backup.retention_days.local 14)"
+      printf 'KEEP_REMOTE_DAYS=%s\n' "$(yaml_get "$cfile" .backup.retention_days.remote 30)"
+      printf 'HEARTBEAT_URL=%s\n' "$(yaml_get "$cfile" .backup.heartbeat_url)"
+    } > "${out}/backup.conf"
+    {
+      if grep -qx telegram <<< "$channels"; then
+        printf 'TELEGRAM_CHAT_ID=%s\n' "$(yaml_get "$cfile" .alerts.telegram.chat_id)"
+      fi
+      if grep -qx slack <<< "$channels"; then
+        slack_secret="$(yaml_get "$cfile" .alerts.slack.webhook_secret)"
+        printf 'SLACK_WEBHOOK_URL=%s\n' "$(channel_secret "$id" "$slack_secret")"
+      fi
+    } > "${out}/alerts.conf"
+  )
+}
+
 # stack_render <id>: requires a valid client + host; generates secrets on first use
 stack_render() {
   local id="$1" cfile hfile host out tls
@@ -67,6 +100,7 @@ stack_render() {
     render_template "${OPSKIT_ROOT}/templates/cron.tmpl" "${out}/cron" >/dev/null
   ) || { log_fail "render ${id}: failed"; return 1; }
   chmod 600 "${out}/.env"
+  stack_render_backup "$id"
   if [ "$(yaml_get "$hfile" .practice_quirks.ipv4_listen_shim false)" = "true" ]; then
     cp "${OPSKIT_ROOT}/templates/compose.practice.yml.tmpl" "${out}/compose.practice.yml"
     cp "${OPSKIT_ROOT}/templates/ipv4-shim.js" "${out}/ipv4-shim.js"
@@ -74,5 +108,5 @@ stack_render() {
   else
     rm -f "${out}/compose.practice.yml" "${out}/ipv4-shim.js"
   fi
-  log_ok "rendered ${id}: compose.yml, .env (600), ${id}.caddy, cron → ${out}"
+  log_ok "rendered ${id}: compose.yml, .env (600), ${id}.caddy, cron, backup.conf, alerts.conf → ${out}"
 }

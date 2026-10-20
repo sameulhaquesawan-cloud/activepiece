@@ -23,3 +23,11 @@ load helpers/common
     [ "$status" -eq 0 ]
   done
 }
+
+@test "owner channels and rclone credentials are git-ignored" {
+  cd "$OPSKIT_ROOT"
+  run git check-ignore -q owner/alerts.conf
+  [ "$status" -eq 0 ]
+  run git check-ignore -q owner/rclone.conf
+  [ "$status" -eq 0 ]
+}

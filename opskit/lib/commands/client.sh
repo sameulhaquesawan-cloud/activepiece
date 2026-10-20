@@ -109,6 +109,15 @@ client_resume() {
   log_ok "client ${id} resumed"
 }
 
+client_stop_backups() {
+  local host="$1" id="$2" root
+  root="$(host_root "$host")"
+  host_run "$host" rm -f "${root}/clients/${id}/cron"
+  if [ "$(host_installs_cron "$host")" = "true" ] && host_run "$host" test -x "${root}/agent/cron-sync.sh"; then
+    host_run "$host" "${root}/agent/cron-sync.sh" --root "$root" >/dev/null || log_warn "cron sync failed on ${host}"
+  fi
+}
+
 client_remove_site() {
   local host="$1" id="$2" edge
   edge="$(yaml_get "$(host_file "$host")" .edge.container opskit-caddy)"
@@ -154,6 +163,7 @@ client_offboard() {
   confirm_destructive "$id" "$yes" "take ${id} offline (stop stack, remove HTTPS site)" || return 1
   stack_compose "$host" "$id" stop >/dev/null 2>&1 || die "could not stop ${id}"
   client_remove_site "$host" "$id"
+  client_stop_backups "$host" "$id"
   yaml_set "$(client_file "$id")" ".status = \"offboarded\" | .offboarded_at = \"$(date -u +%Y-%m-%d)\""
   client_history_add "$id" offboarded
   log_ok "client ${id} offboarded; data kept until $(purge_allowed_from "$id"), then: opskit client offboard ${id} --purge --yes"

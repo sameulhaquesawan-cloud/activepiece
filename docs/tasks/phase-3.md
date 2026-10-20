@@ -31,7 +31,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 - **Goal:** heartbeat only when 3.2+3.3 fully succeed; on failure `agent/alert.sh` sends `{client, severity, what, first_action}` (≤ 300-char excerpts, no secrets) to configured channels.
 - **Tests:** mock HTTP listener receives exactly one alert on failure, none on success.
 
-### [ ] 3.5 — Install agent + cron via deploy
+### [x] 3.5 — Install agent + cron via deploy
 - **Goal:** `opskit deploy` copies `agent/*.sh`, the owner's age public key and per-client backup config to the host and installs `/etc/cron.d/opskit-<id>` (ssh hosts) / user crontab note (practice hosts).
 - **Tests:** rendered cron content; deploy pushes agent files (stubs).
 

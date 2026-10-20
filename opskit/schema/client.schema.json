@@ -246,6 +246,12 @@
           "type": "string",
           "pattern": "^[A-Za-z0-9_-]+:[A-Za-z0-9_./-]*$",
           "description": "rclone remote:path"
+        },
+        "heartbeat_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://",
+          "description": "Uptime Kuma push URL for this client's backup (Phase 4)"
         }
       }
     },

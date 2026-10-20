@@ -141,6 +141,10 @@
           "description": "kernel without IPv6: make the app listen on 0.0.0.0"
         }
       }
+    },
+    "install_cron": {
+      "type": "boolean",
+      "description": "install backup schedules in the ssh user's crontab (default: true for ssh hosts, false for local practice hosts)"
     }
   }
 }
