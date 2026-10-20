@@ -2,9 +2,12 @@
 
 This repo = Activepieces Community Edition (upstream, pinned release, see `docs/UPSTREAM_CHANGES.md`) + our ops kit (`opskit/`, `docs/`, `packages/pieces/custom/`). Upstream files stay unchanged except entries in the patch ledger. Nothing updates from upstream automatically.
 
+## New session or another AI?
+Read **`docs/HANDOFF.md`** first: a copy-paste prompt, reading order, machine setup (`opskit/bin/dev-env`) and how to continue. Nothing requires Claude.
+
 ## How work happens
-- **Cloud (default):** open the repo in a Claude Code session at claude.ai/code. `.claude/hooks/session-start.sh` installs shellcheck/bats/rclone/age and starts Docker. Claude works on its `claude/...` branch; you merge finished phases into `main` by pull request.
-- **Laptop (optional):** WSL2 Ubuntu + Docker Desktop + Claude Code CLI, repo cloned inside WSL. Same commands.
+- **Cloud (default):** open the repo in a Claude Code session at claude.ai/code. `.claude/hooks/session-start.sh` runs `opskit/bin/dev-env` (installs shellcheck/bats/rclone/age, starts Docker). Claude works on its `claude/...` branch; you merge finished phases into `main` by pull request.
+- **Laptop (optional):** WSL2 Ubuntu + Docker Desktop, repo cloned inside WSL, any AI tool. Run `opskit/bin/dev-env`. Same commands.
 
 ## Commands (slash skills in `.agents/skills/opskit-*`)
 | Command | What it does |

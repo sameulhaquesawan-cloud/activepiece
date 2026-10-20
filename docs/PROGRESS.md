@@ -3,7 +3,12 @@
 ## Current status
 - **Current phase:** Phase 0 — Fork, set up & explore Activepieces
 - **Current task:** `/opskit-explore` (install & explore CE 0.92.3)
-- **Last updated:** 2026-10-20
+- **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
+
+## Next steps
+1. **Owner decision pending:** how to finish Phase 0 flow-building, since containers in the Claude cloud session have no internet (relay denied twice by the session safety check). Options: (a) GitHub Codespaces with a light opskit devcontainer (owner sees the UI in the browser; recommended), (b) owner's laptop (WSL2 + Docker Desktop).
+2. Then on that machine: recreate the explore stack (`docs/HANDOFF.md`), confirm pieces load, build 1–2 starter flows (webhook + schedule; branches, loop, delay, code, HTTP; AI step with Gemini free key, practice data), run logs/retries/failure display, flow import/export, templates, 20 test runs + `docker stats`, stored-connection decrypt after restore, hello-world piece in dev mode.
+3. Finish `docs/EXPLORATION_REPORT.md`, mark Phase 0 done, run `/opskit-start-phase` (or follow `.agents/skills/opskit-start-phase/SKILL.md`) for Phase 1.
 
 ## Phases
 | Phase | Name | Status | Verified |

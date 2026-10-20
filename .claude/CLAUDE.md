@@ -20,7 +20,7 @@ This repo is the owner's fork of Activepieces (open-source Zapier alternative, M
 **Conflict order:** SPEC > DECISIONS > TECH_ARCHITECTURE > other docs.
 
 ## Session start (or run `/opskit-resume`)
-1. Read `docs/PROGRESS.md` and the current `docs/tasks/phase-N.md`.
+1. Read `docs/HANDOFF.md`, `docs/PROGRESS.md` and the current `docs/tasks/phase-N.md`. Machine setup: `opskit/bin/dev-env`.
 2. Read only the referenced SPEC/doc sections.
 3. State: phase, task, files to touch (flag any upstream file).
 
@@ -44,7 +44,7 @@ Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. 
 `opskit/bin/check` · `opskit/bin/check --quick` · `opskit/bin/opskit doctor` · `opskit/bin/opskit selftest` · `docker compose -p <id> ps`
 
 ## End of every task
-Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conventional commit.
+Update PROGRESS (incl. **Next steps**, precise enough for any AI or person to continue — see `docs/HANDOFF.md`); ADR for architectural choices; ledger for upstream edits; conventional commit; push.
 
 ## Rules (always apply)
 
