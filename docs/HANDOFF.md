@@ -39,6 +39,11 @@ opskit/bin/explore-stack up       # also: status, stop (data kept)
 ```
 Then open `http://localhost:8080` (Codespaces: Ports tab) and create the admin account. Upstream files are copied, never edited. The script handles two quirks by itself: GHCR unreachable → same official image from Docker Hub; kernel without IPv6 (`listen EAFNOSUPPORT :::80`) → explore-only IPv4 shim. If the piece list is empty, the containers can't reach `cloud.activepieces.com`.
 
+## Where each kind of work happens
+- **Write code + run `opskit/bin/check`** (scripts, schema, bats/shellcheck, Docker tests that only need health/worker): any machine, including a Claude cloud session.
+- **Anything needing pieces** (flows, templates, failed-flow alerts, stored connections): a machine whose containers have internet — the Codespace or the laptop. Get the latest code there with `git pull`. A Claude cloud session can drive the Codespace UI only if port 8080 is set to **Public** (set it back to Private afterwards).
+- **Phase 9 real VPS:** owner's accounts; step-by-step with the owner.
+
 ## Keep the handoff working
 - At the end of every task, update `docs/PROGRESS.md`: Current status, a dated Task log entry, and **Next steps** precise enough for a stranger to continue.
 - Commit + push after every task (conventional commits); nothing important may live only in a chat or in `explore/`.
