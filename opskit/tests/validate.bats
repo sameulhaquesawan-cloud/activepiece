@@ -93,3 +93,14 @@ expect_client_error() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"cannot tell client from host"* ]]
 }
+
+@test "a wrong yq flavor gives a clear fix-it message" {
+  local stub
+  stub="$(mktemp -d)"
+  printf '#!/usr/bin/env bash\necho "yq 3.4.3"\n' > "${stub}/yq"
+  chmod +x "${stub}/yq"
+  PATH="${stub}:${PATH}" run "$OPSKIT" validate "${FIXTURES}/hosts/valid.yaml" --type host
+  rm -rf "$stub"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"mikefarah yq v4 is required"*"opskit/bin/dev-env"* ]]
+}

@@ -60,6 +60,6 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** action "Ask model" (chat/completions): model dropdown loaded live from `{baseUrl}/models` on open/refresh; reasoning effort dropdown defaulting to `high` (+ `minimal/low/medium`, "don't send" for endpoints that reject it, optional custom value); system prompt, prompt, max output tokens (blank = model max), temperature. "List models" action too.
 - **Tests:** vitest: dropdown options from mocked `/models`, request body carries `reasoning_effort` by default and omits it on "don't send", error mapping.
 
-### [~] 1.12 — Ship the piece into CE without an own image (installed + live models verified; owner's real-key run pending)
+### [x] 1.12 — Ship the piece into CE without an own image
 - **Goal:** build → package archive → install via CE admin `POST /api/v1/pieces` (`packageType: ARCHIVE`) on the Codespace; flow test against a real endpoint with the owner's key (owner enters the key in the connection, not in git).
 - **Acceptance:** piece visible in the builder; model dropdown lists live models; run succeeds with reasoning `high`; documented in `packages/pieces/custom/openai-compatible/README.md`.

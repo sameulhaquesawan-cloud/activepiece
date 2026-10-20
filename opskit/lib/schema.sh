@@ -16,9 +16,17 @@ schema_errors_to_lines() {
     else $path + ": " + .message end' | sort -u
 }
 
+require_yq_v4() {
+  if ! yq --version 2>/dev/null | grep -q 'mikefarah.*version v4'; then
+    log_fail "mikefarah yq v4 is required (found: $(yq --version 2>/dev/null | head -n 1 || echo none)); run: opskit/bin/dev-env"
+    return 1
+  fi
+}
+
 # validate_against_schema <schema.json> <file.yaml|json>
 validate_against_schema() {
   local schema="$1" file="$2" tmp json errors status=0
+  require_yq_v4 || return 1
   tmp="$(mktemp -d)"
   json="${tmp}/data.json"
   if ! yq -o=json '.' "$file" > "$json" 2>/dev/null || [ "$(jq -r 'type' "$json")" != "object" ]; then

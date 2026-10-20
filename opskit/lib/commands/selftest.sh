@@ -50,8 +50,9 @@ cmd_main() {
     "") SELFTEST_KEEP="false" ;;
     *) selftest_usage >&2; return 1 ;;
   esac
-  if ! docker info >/dev/null 2>&1; then
-    die "selftest needs a running Docker daemon"
+  if ! "${OPSKIT_ROOT}/bin/opskit" doctor --offline >/dev/null 2>&1; then
+    "${OPSKIT_ROOT}/bin/opskit" doctor --offline | grep -F '[fail]'
+    die "selftest: fix the problems above first (most can be fixed with: opskit/bin/dev-env)"
   fi
   SELFTEST_DIR="$(mktemp -d)"
   SELFTEST_ROOT="${SELFTEST_DIR}/host-root"
