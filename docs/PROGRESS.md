@@ -1,21 +1,21 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** Phase 1 wrap-up: owner decisions on CI (1.8) and real-key test (1.12)
+- **Current phase:** Phase 2 — Client deployment kit
+- **Current task:** 2.1 (see `docs/tasks/phase-2.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
 1. **Owner — CI (1.8):** GitHub Actions is off for the whole repo (opskit-ci registered, 0 runs). Decide: (a) delete upstream workflow files in the fork (ledger row, re-delete on sync; agent does it) then switch Actions on, or (b) switch Actions on and disable 41 upstream workflows one by one. Then confirm a green `opskit-ci` run.
 2. **Owner — piece (1.12):** in the Codespace Activepieces, add an "OpenAI Compatible (BYOK)" step, create a connection with your Base URL + API key, pick a model, run once. Agent records the result.
-3. Then `/opskit-verify-phase` for Phase 1 and the end-of-phase check-in.
+3. Owner (20 Oct 2026): do items 1–2 together later; meanwhile Phase 2 (`docs/tasks/phase-2.md`).
 
 ## Phases
 | Phase | Name | Status | Verified |
 |---|---|---|---|
 | 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
-| 1 | Opskit foundation (+ openai-compatible piece) | In progress | — |
-| 2 | Client deployment kit | Not started | — |
+| 1 | Opskit foundation (+ openai-compatible piece) | Done except owner tests (CI 1.8, real-key 1.12) | — |
+| 2 | Client deployment kit | In progress | — |
 | 3 | Backups & restore | Not started | — |
 | 4 | Monitoring & alerts | Not started | — |
 | 4b | Go to market (owner-led) | Not started | — |
