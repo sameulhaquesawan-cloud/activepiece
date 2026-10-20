@@ -38,7 +38,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 ### [x] 3.6 — `opskit backup <id>` (on demand) + `opskit backups <id>` (list)
 - **Goal:** run the host agent now; list local/remote backups with sizes and status.
 
-### [ ] 3.7 — `opskit restore <id> --from <ts> [--target <new-id>] [--overwrite --yes]`
+### [x] 3.7 — `opskit restore <id> --from <ts> [--target <new-id>] [--overwrite --yes]`
 - **Goal:** fetch backup (remote or host), decrypt `env.age` with the owner's private key on the operator machine, create a fresh stack (same secrets → stored connections decrypt), load the dump, start, smoke checks (health, worker, a flow listed).
 - **Acceptance:** refuses a running target without `--overwrite --yes` + typed id.
 

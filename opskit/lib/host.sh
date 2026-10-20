@@ -43,3 +43,15 @@ host_put() {
   scp_put "${target[0]}" "${target[1]}" "${target[2]}" "$src" "$dest" || return 1
   ssh_run "${target[0]}" "${target[1]}" "${target[2]}" chmod "$mode" "$dest"
 }
+
+# host_get <host> <remote file> <local file>
+host_get() {
+  local host="$1" src="$2" dest="$3"
+  if [ "$(host_transport "$host")" = "local" ]; then
+    cp "$src" "$dest"
+    return
+  fi
+  local target
+  mapfile -t target < <(host_ssh_target "$host")
+  scp_get "${target[0]}" "${target[1]}" "${target[2]}" "$src" "$dest"
+}

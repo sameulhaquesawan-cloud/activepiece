@@ -176,7 +176,11 @@ deploy_client() {
   deploy_wait_worker "$host" "$id" "$since" || return 1
   deploy_publish_site "$host" "$id" || return 1
   deploy_check_https "$host" "$id" || return 1
-  deploy_install_backup "$host" "$id" || return 1
+  if [ "${DEPLOY_SKIP_BACKUP:-false}" = "true" ]; then
+    log_warn "backup schedule not installed for ${id} (restore copy)"
+  else
+    deploy_install_backup "$host" "$id" || return 1
+  fi
   deploy_record "$id"
   log_ok "deployed ${id}"
 }

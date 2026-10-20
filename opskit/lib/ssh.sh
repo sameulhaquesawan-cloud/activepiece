@@ -36,6 +36,15 @@ ssh_run() {
   ssh "${opts[@]}" -p "$port" "${user}@${host}" -- "${remote_command% }"
 }
 
+# scp_get <user> <host> <port> <remote path> <local path>
+scp_get() {
+  local user="$1" host="$2" port="$3" remote_path="$4" local_path="$5"
+  ssh_target_ok "$user" "$host" "$port" || return 1
+  local opts
+  mapfile -t opts < <(ssh_common_opts)
+  scp -q "${opts[@]}" -P "$port" -- "${user}@${host}:${remote_path}" "$local_path"
+}
+
 # scp_put <user> <host> <port> <local path> <remote path>
 scp_put() {
   local user="$1" host="$2" port="$3" local_path="$4" remote_path="$5"

@@ -329,7 +329,8 @@
               "paused",
               "resumed",
               "offboarded",
-              "purged"
+              "purged",
+              "restored"
             ]
           },
           "tag": {

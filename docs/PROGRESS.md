@@ -2,14 +2,14 @@
 
 ## Current status
 - **Current phase:** Phase 3 — Backups & restore
-- **Current task:** 3.7 (see `docs/tasks/phase-3.md`)
+- **Current task:** 3.8 (see `docs/tasks/phase-3.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner:** approve Phase 3 implementation (backup/restore logic) and answer `docs/tasks/phase-3.md` Q1 (off-server target) / Q2 (own age key — guided).
-2. Agent: get opskit-ci green on GitHub (selftest step on the runner) — in progress.
-3. Owner Codespace: run `opskit/bin/dev-env` once, then `opskit/bin/opskit selftest` (old Codespace had the python yq).
-4. Then Phase 3 tasks top to bottom.
+1. Agent: 3.8 round-trip acceptance test (docker): selftest-style client + 3 flows + a stored connection via the API → backup → `opskit restore --target` → flows present, connection still decrypts.
+2. Agent: 3.9 `opskit restore-test <id>`, runbook `docs/runbooks/backup-restore.md` (incl. owner age-key guide), ADR-015; then Phase 3 verification and owner check-in.
+3. Owner (later, guided): create your own age key; choose the off-server target (Q1/Q2 in `docs/tasks/phase-3.md`).
+4. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest`.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.7 done.** `opskit restore <id> [--from <name>|latest] [--target <new id>] [--domain d] [--overwrite --yes]` (`lib/restore.sh`, `lib/commands/restore.sh`; `host_get`/`scp_get`; `restored` history event; `DEPLOY_SKIP_BACKUP` so copies get no cron). Finds the backup on the host (else fetches it from the off-server remote), decrypts `env.age` on the operator machine with the owner key (`OPSKIT_OWNER_AGE_KEY` or `~/.config/opskit/owner.key`), validates the 4 secrets, creates the target with the *original* secrets, starts postgres+redis, `pg_restore --exit-on-error`, then the normal deploy checks (health, worker, HTTPS) and prints flow/connection/run counts. Same id always needs `--overwrite --yes` + typed id (also when stopped: volumes still hold data). Copy target defaults to `<id>-restore`, domain `<target>.localhost` only on internal-TLS hosts. 10 tests (`opskit/tests/restore.bats`); real run on a selftest stack: copy restore 33 s and overwrite restore both green. Verify: `bats opskit/tests/restore.bats`.
 - **2026-10-20 — 3.6 done.** `opskit backup <id>` (runs the host agent; 0 complete / 2 local only / 1 failed) and `opskit backups <id>` (host list from status.json + off-server dirs via the host's rclone). Verified on a selftest stack; 3 tests.
 - **2026-10-20 — 3.5 done.** `opskit deploy` installs the backup system: `agent/{backup,alert,cron-sync}.sh` (755), owner key `opskit/keys/owner.age.pub` (override `OPSKIT_OWNER_AGE_PUB`; missing → clear warning, no backups), `opskit/owner/{alerts,rclone}.conf` (git-ignored, 600), rendered `backup.conf`/`alerts.conf` (600, from client.yaml + `clients/<id>/channels.env` for the Slack URL) and `cron` per client; `cron-sync.sh` rebuilds the ssh user's crontab (keeps foreign lines, one tagged line per client); practice hosts skip cron unless `install_cron: true`. Offboard removes the client's schedule. Selftest now also runs a backup to an rclone local remote and decrypts `env.age` with a throwaway owner key. 5 new tests; full check incl. docker passes.
 - **2026-10-20 — 3.4 done.** `opskit/agent/alert.sh` (standalone): `[SEVERITY] <client> on <host>: <what> — First action: <action>`, texts cut to 300 chars, channels from `<root>/agent/alerts.conf` (owner: Telegram token/chat, WEBHOOK_URL) and `<root>/clients/<id>/alerts.conf` (client: Telegram chat, Slack webhook, WEBHOOK_URL); reports undelivered if no owner channel. backup.sh: heartbeat (`HEARTBEAT_URL`, Uptime Kuma push `?status=up&msg=…`) only on a complete backup; critical alert on failure, warn on local-only; heartbeat failure = alert + exit 1. Tests with a mock HTTP listener (`tests/helpers/mock_http.py`): 6 tests (one heartbeat on success, exactly one alert on failure, no secrets in payloads, Telegram owner+client).
