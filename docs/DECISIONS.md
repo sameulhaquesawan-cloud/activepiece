@@ -1,69 +1,8 @@
-# Architecture Decision Records
 
-Format: Context → Decision → Alternatives → Consequences. Never delete; mark superseded.
 
-### ADR-001: Fork Activepieces; clients run images built from the fork
-- **Status:** accepted; image part superseded by ADR-012 (clients run official images in V1)
-- **Context:** Owner wants an enhanced repo on GitHub to install clients from; private piece upload is paid, and the custom-piece route assumes a fork.
-- **Decision:** Fork, pin release tags, fetch-only upstream; build our CE image with custom pieces via GitHub Actions.
-- **Alternatives:** Ops-kit repo with Activepieces cloned inside (can't ship custom pieces on CE); official images only.
-- **Consequences:** Must sync releases and rebuild images; heavy builds happen in CI.
-
-### ADR-002: Our code isolated; upstream edits only via ledger
-- **Status:** accepted
-- **Decision:** `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, docs, IDE config. Upstream workflows disabled in the fork.
-- **Consequences:** Clean syncs.
-
-### ADR-003: Community Edition only
-- **Status:** accepted
-- **Context:** Docs' manual path suggests `AP_EDITION=ee`; ee code is commercially licensed.
-- **Decision:** Render `AP_EDITION=ce` explicitly; never touch `packages/ee`.
-- **Consequences:** No branding/projects/SSO/private-piece upload; one stack per client.
-
-### ADR-004: One stack per client; dedicated or shared hosts
-- **Status:** accepted
-- **Decision:** Per-client compose project, volumes, `.env`, domain, backups; hosts may carry one or several stacks behind one Caddy.
-- **Consequences:** Clean isolation; capacity checks needed on shared hosts.
-
-### ADR-005: Bash ops tooling driven by validated `client.yaml`
-- **Status:** accepted
-- **Context:** Hosts are plain Ubuntu; minimal dependencies; testable with bats.
-- **Decision:** `opskit` dispatcher + libs; JSON-schema validation; templates rendered with envsubst/yq.
-- **Alternatives:** Ansible, Terraform, Node CLI.
-- **Consequences:** Simple to run anywhere; keep scripts small and tested.
-
-### ADR-006: Ops-hub = our own Activepieces + Uptime Kuma
-- **Status:** superseded by ADR-012
-- **Context:** CE alerting features may be limited; multi-channel routing needed; dogfooding shows clients the product.
-- **Decision:** Hosts push heartbeats/alerts to ops-hub webhooks; ops-hub flows route to Telegram/email/Slack/WhatsApp and send reports.
-- **Consequences:** Ops-hub must itself be monitored (UptimeRobot) and backed up.
-
-### ADR-007: Failed-run detection by read-only SQL
-- **Status:** accepted (verify schema in Phase 0)
-- **Decision:** Cron query on run tables with a read-only role; de-duplicated alerts.
-- **Consequences:** Must re-verify table names after each upstream sync.
-
-### ADR-008: Encrypted secrets escrow with age + off-server copies with rclone
-- **Status:** accepted
-- **Decision:** `.env` encrypted to owner's age key; dumps + escrow copied off-server; tested restores monthly.
-
-### ADR-009: Upgrades through staging with automatic rollback
-- **Status:** accepted
-- **Decision:** Backup → staging restore on new image → smoke tests → promote → rollback on failure.
-
-### ADR-010: Two IDE packages share docs
-- **Status:** superseded by ADR-011
-- **Decision:** Kilo: `AGENTS.fork.md` + `kilo.jsonc` + `.kilo/`. Factory: `.factory/AGENTS.md` + `.factory/skills/`. Same `docs/`, same nested AGENTS.md in our folders.
-
-### ADR-011: Build with Claude Code (cloud sessions) instead of Factory/Kilo
-- **Status:** accepted (20 Oct 2026)
-- **Context:** Owner moved the build from Factory IDE to Claude Code cloud sessions. Upstream already ships `.claude/` (rules, `settings.json`) and `.claude/skills` as a symlink to `.agents/skills`.
-- **Decision:** Opskit rules in `.claude/CLAUDE.md` (new file, upstream has none); our skills in `.agents/skills/opskit-*` (prefixed, new folders only); nested `CLAUDE.md` in `opskit/`, `opskit/agent/`, `opskit/flows/`, `packages/pieces/custom/`; SessionStart hook `.claude/hooks/session-start.sh` registered in upstream `.claude/settings.json` (ledger #1). `.factory/` removed.
-- **Consequences:** One upstream file edited (settings.json); re-apply on upstream sync.
-
-### ADR-012: V1 = official images + direct alerts; custom pieces/own image and ops-hub routing deferred
-- **Status:** accepted (owner, 20 Oct 2026)
-- **Context:** Plan review after pinning 0.92.3 (SPEC Appendix C). Private pieces are paid; CE admins can install pieces via `POST /api/v1/pieces`; an ops-hub in the alert path is a single point of failure.
-- **Decision:** Client stacks run official `activepieces/activepieces:<tag>` images; Improvement 8 (custom pieces + own image) → V2. Host scripts send alerts directly (Telegram/email/Slack) and push heartbeats to Uptime Kuma; an ops-hub Activepieces stack is demo-only. WhatsApp → later add-on; shared hosts → after first paying client.
-- **Alternatives:** ADR-001 own image; ADR-006 ops-hub routing.
-- **Consequences:** Simpler upgrades (official tags) and no hub outage blind spot; per-host alert config holds channel secrets (mode 600, never in git).
+### ADR-013: One custom piece in V1 — `openai-compatible`, installed by archive (no own image)
+- **Status:** accepted (owner, 20 Oct 2026); narrows ADR-012 for this one piece
+- **Context:** Owner wants BYOK OpenAI-compatible AI with a live model dropdown and max reasoning by default. CE 0.92.3 has a `custom` AI provider (Platform Admin → AI Center) but its models are typed in by hand (`listModels` returns the stored list) and AI steps send no reasoning effort except `minimal` for OpenAI summaries.
+- **Decision:** Build `packages/pieces/custom/openai-compatible` (connection = base URL + API key; dropdown from `GET {baseUrl}/models`; `reasoning_effort` default `high`). Ship it with the CE admin piece-install API (archive), not an own Docker image.
+- **Alternatives:** Patch upstream AI provider/worker/web (needs our own image = V2, large ledger); use the built-in custom provider as is (no live models, no reasoning control).
+- **Consequences:** Clients keep official images; the piece must be re-installed per stack (scriptable later) and re-tested on upgrades. Built-in AI steps/agents don't use it — flows use the piece's actions.

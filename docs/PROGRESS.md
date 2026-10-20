@@ -1,21 +1,20 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 0 — Fork, set up & explore Activepieces
-- **Current task:** `/opskit-explore` (install & explore CE 0.92.3)
+- **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
+- **Current task:** 1.1 (see `docs/tasks/phase-1.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner check-in (end of Phase 0):** review `docs/EXPLORATION_REPORT.md` + `docs/phase0-screenshots/`; decide on the optional AI-step test (needs a free Gemini key) and confirm start of Phase 1.
-2. Moved out of Phase 0 (covered by later acceptance tests): stored-connection decrypt after restore → Phase 3; per-container RAM under load → Phase 2 `selftest`.
-3. Then run `/opskit-start-phase` (or follow `.agents/skills/opskit-start-phase/SKILL.md`) to create `docs/tasks/phase-1.md` and start Phase 1 (opskit foundation).
-4. Codespace housekeeping (owner): delete old `symmetrical-fishstick`; stop `verbose-trout` and set port 8080 back to Private when not in use.
+1. Work `docs/tasks/phase-1.md` top to bottom (one task, test, commit, push).
+2. Owner answers Q1 (schema validator) before task 1.4.
+3. Task 1.12 needs the owner: enter base URL + API key in the piece's connection in the Codespace Activepieces.
 
 ## Phases
 | Phase | Name | Status | Verified |
 |---|---|---|---|
-| 0 | Fork, set up & explore Activepieces | Done pending owner check-in | — |
-| 1 | Opskit foundation | Not started | — |
+| 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
+| 1 | Opskit foundation (+ openai-compatible piece) | In progress | — |
 | 2 | Client deployment kit | Not started | — |
 | 3 | Backups & restore | Not started | — |
 | 4 | Monitoring & alerts | Not started | — |
@@ -28,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — Phase 1 started.** Owner closed Phase 0 and requested an OpenAI-compatible BYOK piece (ADR-013). Task file `docs/tasks/phase-1.md` (12 tasks).
 - **2026-10-20 — Phase 0 flows in Codespace.** Codespace `verbose-trout` up via `.devcontainer/opskit` (771 pieces, 420 templates). Built + ran lead-capture (webhook/code/router/HTTP/failing branch) and invoice-reminder (schedule/loop/delay) via API; export/import round trip; 20 concurrent runs all succeeded (≈0.3 s each); screenshots in `docs/phase0-screenshots/`, flow generators in `docs/phase0-flows/`. Report updated. Verify: open the Codespace URL, Runs page shows 22 SUCCEEDED + 1 FAILED.
 - **2026-10-20 — Codespaces + one-command explore stack.** Added `.devcontainer/opskit/devcontainer.json` (ledger #3) and `opskit/bin/explore-stack` (up/status/stop; Codespaces URL aware). Verified: shellcheck clean; fresh-path test created a new stack from scratch, healthy in 10 s (GHCR pull works now); existing stack re-run keeps data; devcontainer parsed by `@devcontainers/cli read-configuration`. **Not verified:** a real Codespace build (owner to open one). Laptop requirements in `docs/HANDOFF.md`.
 - **2026-10-20 — Phase 0: backup→restore + idle stats.** Restore into fresh stack works (admin/projects/worker); idle ≈ 760 MiB; `flow_run` checked live (read-only). Files: `docs/EXPLORATION_REPORT.md`. Still blocked on container internet for pieces.

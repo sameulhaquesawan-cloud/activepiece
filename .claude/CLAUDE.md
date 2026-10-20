@@ -127,7 +127,7 @@ Update PROGRESS (incl. **Next steps**, precise enough for any AI or person to co
 
 ### Custom pieces & flow template rules
 
-- Custom pieces and our own image are V2: do not build them in V1.
+- Custom pieces and our own image are V2: do not build them in V1 — except `packages/pieces/custom/openai-compatible` (ADR-013), installed via CE archive install.
 - Flow templates: `flow.json` (exported, placeholders instead of real IDs/keys), `README.md`, `test/` payloads, `CHECKLIST.md`; every template includes a failure-notification convention.
 - Templates must import into a fresh CE stack of the pinned version before they count as done.
 
