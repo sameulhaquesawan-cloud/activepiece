@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# opskit dispatcher: `opskit <command> [args]`. Each command lives in lib/commands/<command>.sh
+# with a "# summary: ..." line and a cmd_main function.
+set -euo pipefail
+
+OPSKIT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export OPSKIT_ROOT
+# shellcheck source=../lib/log.sh
+source "${OPSKIT_ROOT}/lib/log.sh"
+
+COMMANDS_DIR="${OPSKIT_ROOT}/lib/commands"
+
+list_commands() {
+  local file name summary
+  for file in "${COMMANDS_DIR}"/*.sh; do
+    [ -e "$file" ] || continue
+    name="$(basename "$file" .sh)"
+    summary="$(sed -n 's/^# summary: //p' "$file" | head -n 1)"
+    printf '  %-12s %s\n' "$name" "$summary"
+  done
+}
+
+usage() {
+  cat <<EOF
+Usage: opskit <command> [args]   (opskit <command> --help for details)
+
+Commands:
+EOF
+  list_commands
+}
+
+main() {
+  local command="${1:-}"
+  case "$command" in
+    ""|-h|--help|help)
+      usage
+      return 0
+      ;;
+  esac
+  if [[ ! "$command" =~ ^[a-z][a-z0-9-]*$ ]] || [ ! -f "${COMMANDS_DIR}/${command}.sh" ]; then
+    log_fail "unknown command: ${command} (see: opskit --help)"
+    return 1
+  fi
+  shift
+  # shellcheck source=/dev/null
+  source "${COMMANDS_DIR}/${command}.sh"
+  cmd_main "$@"
+}
+
+main "$@"

@@ -9,7 +9,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 
 ## Tasks
 
-### [ ] 1.1 — Skeleton, dispatcher, logging
+### [x] 1.1 — Skeleton, dispatcher, logging
 - **Goal:** `opskit/` layout per TECH_ARCHITECTURE §3; `bin/opskit` dispatcher (`--help`, unknown command → exit 1); `lib/log.sh` (`[ok]`/`[warn]`/`[fail]`, die); `.gitignore` for `opskit/clients/`, `opskit/hosts/`, logs.
 - **Spec refs:** 3.1, 3.10; TECH_ARCHITECTURE §3–4
 - **Files:** `opskit/bin/opskit`, `opskit/lib/log.sh`, `opskit/tests/*.bats`, `.gitignore` (our block), nested `CLAUDE.md`

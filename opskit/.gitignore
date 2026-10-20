@@ -1,7 +1,4 @@
-clients/
-hosts/
-*.env
-*.age
-*.sql
-*.sql.gz
+/clients/
+/hosts/
 logs/
+*.log
