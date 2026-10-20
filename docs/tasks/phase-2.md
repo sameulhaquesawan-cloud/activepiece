@@ -37,7 +37,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Goal:** validate → render → push files → `docker compose -p <id> up -d` → wait app healthy → worker registered (app log `Poll request received`) → write Caddy site + reload → HTTPS health through Caddy → record `status: deployed` + history.
 - **Acceptance:** re-running deploy changes nothing (same container IDs).
 
-### [ ] 2.7 — `opskit client pause|resume|offboard`
+### [x] 2.7 — `opskit client pause|resume|offboard`
 - **Goal:** pause/resume = compose stop/start + status; offboard = stop + status `offboarded` + `offboarded_at`; `--purge` (only after `offboard_retention_days`, `--yes` + typed id) removes the stack and its volumes.
 - **Tests:** status transitions; purge refused before retention / without confirmation.
 
