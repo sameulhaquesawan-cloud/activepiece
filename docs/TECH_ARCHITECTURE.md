@@ -6,19 +6,17 @@
 ```mermaid
 flowchart LR
   OP[Owner laptop - WSL2] -->|ssh + opskit| H1[Dedicated host - client A stack]
-  OP -->|ssh + opskit| H2[Shared host - clients B, C stacks]
-  GH[GitHub fork + Actions] -->|image ghcr.io/owner/activepieces| H1
-  GH --> H2
-  H1 -->|heartbeats, failed runs, backups status| HUB[Ops-hub: Activepieces + Uptime Kuma]
-  H2 --> HUB
-  HUB -->|alerts, reports| CH[Telegram / Email / Slack / WhatsApp]
+  IMG[Official image activepieces/activepieces:tag] --> H1
+  H1 -->|alerts, digest, reports - direct| CH[Telegram / Email / Slack]
+  H1 -->|backup heartbeats| UK[Uptime Kuma - owner monitoring host]
+  UK -->|health checks| H1
+  UK -->|down / missed heartbeat| CH
   H1 -->|rclone| BK[(Off-server backups)]
-  H2 --> BK
-  UR[UptimeRobot] --> HUB
+  UR[UptimeRobot] --> UK
 ```
 
 ## 2. Client stack (per client)
-Caddy site `https://<domain>` → `app` (:8080 internal) · `worker` (replicas from config, `AP_FRONTEND_URL=http://app`) · `postgres` (volume `<id>_postgres`) · `redis`. Only Caddy publishes 80/443. Host cron: backup, failed-run detector, host health, heartbeat.
+Caddy site `https://<domain>` → `app` (:80 inside the container; listens on IPv6 `::`) · `worker` (replicas from config, `AP_FRONTEND_URL=http://app`) · `postgres` (volume `<id>_postgres`) · `redis`. Only Caddy publishes 80/443. Host cron: backup, failed-run detector, host health, heartbeat.
 
 ## 3. Repo structure (fork)
 ```
@@ -31,12 +29,12 @@ opskit/
   templates/            compose.yml.tmpl, env.tmpl, caddy.tmpl, cron.tmpl, client.yaml.tmpl, alerts/, docs/, report/
   agent/                scripts copied to hosts: backup.sh, detect-failed-runs.sh, health.sh, heartbeat.sh
   flows/<template>/     flow.json, README.md, test/, CHECKLIST.md
-  hub/                  ops-hub flows + Uptime Kuma setup notes
+  hub/                  Uptime Kuma setup notes (+ demo-only ops-hub)
   hosts/                <host>.yaml host registry: IPs, mode, capacity (git-ignored)
   clients/              git-ignored registry
   tests/                bats tests + fixtures
 packages/pieces/custom/<name>   our pieces
-.github/workflows/opskit-ci.yml, opskit-image.yml
+.github/workflows/opskit-ci.yml   (opskit-image.yml is V2)
 docs/                   SPEC, ADRs, runbooks/
 ```
 Dependency direction: `bin → lib → templates/schema`; host agent scripts are standalone (no repo needed on hosts).
@@ -49,10 +47,10 @@ parse args → load + validate `client.yaml` → confirm if destructive → act 
 - **Backup:** pg_dump (container) → gzip → age-encrypt `.env` → rclone copy → prune → heartbeat/alert.
 - **Restore:** fetch backup → new stack (staging/new host) → load dump → decrypt `.env` → up → smoke tests.
 - **Upgrade:** backup → staging restore on new tag → smoke → promote prod → smoke → rollback if needed.
-- **Alert:** detector finds failed run → POST ops-hub `/webhooks/<alert-router>` → route by client channels (+ owner Telegram) → de-dup window 30 min.
+- **Alert:** detector finds failed run → `opskit` alert helper on the host sends it directly to the client's channels (+ owner Telegram) → de-dup window 30 min (state file on host).
 
 ## 6. Sizing
-Default per client: app 1 GB limit, worker 1 replica 1 GB, postgres 512 MB–1 GB, redis 128 MB; Phase 0 measurements override defaults. Shared host warning at 85% memory.
+Default per client: app 1 GB limit, worker 1 replica 1 GB, postgres 512 MB–1 GB, redis 128 MB; Phase 0 measurements override defaults. Shared hosts (later): warning at 85% memory.
 
 ## 7. Cross-cutting
 Secrets 600 perms; UTC on hosts; quiet hours per client timezone; all scripts `set -euo pipefail`; shellcheck; idempotency.

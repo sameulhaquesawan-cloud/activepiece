@@ -9,7 +9,7 @@ Fork → clone in WSL → pin tag → official CE install → worker fix → exp
 `client new acme` → edit `client.yaml` → `host bootstrap acme-vps` → `render acme` → `deploy acme` → import templates → connect client-owned accounts → test checklist → `docs acme` → go live.
 Edge: DNS not propagated (HTTPS fails → retry guidance) · port 80 blocked · worker not registered (worker URL check).
 
-### O3. Onboard onto a shared host ⭐
+### O3. Onboard onto a shared host ⭐ (later — after the first paying client)
 Same, `host.mode: shared`; ports/routes auto-allocated; `host capacity` must pass.
 
 ### O4. Nightly backup + monthly restore test ⭐
@@ -17,15 +17,15 @@ Cron backup → off-server copy → heartbeat; monthly restore into temp stack �
 Edge: remote unreachable (alert, keep local) · disk full (alert, prune).
 
 ### O5. Failure alert at night ⭐
-Flow fails → detector (≤ 5 min) → ops-hub → owner Telegram + client channels (quiet hours respected for non-critical) → owner fixes → resolved note.
+Flow fails → detector (≤ 5 min) → direct alert → owner Telegram + client channels (quiet hours respected for non-critical) → owner fixes → resolved note.
 
 ### O6. Upgrade a client ⭐
 Sync fork to new release → CI image → `upgrade acme --to <tag>` → staging smoke → prod → smoke → report entry; rollback path.
 
 ### O7. Monthly care report
-Day 1 → `report acme --month` (or scheduled) → ops-hub emails client → owner invoices.
+Day 1 → `report acme --month` (or scheduled) → emailed to client (msmtp) → owner invoices.
 
-### O8. Custom piece
+### O8. Custom piece (V2)
 Create in `packages/pieces/custom/` → tests → CI image → deploy → use in client flow.
 
 ### O9. Offboard

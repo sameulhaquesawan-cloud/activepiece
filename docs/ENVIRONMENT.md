@@ -10,23 +10,22 @@
 | VS Code + Remote-WSL | Open the repo from WSL so the IDE agent runs Bash |
 | Claude Code (cloud session at claude.ai/code, or CLI in WSL) | Cloud sessions get tools + Docker from `.claude/hooks/session-start.sh` |
 | git, openssl, jq, yq, curl, gettext (envsubst), shellcheck, bats, age, rclone, ssh | `opskit doctor` checks all |
-| Node + bun per upstream `.nvmrc`/docs | Only for custom pieces and upstream dev (Phase 0/8) |
+| Node + bun per upstream `.nvmrc`/docs | Only for upstream dev and V2 custom pieces |
 | ngrok (free) | Local webhook testing only |
 
 ## 2. Accounts (free unless noted)
-GitHub (fork, Actions, GHCR) · Telegram bot via @BotFather (demo alerts) · Gemini API key (free tier, practice data only) · ngrok free · UptimeRobot free · Backblaze B2 (10 GB free) or other rclone remote · VPS provider (paid, per client) · domain (owner + clients) · Oracle Cloud (optional, practice).
+GitHub (fork, Actions, GHCR) · Telegram bot via @BotFather (demo alerts) · Gemini API key (free tier, practice data only) · UptimeRobot free · Backblaze B2 (10 GB free) or other rclone remote · VPS provider (paid, per client) · domain (owner + clients) · Oracle Cloud (optional, practice).
 
 ## 3. Opskit variables (per client, in `client.yaml`; secrets in host `.env` only)
 | Name | Where | How to get |
 |---|---|---|
-| `AP_ENCRYPTION_KEY`, `AP_JWT_SECRET`, `AP_POSTGRES_PASSWORD` | generated into host `.env` | `opskit render` (openssl rand; aborts if empty) |
+| `AP_API_KEY`, `AP_ENCRYPTION_KEY`, `AP_JWT_SECRET`, `AP_POSTGRES_PASSWORD` | generated into host `.env` | `opskit render` (openssl rand; aborts if empty) |
 | `AP_FRONTEND_URL` | `.env` (app) / compose (worker = `http://app`) | domain from `client.yaml` |
-| `AP_EDITION=ce` | `.env` | fixed (verify exact value) |
-| `OPSKIT_HUB_URL`, `OPSKIT_HUB_TOKEN` | host agent config | ops-hub alert-router webhook |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | ops-hub connections | @BotFather; chat id via getUpdates |
-| SMTP host/user/pass | ops-hub connection | provider (e.g. Brevo/Gmail app password) |
-| Slack webhook URL | ops-hub connection | Slack app → Incoming Webhooks |
-| WhatsApp Cloud API token + phone id | ops-hub connection (client) | Meta developer app (client-provided) |
+| `AP_EDITION=ce`, `AP_TELEMETRY_ENABLED=false` | `.env` | fixed (verified 0.92.3) |
+| `OPSKIT_KUMA_PUSH_URL` | host agent config | Uptime Kuma push monitor URL per client |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | host agent config (secret, mode 600) | @BotFather; chat id via getUpdates |
+| SMTP host/user/pass | host msmtp config (secret, mode 600) | provider (e.g. Brevo/Gmail app password) |
+| Slack webhook URL | host agent config (secret) | Slack app → Incoming Webhooks |
 | rclone remote | host | `rclone config` (B2 key id/app key) |
 | age public key | repo `opskit/keys/owner.age.pub` (public only) | `age-keygen`; private key offline |
 

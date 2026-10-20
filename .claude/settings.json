@@ -18,8 +18,8 @@
   },
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
-    "ponytail@ponytail": true,
-    "craftspace@craftspace": true
+    "ponytail@ponytail": false,
+    "craftspace@craftspace": false
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -34,15 +34,6 @@
         "source": "github",
         "repo": "abuaboud/craftspace-plugin"
       }
-    }
-  },
-  "mcpServers": {
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ]
     }
   }
 }

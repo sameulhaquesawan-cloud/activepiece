@@ -1,6 +1,6 @@
 # .claude/CLAUDE.md — Automation Ops Kit (fork of activepieces/activepieces)
 
-This repo is the owner's fork of Activepieces (open-source Zapier alternative, MIT Community Edition) plus **opskit**: tooling to deploy, back up, monitor, upgrade, document and report on one Activepieces stack per client, a flow template library, and custom pieces built into the owner's own Docker image.
+This repo is the owner's fork of Activepieces (open-source Zapier alternative, MIT Community Edition) plus **opskit**: tooling to deploy, back up, monitor, upgrade, document and report on one Activepieces stack per client, and a flow template library. Custom pieces / own Docker image are V2 (owner, 20 Oct 2026).
 
 **Two instruction sets apply.** Upstream's root `AGENTS.md`/`CLAUDE.md` govern upstream code. This file (including the rules below) and `docs/SPEC.md` govern opskit. On conflict: upstream conventions for how to edit upstream files; SPEC for what opskit does.
 
@@ -28,17 +28,17 @@ This repo is the owner's fork of Activepieces (open-source Zapier alternative, M
 - **Phase 0 = install & explore Activepieces as it is** (`/opskit-explore`): no opskit code, no upstream changes. Then continue; ask the owner only when blocked or unclear.
 - ONE task at a time; never jump ahead. SPEC silent → simplest option consistent with SPEC 3, log in ASSUMPTIONS.
 - Never invent Activepieces env vars, tables, APIs or piece CLI commands: check the pinned source/docs/running instance first; *(verify)* items must be verified and recorded.
-- **Community Edition only**: never `AP_EDITION=ee`, never touch `packages/ee/`.
+- **Community Edition only**: never `AP_EDITION=ee`, never touch `packages/ee/` or `packages/server/api/src/app/ee/`.
 - **Client safety**: no secrets in git; destructive actions need `--yes`, typed client id, and owner approval.
 - Never mark done unless `opskit/bin/check` passes (and `opskit/bin/opskit selftest` from Phase 2).
 - Never remove or weaken a test. Don't edit SPEC or anything in `.claude/` without approval.
 - Stop and ask before: new dependencies, upstream file edits, anything touching a real client host.
 
 ## Stack
-Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. Opskit: Bash (shellcheck, bats), JSON schema, envsubst/yq/jq, Caddy, ufw, age, rclone, Uptime Kuma; GitHub Actions + GHCR. Run everything in Linux: the Claude Code cloud session (Docker daemon started by the SessionStart hook) or WSL2 Ubuntu on the owner's Windows laptop (12 GB RAM).
+Upstream: TypeScript monorepo (bun, turbo), Docker app/worker, Postgres, Redis. Opskit: Bash (shellcheck, bats), JSON schema, envsubst/yq/jq, Caddy, ufw, age, rclone, Uptime Kuma; GitHub Actions. Run everything in Linux: the Claude Code cloud session (Docker daemon started by the SessionStart hook) or WSL2 Ubuntu on the owner's Windows laptop (12 GB RAM).
 
 ## Repo layout (ours)
-`opskit/bin` · `opskit/lib` · `opskit/schema` · `opskit/templates` · `opskit/agent` (host scripts) · `opskit/flows` · `opskit/hub` · `opskit/tests` · `opskit/clients` + `opskit/hosts` (git-ignored) · `packages/pieces/custom/` · `.github/workflows/opskit-*.yml` · `explore/` (Phase 0 scratch, git-ignored) · `docs/`
+`opskit/bin` · `opskit/lib` · `opskit/schema` · `opskit/templates` · `opskit/agent` (host scripts) · `opskit/flows` · `opskit/tests` · `opskit/clients` + `opskit/hosts` (git-ignored) · `packages/pieces/custom/` · `.github/workflows/opskit-*.yml` · `explore/` (Phase 0 scratch, git-ignored) · `docs/`
 
 ## Commands (Linux shell)
 `opskit/bin/check` · `opskit/bin/check --quick` · `opskit/bin/opskit doctor` · `opskit/bin/opskit selftest` · `docker compose -p <id> ps`
@@ -77,7 +77,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 - One client = one stack: own compose project (`-p <client_id>`), `.env`, volumes `<id>_postgres`/`<id>_redis`, domain, backups. Never share data between stacks.
 - `client.yaml` (validated by `opskit/schema/client.schema.json`) drives rendering; never hand-edit compose/.env on servers — change config, re-render, redeploy.
 - Rendered stacks always: pinned image tag, `AP_EDITION=ce`, worker `AP_FRONTEND_URL=http://app`, worker replicas from config (default 1), memory limits, healthchecks, only Caddy publishing ports.
-- Hosts talk to the owner only through the ops-hub (heartbeats, alerts, reports); fallback email if the hub is unreachable.
+- Hosts send alerts directly to the configured channels (Telegram, email, Slack) and push heartbeats to Uptime Kuma; no hub in the alert path (an ops-hub stack is for demos only).
 - Scripts are Bash, `set -euo pipefail`, idempotent; host agent scripts in `opskit/agent/` are standalone (no repo needed on hosts).
 - Custom pieces follow upstream piece conventions and ship only via our CI image.
 - Follow `docs/TECH_ARCHITECTURE.md` Section 3 layout and command pattern.
@@ -95,7 +95,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 - Detectors/reports use a read-only DB role and read-only SQL.
 - Alert/report payloads: no secrets, no full personal data; error excerpts ≤ 300 chars.
 - Gemini free tier only with practice data; client AI steps use client-owned keys.
-- Never set `AP_EDITION=ee`, never touch `packages/ee/`, never add a license key.
+- Never set `AP_EDITION=ee`, never touch `packages/ee/` or `packages/server/api/src/app/ee/`, never add a license key.
 
 ### Upstream fork rules
 
@@ -117,7 +117,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 
 ### Reliability rules (backups, alerts, upgrades)
 
-- A backup counts only if: dump + encrypted `.env` exist locally and remotely, sizes > 0, and a heartbeat reached the ops-hub.
+- A backup counts only if: dump + encrypted `.env` exist locally and remotely, sizes > 0, and a heartbeat reached its Uptime Kuma push monitor.
 - Restores go into a fresh stack; never over a running stack without `--overwrite --yes`.
 - Monthly automated restore test per client; result appears in the care report.
 - Failed-run detector: read-only SQL, runs every 5 min, de-duplicates (30 min window), includes flow name + run link.
@@ -127,8 +127,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 
 ### Custom pieces & flow template rules
 
-- Custom pieces live in `packages/pieces/custom/<name>`; use upstream's piece CLI/framework and naming; each action/trigger has tests; no secrets in code (piece auth props only).
-- Pieces are shipped only through `opskit-image.yml` builds; image tags `<upstream-tag>-ops.<n>`.
+- Custom pieces and our own image are V2: do not build them in V1.
 - Flow templates: `flow.json` (exported, placeholders instead of real IDs/keys), `README.md`, `test/` payloads, `CHECKLIST.md`; every template includes a failure-notification convention.
 - Templates must import into a fresh CE stack of the pinned version before they count as done.
 
@@ -143,7 +142,6 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 #### What must have tests
 - Secret generation never empty; config/schema validation errors
 - Compose/.env/Caddy rendering (worker URL, replicas, limits, CE edition, pinned tag)
-- Shared-host port/route allocation and capacity warning
 - Backup → restore round trip incl. stored connection decrypting; retention pruning
 - Failed-run detector query + de-duplication; alert payload per channel
 - Upgrade promote and rollback paths
@@ -151,7 +149,7 @@ Update PROGRESS; ADR for architectural choices; ledger for upstream edits; conve
 - Custom piece actions (upstream test runner)
 
 #### Tools
-shellcheck, bats-core, docker compose (cloud session or WSL) for integration tests, mock ops-hub (small HTTP listener), fixture Postgres data. Never test against real client hosts.
+shellcheck, bats-core, docker compose (cloud session or WSL) for integration tests, mock channel endpoint (small HTTP listener), fixture Postgres data. Never test against real client hosts.
 
 ### Git rules
 

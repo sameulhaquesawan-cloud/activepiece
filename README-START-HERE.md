@@ -18,4 +18,4 @@ This repo = Activepieces Community Edition (upstream, pinned release, see `docs/
 | `/opskit-resume` | Rebuild context in a new session |
 
 ## Rules in one breath
-Source of truth: `docs/SPEC.md`. Agent rules: `.claude/CLAUDE.md`. Community Edition only — never set `AP_EDITION=ee` or use anything in `packages/ee/`. No secrets in git. Upstream remote is fetch-only; upstream GitHub Actions stay disabled in the repo settings.
+Source of truth: `docs/SPEC.md`. Agent rules: `.claude/CLAUDE.md`. Community Edition only — never set `AP_EDITION=ee` or use anything in `packages/ee/` or `packages/server/api/src/app/ee/`. No secrets in git. Upstream remote is fetch-only; upstream GitHub Actions stay disabled in the repo settings.

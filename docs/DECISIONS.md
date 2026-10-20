@@ -3,7 +3,7 @@
 Format: Context → Decision → Alternatives → Consequences. Never delete; mark superseded.
 
 ### ADR-001: Fork Activepieces; clients run images built from the fork
-- **Status:** accepted
+- **Status:** accepted; image part superseded by ADR-012 (clients run official images in V1)
 - **Context:** Owner wants an enhanced repo on GitHub to install clients from; private piece upload is paid, and the custom-piece route assumes a fork.
 - **Decision:** Fork, pin release tags, fetch-only upstream; build our CE image with custom pieces via GitHub Actions.
 - **Alternatives:** Ops-kit repo with Activepieces cloned inside (can't ship custom pieces on CE); official images only.
@@ -33,7 +33,7 @@ Format: Context → Decision → Alternatives → Consequences. Never delete; ma
 - **Consequences:** Simple to run anywhere; keep scripts small and tested.
 
 ### ADR-006: Ops-hub = our own Activepieces + Uptime Kuma
-- **Status:** accepted
+- **Status:** superseded by ADR-012
 - **Context:** CE alerting features may be limited; multi-channel routing needed; dogfooding shows clients the product.
 - **Decision:** Hosts push heartbeats/alerts to ops-hub webhooks; ops-hub flows route to Telegram/email/Slack/WhatsApp and send reports.
 - **Consequences:** Ops-hub must itself be monitored (UptimeRobot) and backed up.
@@ -60,3 +60,10 @@ Format: Context → Decision → Alternatives → Consequences. Never delete; ma
 - **Context:** Owner moved the build from Factory IDE to Claude Code cloud sessions. Upstream already ships `.claude/` (rules, `settings.json`) and `.claude/skills` as a symlink to `.agents/skills`.
 - **Decision:** Opskit rules in `.claude/CLAUDE.md` (new file, upstream has none); our skills in `.agents/skills/opskit-*` (prefixed, new folders only); nested `CLAUDE.md` in `opskit/`, `opskit/agent/`, `opskit/flows/`, `packages/pieces/custom/`; SessionStart hook `.claude/hooks/session-start.sh` registered in upstream `.claude/settings.json` (ledger #1). `.factory/` removed.
 - **Consequences:** One upstream file edited (settings.json); re-apply on upstream sync.
+
+### ADR-012: V1 = official images + direct alerts; custom pieces/own image and ops-hub routing deferred
+- **Status:** accepted (owner, 20 Oct 2026)
+- **Context:** Plan review after pinning 0.92.3 (SPEC Appendix C). Private pieces are paid; CE admins can install pieces via `POST /api/v1/pieces`; an ops-hub in the alert path is a single point of failure.
+- **Decision:** Client stacks run official `activepieces/activepieces:<tag>` images; Improvement 8 (custom pieces + own image) → V2. Host scripts send alerts directly (Telegram/email/Slack) and push heartbeats to Uptime Kuma; an ops-hub Activepieces stack is demo-only. WhatsApp → later add-on; shared hosts → after first paying client.
+- **Alternatives:** ADR-001 own image; ADR-006 ops-hub routing.
+- **Consequences:** Simpler upgrades (official tags) and no hub outage blind spot; per-host alert config holds channel secrets (mode 600, never in git).
