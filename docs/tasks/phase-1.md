@@ -35,7 +35,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** envsubst/yq render helper that fails on any unresolved `${...}` and never prints secret values.
 - **Tests:** bats: complete vars render; missing var fails naming the variable (not its value).
 
-### [ ] 1.6 — `lib/ssh.sh`
+### [x] 1.6 — `lib/ssh.sh`
 - **Goal:** `ssh_run`/`scp_put` wrappers: BatchMode, `StrictHostKeyChecking=accept-new`, ConnectTimeout, ServerAlive, key-only.
 - **Tests:** bats with a stub `ssh`/`scp` on PATH asserting the exact options.
 
