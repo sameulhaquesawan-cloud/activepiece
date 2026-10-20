@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# Phase 0 helper: run the pinned upstream Activepieces CE as it is, in git-ignored explore/stack.
+# Upstream files are copied, never edited. Tool-neutral: any person or AI agent can run it.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: opskit/bin/explore-stack <up|status|stop> [--help]
+
+  up      create explore/stack on first run (official tools/deploy.sh secrets,
+          CE edition, 1 worker, worker AP_FRONTEND_URL=http://app, telemetry off),
+          start it as compose project "ap0" and wait for /api/v1/health
+  status  show containers and health
+  stop    stop the containers (data volumes are kept)
+EOF
+}
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+STACK_DIR="${EXPLORE_DIR:-${REPO_ROOT}/explore/stack}"
+PROJECT="${EXPLORE_PROJECT:-ap0}"
+PORT="8080"
+
+compose() {
+  docker compose -p "$PROJECT" --project-directory "$STACK_DIR" "$@"
+}
+
+create_stack() {
+  mkdir -p "$STACK_DIR"
+  cp "${REPO_ROOT}/docker-compose.yml" "${REPO_ROOT}/.env.example" "$STACK_DIR/"
+  (cd "$STACK_DIR" && bash "${REPO_ROOT}/tools/deploy.sh" >/dev/null)
+  chmod 600 "${STACK_DIR}/.env"
+  echo "[ok] created ${STACK_DIR} with fresh secrets"
+}
+
+choose_image() {
+  local ghcr_image hub_image
+  ghcr_image="$(grep -m1 -o 'ghcr.io/activepieces/activepieces:[^[:space:]]*' "${STACK_DIR}/docker-compose.yml" || true)"
+  [ -n "$ghcr_image" ] || return 0
+  if docker pull -q "$ghcr_image" >/dev/null 2>&1; then
+    echo "[ok] image ${ghcr_image}"
+    return 0
+  fi
+  hub_image="${ghcr_image#ghcr.io/}"
+  sed -i "s|${ghcr_image}|${hub_image}|" "${STACK_DIR}/docker-compose.yml"
+  echo "[warn] GHCR unreachable, using the same official image from Docker Hub: ${hub_image}"
+}
+
+frontend_url() {
+  if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]; then
+    printf 'https://%s-%s.%s' "$CODESPACE_NAME" "$PORT" "$GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN"
+  else
+    printf 'http://localhost:%s' "$PORT"
+  fi
+}
+
+write_override() {
+  local app_extra=""
+  if [ ! -e /proc/net/if_inet6 ]; then
+    cat > "${STACK_DIR}/ipv4-shim.js" <<'EOF'
+const net = require('net')
+const originalListen = net.Server.prototype.listen
+net.Server.prototype.listen = function (...args) {
+  if (args[0] && typeof args[0] === 'object' && args[0].host === '::') {
+    args[0] = { ...args[0], host: '0.0.0.0' }
+  }
+  return originalListen.apply(this, args)
+}
+EOF
+    app_extra=$'      - NODE_OPTIONS=--require /opt/ipv4-shim.js\n    volumes:\n      - ./ipv4-shim.js:/opt/ipv4-shim.js:ro'
+    echo "[warn] kernel has no IPv6: app listens via explore-only IPv4 shim"
+  fi
+  {
+    printf 'services:\n  app:\n    environment:\n'
+    printf '      - AP_CONTAINER_TYPE=APP\n      - AP_EDITION=ce\n'
+    printf '      - AP_FRONTEND_URL=%s\n      - AP_TELEMETRY_ENABLED=false\n' "$(frontend_url)"
+    [ -z "$app_extra" ] || printf '%s\n' "$app_extra"
+    printf '  worker:\n    environment:\n'
+    printf '      - AP_CONTAINER_TYPE=WORKER\n      - AP_EDITION=ce\n'
+    printf '      - AP_FRONTEND_URL=http://app\n      - AP_TELEMETRY_ENABLED=false\n'
+    printf '    deploy:\n      replicas: 1\n'
+  } > "${STACK_DIR}/docker-compose.override.yml"
+}
+
+wait_healthy() {
+  local _ code=""
+  for _ in $(seq 1 120); do
+    code="$(curl -s -o /dev/null -w '%{http_code}' --noproxy '*' "http://localhost:${PORT}/api/v1/health" || true)"
+    [ "$code" = "200" ] && break
+    sleep 2
+  done
+  if [ "$code" = "200" ]; then
+    echo "[ok] Activepieces is up: $(frontend_url)"
+  else
+    echo "[fail] health check did not pass; see: docker compose -p ${PROJECT} logs app"
+    return 1
+  fi
+}
+
+cmd_up() {
+  [ -f "${STACK_DIR}/.env" ] || create_stack
+  choose_image
+  write_override
+  local out
+  if ! out="$(compose up -d 2>&1)"; then
+    printf '%s\n' "$out" | tail -3
+    echo "[fail] docker compose up (only one explore stack can run: upstream uses fixed container names)"
+    return 1
+  fi
+  echo "[ok] containers started"
+  wait_healthy
+}
+
+cmd_status() {
+  compose ps --format '{{.Service}}: {{.Status}}'
+  curl -s --noproxy '*' "http://localhost:${PORT}/api/v1/health" || echo "[warn] app not answering"
+  echo
+}
+
+main() {
+  case "${1:-}" in
+    up) cmd_up ;;
+    status) cmd_status ;;
+    stop) compose stop >/dev/null 2>&1 && echo "[ok] stopped (data kept)" ;;
+    -h|--help) usage ;;
+    *) usage >&2; return 1 ;;
+  esac
+}
+
+main "$@"

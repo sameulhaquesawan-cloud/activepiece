@@ -73,7 +73,7 @@ Update PROGRESS (incl. **Next steps**, precise enough for any AI or person to co
 
 ### Architecture rules (mirror of SPEC Section 3)
 
-- Our code lives only in `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, `docs/`, IDE config. Everything else is upstream.
+- Our code lives only in `opskit/`, `packages/pieces/custom/`, `.github/workflows/opskit-*.yml`, `docs/`, `.devcontainer/opskit/`, IDE config. Everything else is upstream.
 - One client = one stack: own compose project (`-p <client_id>`), `.env`, volumes `<id>_postgres`/`<id>_redis`, domain, backups. Never share data between stacks.
 - `client.yaml` (validated by `opskit/schema/client.schema.json`) drives rendering; never hand-edit compose/.env on servers — change config, re-render, redeploy.
 - Rendered stacks always: pinned image tag, `AP_EDITION=ce`, worker `AP_FRONTEND_URL=http://app`, worker replicas from config (default 1), memory limits, healthchecks, only Caddy publishing ports.

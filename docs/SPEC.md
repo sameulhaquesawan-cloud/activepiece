@@ -67,7 +67,7 @@ Custom pieces + own Docker image (Improvement 8), WhatsApp alerts (paid add-on),
 
 ## 3. Architecture rules (non-negotiable)
 
-1. **Fork layout.** Our paths: `opskit/` (bin, lib, templates, flows, clients [git-ignored], tests), `packages/pieces/custom/` (custom pieces), `.github/workflows/opskit-*.yml`, `docs/`, Claude Code config (`.claude/CLAUDE.md`, `.claude/hooks/`, `.agents/skills/opskit-*`, nested `CLAUDE.md` files in our folders), `README-START-HERE.md`. Everything else is upstream.
+1. **Fork layout.** Our paths: `opskit/` (bin, lib, templates, flows, clients [git-ignored], tests), `packages/pieces/custom/` (custom pieces), `.github/workflows/opskit-*.yml`, `docs/`, Claude Code config (`.claude/CLAUDE.md`, `.claude/hooks/`, `.agents/skills/opskit-*`, nested `CLAUDE.md` files in our folders), `.devcontainer/opskit/` (Codespaces), `README-START-HERE.md`. Everything else is upstream.
 2. **Upstream untouched by default.** Changes to upstream files need owner approval + ledger row + test. Upstream GitHub Actions are disabled in the fork (Settings → Actions) so they don't run or fail on our pushes; our workflows are separate files.
 3. **Pinned releases, manual sync.** `main` = upstream release tag + our commits; `upstream` remote is fetch-only; updates follow `docs/UPSTREAM_SYNC.md`. No automated merges.
 4. **Community Edition.** Every rendered `.env` sets `AP_EDITION=ce` explicitly (verified: default `ce`); code steps run `AP_EXECUTION_MODE=UNSANDBOXED` (verified default; fine for one client per server per upstream docs); `AP_TELEMETRY_ENABLED=false`.

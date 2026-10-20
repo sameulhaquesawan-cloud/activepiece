@@ -2,16 +2,18 @@
 
 > Derived from `docs/SPEC.md` Sections 4, 16. If this conflicts with SPEC, SPEC wins.
 
-## 1. Laptop tooling (all work happens in WSL2 Ubuntu)
+## 1. Machines
+Current: GitHub Codespaces with `.devcontainer/opskit/devcontainer.json` (free monthly quota). Later: the laptop. Requirements and steps for both: `docs/HANDOFF.md`. Any machine: run `opskit/bin/dev-env`.
+
+### Laptop tooling (all work happens in WSL2 Ubuntu)
 | Tool | Notes |
 |---|---|
 | Windows 10/11 + WSL2 Ubuntu 24.04 | `wsl --install -d Ubuntu-24.04` |
 | Docker Desktop (WSL2 backend, WSL integration on) | Compose v2 (`docker compose version`) |
 | VS Code + Remote-WSL | Open the repo from WSL so the IDE agent runs Bash |
-| Claude Code (cloud session at claude.ai/code, or CLI in WSL) | Cloud sessions get tools + Docker from `.claude/hooks/session-start.sh` |
+| Any AI tool (Claude Code, Codex, Cursor, …) | Claude cloud sessions run `opskit/bin/dev-env` via `.claude/hooks/session-start.sh` |
 | git, openssl, jq, yq, curl, gettext (envsubst), shellcheck, bats, age, rclone, ssh | `opskit doctor` checks all |
 | Node + bun per upstream `.nvmrc`/docs | Only for upstream dev and V2 custom pieces |
-| ngrok (free) | Local webhook testing only |
 
 ## 2. Accounts (free unless noted)
 GitHub (fork, Actions, GHCR) · Telegram bot via @BotFather (demo alerts) · Gemini API key (free tier, practice data only) · UptimeRobot free · Backblaze B2 (10 GB free) or other rclone remote · VPS provider (paid, per client) · domain (owner + clients) · Oracle Cloud (optional, practice).

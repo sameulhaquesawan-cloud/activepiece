@@ -1,0 +1,20 @@
+{
+  "name": "opskit (Activepieces CE explore + ops tooling)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": {
+      "label": "Activepieces",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "opskit/bin/dev-env",
+  "postStartCommand": "opskit/bin/dev-env && opskit/bin/explore-stack up"
+}
