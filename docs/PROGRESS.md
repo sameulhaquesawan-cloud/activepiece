@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 2 — Client deployment kit
-- **Current task:** 2.5 (see `docs/tasks/phase-2.md`)
+- **Current task:** 2.6 (see `docs/tasks/phase-2.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 2.5 host bootstrap done.** `opskit/agent/bootstrap.sh` (standalone, idempotent, `--dry-run`): Ubuntu 24.04 check, docker.io + docker-compose-v2 + ufw + unattended-upgrades, ssh user → docker group, ufw deny-in + ssh/80/443, auto-upgrades, 2 GB swap if RAM ≤ 4 GB, sshd key-only/no-root check (`--harden-ssh` writes a drop-in only if authorized_keys exists), edge: `<root>/caddy/etc/{Caddyfile,sites/}`, network `opskit_edge`, pinned `caddy:2.10.0` container. `opskit host bootstrap <host> [--dry-run] [--harden-ssh]`: ssh hosts copy + `sudo -n` (needs passwordless sudo), local hosts `--edge-only`. 5 tests incl. real Caddy HTTPS (docker-tagged). Real VPS run not verified (Phase 9).
 - **2026-10-20 — 2.4 host transport done.** `lib/host.sh`: `host_transport`, `host_root`, `host_run`, `host_put` (local = run/install here; ssh = `lib/ssh.sh` with the host's user/ip/port, mkdir → scp → chmod). 5 tests.
 - **2026-10-20 — 2.3 render done.** Templates `compose.yml.tmpl`, `env.tmpl`, `caddy-site.tmpl`, `cron.tmpl` (+ practice-only `compose.practice.yml.tmpl`/`ipv4-shim.js`); `lib/stack.sh` `stack_render`; `opskit render <id>` → `clients/<id>/rendered/` (dir 700, .env 600). 13 tests (pinned tag, CE, telemetry off, worker URL, replicas/limits, no ports/container_name, volumes, edge network, healthchecks, no secrets outside .env, `docker compose config`). Verify: see `opskit/tests/render_client.bats`.
 - **2026-10-20 — 2.2 secrets done.** `lib/secrets.sh`: `secrets_ensure` generates `AP_API_KEY` (hex 64), `AP_POSTGRES_PASSWORD`/`AP_JWT_SECRET` (hex 32), `AP_ENCRYPTION_KEY` (hex 16 = 32 chars, as upstream requires) once into `clients/<id>/secrets.env` (600); aborts on empty/malformed output; never regenerates (damaged file → restore from escrow); `secrets_export`. 7 tests. Also: `opskit validate` now runs npx from a temp dir (inside the installed monorepo npx scanned all workspaces: 24 s → 0.9 s).

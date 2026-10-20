@@ -122,6 +122,11 @@
         "acme_email": {
           "type": "string",
           "format": "email"
+        },
+        "container": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,40}$",
+          "default": "opskit-caddy"
         }
       }
     },

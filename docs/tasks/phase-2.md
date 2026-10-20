@@ -29,7 +29,7 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Goal:** `host_run`, `host_put` (local vs ssh via `lib/ssh.sh`), `host_load` (host file + defaults).
 - **Tests:** local runs commands; ssh mode calls stubbed ssh/scp with the host's user/ip/port.
 
-### [ ] 2.5 — `opskit host bootstrap <host>`
+### [x] 2.5 — `opskit host bootstrap <host>`
 - **Goal:** `agent/bootstrap.sh` (standalone, idempotent; Ubuntu 24.04: docker + compose plugin, ufw 22/80/443, unattended-upgrades, swap ≤ 4 GB RAM, sshd key-only/no-root check) + edge setup (network `opskit_edge`, pinned Caddy container, sites dir). Local transport runs edge setup only.
 - **Tests:** script shellcheck + `--dry-run` plan output; edge setup tagged docker.
 
