@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# Quality gate for opskit: shellcheck on every Bash file, then the bats suite.
+set -euo pipefail
+IFS=$'\n\t'
+
+usage() {
+  cat <<'EOF'
+Usage: opskit/bin/check [--quick] [--help]
+
+  --quick   skip tests tagged "docker" (integration tests that start containers)
+
+Runs shellcheck on all Bash files under opskit/ (plus .claude/hooks) and the
+bats tests in opskit/tests. Exits non-zero if anything fails.
+EOF
+}
+
+REPO_ROOT="${OPSKIT_CHECK_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+OPSKIT_DIR="${REPO_ROOT}/opskit"
+# shellcheck source=../lib/log.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/log.sh"
+
+bash_files() {
+  local file
+  while IFS= read -r -d '' file; do
+    case "$file" in
+      *.sh) printf '%s\n' "$file" ;;
+      *)
+        if head -n 1 "$file" | grep -qE '^#!/usr/bin/env bash|^#!/bin/bash'; then
+          printf '%s\n' "$file"
+        fi
+        ;;
+    esac
+  done < <(find "$OPSKIT_DIR" "${REPO_ROOT}/.claude/hooks" -type f ! -name '*.bats' \
+    ! -path '*/tests/fixtures/*' ! -path '*/clients/*' ! -path '*/hosts/*' -print0 2>/dev/null)
+}
+
+run_shellcheck() {
+  local files
+  mapfile -t files < <(bash_files)
+  if [ "${#files[@]}" -eq 0 ]; then
+    log_warn "shellcheck: no Bash files found"
+    return 0
+  fi
+  if shellcheck "${files[@]}"; then
+    log_ok "shellcheck: ${#files[@]} files clean"
+  else
+    log_fail "shellcheck found problems"
+    return 1
+  fi
+}
+
+run_bats() {
+  local quick="$1"
+  local args=(--recursive)
+  if [ "$quick" = "true" ]; then
+    args+=(--filter-tags '!docker')
+  fi
+  if [ ! -d "${OPSKIT_DIR}/tests" ]; then
+    log_warn "bats: no tests directory"
+    return 0
+  fi
+  if bats "${args[@]}" "${OPSKIT_DIR}/tests"; then
+    log_ok "bats: all tests passed$([ "$quick" = "true" ] && printf ' (docker tests skipped)')"
+  else
+    log_fail "bats: tests failed"
+    return 1
+  fi
+}
+
+main() {
+  local quick="false"
+  case "${1:-}" in
+    --quick) quick="true" ;;
+    -h|--help) usage; return 0 ;;
+    "") ;;
+    *) usage >&2; return 1 ;;
+  esac
+  local failed=0
+  run_shellcheck || failed=1
+  run_bats "$quick" || failed=1
+  if [ "$failed" -ne 0 ]; then
+    log_fail "check failed"
+    return 1
+  fi
+  log_ok "check passed"
+}
+
+main "$@"

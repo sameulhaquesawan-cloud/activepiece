@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** 1.2 (see `docs/tasks/phase-1.md`)
+- **Current task:** 1.3 (see `docs/tasks/phase-1.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 1.2 check done.** `opskit/bin/check [--quick]`: shellcheck on all opskit Bash files + `.claude/hooks`, then `bats --recursive opskit/tests` (`--quick` filters `# bats test_tags=docker`). `OPSKIT_CHECK_ROOT` lets tests run it on a fixture tree. 21 tests pass. Verify: `opskit/bin/check`.
 - **2026-10-20 — 1.1 skeleton done.** `opskit/bin/opskit` (commands in `opskit/lib/commands/*.sh`, `# summary:` line + `cmd_main`), `lib/log.sh`, `version` command, `opskit/VERSION`, `opskit/.gitignore` (`/clients/`, `/hosts/`, logs — our file, root `.gitignore` untouched), `opskit/.shellcheckrc`, bats tests (10 pass). Verify: `opskit/bin/opskit --help`, `bats opskit/tests`.
 - **2026-10-20 — Phase 1 started.** Owner closed Phase 0 and requested an OpenAI-compatible BYOK piece (ADR-013). Task file `docs/tasks/phase-1.md` (12 tasks).
 - **2026-10-20 — Phase 0 flows in Codespace.** Codespace `verbose-trout` up via `.devcontainer/opskit` (771 pieces, 420 templates). Built + ran lead-capture (webhook/code/router/HTTP/failing branch) and invoice-reminder (schedule/loop/delay) via API; export/import round trip; 20 concurrent runs all succeeded (≈0.3 s each); screenshots in `docs/phase0-screenshots/`, flow generators in `docs/phase0-flows/`. Report updated. Verify: open the Codespace URL, Runs page shows 22 SUCCEEDED + 1 FAILED.

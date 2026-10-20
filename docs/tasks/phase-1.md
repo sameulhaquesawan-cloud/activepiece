@@ -16,7 +16,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Acceptance:** `opskit --help` lists commands; unknown command exits 1 with `[fail]`; ignored paths really ignored (`git check-ignore`).
 - **Tests:** bats for dispatcher help/unknown/exit codes and log helpers.
 
-### [ ] 1.2 — `opskit/bin/check` (+ `--quick`)
+### [x] 1.2 — `opskit/bin/check` (+ `--quick`)
 - **Goal:** shellcheck every opskit Bash file + run bats; `--quick` skips Docker-tagged tests; non-zero on any failure.
 - **Files:** `opskit/bin/check`, `opskit/tests/check.bats`
 - **Acceptance:** passes on clean tree; a deliberately broken fixture script makes it fail.
