@@ -2,20 +2,20 @@
 
 ## Current status
 - **Current phase:** Phase 2 — Client deployment kit
-- **Current task:** 2.9 (see `docs/tasks/phase-2.md`)
+- **Current task:** Phase 2 done — owner check-in (+ Phase 1 owner tests)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner — CI (1.8):** GitHub Actions is off for the whole repo (opskit-ci registered, 0 runs). Decide: (a) delete upstream workflow files in the fork (ledger row, re-delete on sync; agent does it) then switch Actions on, or (b) switch Actions on and disable 41 upstream workflows one by one. Then confirm a green `opskit-ci` run.
-2. **Owner — piece (1.12):** in the Codespace Activepieces, add an "OpenAI Compatible (BYOK)" step, create a connection with your Base URL + API key, pick a model, run once. Agent records the result.
-3. Owner (20 Oct 2026): do items 1–2 together later; meanwhile Phase 2 (`docs/tasks/phase-2.md`).
+1. **Owner check-in (end of Phase 2)** together with the Phase 1 owner tests: (a) CI decision (delete upstream workflow files vs. disable 41 one by one) and switch Actions on; (b) real-key test of the OpenAI Compatible piece in the Codespace.
+2. Optional owner practice: in the Codespace terminal run `opskit/bin/opskit selftest` (≈ 1–2 min) — same test that passed here.
+3. Then Phase 3 (backups & restore): `/opskit-start-phase` or `.agents/skills/opskit-start-phase/SKILL.md`.
 
 ## Phases
 | Phase | Name | Status | Verified |
 |---|---|---|---|
 | 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
 | 1 | Opskit foundation (+ openai-compatible piece) | Done except owner tests (CI 1.8, real-key 1.12) | — |
-| 2 | Client deployment kit | In progress | — |
+| 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Not started | — |
 | 4 | Monitoring & alerts | Not started | — |
 | 4b | Go to market (owner-led) | Not started | — |
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 2.9 docs done; Phase 2 complete.** `docs/runbooks/deploy-client.md`, USER_FLOWS O2, ADR-014.
 - **2026-10-20 — 2.8 selftest done.** `opskit selftest [--keep]`: temp registry + local host (free port pair from 18080/18443, Caddy internal TLS, IPv4 shim auto when the kernel lacks IPv6) + `selftest-<hex>` client → edge bootstrap → deploy → re-deploy must keep the same containers → teardown of only its own project/edge/temp dir (trap). Passed in 78 s here, nothing left behind; docker-tagged bats test; full `opskit/bin/check` (with docker tests) passes in ~3 min.
 - **2026-10-20 — 2.7 lifecycle done.** `opskit client pause|resume|offboard <id> [--purge --yes]`: pause (deployed → paused, compose stop), resume (start + health), offboard (`--yes` + typed id; stop, remove Caddy site, `offboarded_at`; warns final backup/flow export are manual until Phase 3), purge (only offboarded and after `offboard_retention_days`, `--yes` + typed id; `down -v`, remove host dir + site; registry kept). Verified for real on the practice host + 6 stubbed tests.
 - **2026-10-20 — 2.6 deploy done.** `lib/deploy.sh` + `opskit deploy <id>`: render → push compose/.env (600) to `<root>/clients/<id>` → `docker compose -p <id> up -d --remove-orphans` → app healthy (image healthcheck) → worker poll seen in app logs → Caddy site + reload → HTTPS health (internal TLS checked on the host, ACME from the operator machine) → status deployed + history (only on first deploy or tag change). Verified for real on a local practice host: first deploy 25 s, re-deploy keeps identical container IDs, volumes `demo_postgres/demo_redis/demo_cache`. 5 unit tests; full run is the selftest (2.8).
@@ -67,3 +68,13 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 2 — 20 Oct 2026
+| Acceptance (SPEC 17, after R5) | Evidence |
+|---|---|
+| Secret generation aborts on empty values (bats) | `opskit/tests/secrets.bats` (empty + malformed openssl) |
+| Rendered compose: worker `AP_FRONTEND_URL=http://app`, replicas from config, memory limits, pinned tag, `AP_EDITION=ce` (+ telemetry off) | `opskit/tests/render_client.bats` (13 tests) |
+| ~~Two clients on one shared host~~ | moved after first paying client (R5) |
+| `selftest` deploys a stack whose health is OK and the worker registers | `opskit selftest` passed (78 s), `opskit/tests/selftest.bats` |
+| Re-running `deploy` is idempotent | selftest compares container IDs; manual practice run too |
+| `opskit/bin/check` passes | full run incl. docker tests, ~3 min |
+Not verified here: bootstrap on a real Ubuntu VPS and ACME certificates (Phase 9 practice run).

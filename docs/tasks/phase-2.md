@@ -45,5 +45,5 @@ Owner (20 Oct 2026): "start next phase and finish it"; Phase 1 owner tests (CI 1
 - **Goal:** demo client on a local practice host (high edge ports, Caddy internal CA, `*.localhost`): render → deploy → health + worker → re-deploy idempotent → teardown (selftest-owned project only).
 - **Acceptance:** passes in the cloud session; bats test tagged docker.
 
-### [ ] 2.9 — Docs
+### [x] 2.9 — Docs
 - **Goal:** operator steps in `docs/HANDOFF.md`/`docs/USER_FLOWS.md` (O1 onboard dedicated), ADR-014, PROGRESS.

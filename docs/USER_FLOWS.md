@@ -6,7 +6,7 @@
 Fork → clone in WSL → pin tag → official CE install → worker fix → explore builder, webhooks (ngrok), schedules, logic, AI step, logs, import/export, CE admin → build 6 starters → local backup/restore → report.
 
 ### O2. Onboard a client (dedicated host) ⭐
-`client new acme` → edit `client.yaml` → `host bootstrap acme-vps` → `render acme` → `deploy acme` → import templates → connect client-owned accounts → test checklist → `docs acme` → go live.
+`host bootstrap acme-vps` → `client new acme --domain … --host acme-vps --contact …` → (edit `client.yaml`) → `deploy acme` (renders itself) → escrow `secrets.env` → import templates → connect client-owned accounts → test checklist → `docs acme` → go live. Steps: `docs/runbooks/deploy-client.md`. Covered by `opskit selftest`.
 Edge: DNS not propagated (HTTPS fails → retry guidance) · port 80 blocked · worker not registered (worker URL check).
 
 ### O3. Onboard onto a shared host ⭐ (later — after the first paying client)
