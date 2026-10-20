@@ -6,14 +6,15 @@
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. ~~Owner opens Codespace~~ done 20 Oct 2026 (`verbose-trout`, port 8080 public; 771 pieces load). Decided 20 Oct 2026: Codespaces now, laptop (Option B) when the free quota runs out. Reason: containers in the Claude cloud session have no internet (relay denied twice by the session safety check).
-2. In the Codespace (any AI in its terminal): `opskit/bin/explore-stack up` runs automatically; confirm pieces load, build 1–2 starter flows (webhook + schedule; branches, loop, delay, code, HTTP; AI step with Gemini free key, practice data), run logs/retries/failure display, flow import/export, templates, 20 test runs + `docker stats`, stored-connection decrypt after restore, hello-world piece in dev mode.
-3. Finish `docs/EXPLORATION_REPORT.md`, mark Phase 0 done, run `/opskit-start-phase` (or follow `.agents/skills/opskit-start-phase/SKILL.md`) for Phase 1.
+1. **Owner check-in (end of Phase 0):** review `docs/EXPLORATION_REPORT.md` + `docs/phase0-screenshots/`; decide on the optional AI-step test (needs a free Gemini key) and confirm start of Phase 1.
+2. Moved out of Phase 0 (covered by later acceptance tests): stored-connection decrypt after restore → Phase 3; per-container RAM under load → Phase 2 `selftest`.
+3. Then run `/opskit-start-phase` (or follow `.agents/skills/opskit-start-phase/SKILL.md`) to create `docs/tasks/phase-1.md` and start Phase 1 (opskit foundation).
+4. Codespace housekeeping (owner): delete old `symmetrical-fishstick`; stop `verbose-trout` and set port 8080 back to Private when not in use.
 
 ## Phases
 | Phase | Name | Status | Verified |
 |---|---|---|---|
-| 0 | Fork, set up & explore Activepieces | In progress (blocked) | — |
+| 0 | Fork, set up & explore Activepieces | Done pending owner check-in | — |
 | 1 | Opskit foundation | Not started | — |
 | 2 | Client deployment kit | Not started | — |
 | 3 | Backups & restore | Not started | — |
@@ -27,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — Phase 0 flows in Codespace.** Codespace `verbose-trout` up via `.devcontainer/opskit` (771 pieces, 420 templates). Built + ran lead-capture (webhook/code/router/HTTP/failing branch) and invoice-reminder (schedule/loop/delay) via API; export/import round trip; 20 concurrent runs all succeeded (≈0.3 s each); screenshots in `docs/phase0-screenshots/`, flow generators in `docs/phase0-flows/`. Report updated. Verify: open the Codespace URL, Runs page shows 22 SUCCEEDED + 1 FAILED.
 - **2026-10-20 — Codespaces + one-command explore stack.** Added `.devcontainer/opskit/devcontainer.json` (ledger #3) and `opskit/bin/explore-stack` (up/status/stop; Codespaces URL aware). Verified: shellcheck clean; fresh-path test created a new stack from scratch, healthy in 10 s (GHCR pull works now); existing stack re-run keeps data; devcontainer parsed by `@devcontainers/cli read-configuration`. **Not verified:** a real Codespace build (owner to open one). Laptop requirements in `docs/HANDOFF.md`.
 - **2026-10-20 — Phase 0: backup→restore + idle stats.** Restore into fresh stack works (admin/projects/worker); idle ≈ 760 MiB; `flow_run` checked live (read-only). Files: `docs/EXPLORATION_REPORT.md`. Still blocked on container internet for pieces.
 - **2026-10-20 — Owner plan decisions applied.** Owner approved R1–R5 and A1–A5 (C1–C6 already accepted). Files: `docs/SPEC.md` (+ Appendix C), `docs/DECISIONS.md` (ADR-012; ADR-006 superseded, ADR-001 image part superseded), `docs/TECH_ARCHITECTURE.md`, `docs/USER_FLOWS.md`, `docs/ENVIRONMENT.md`, `.claude/CLAUDE.md`, `.claude/settings.json` (ledger #2, A3), `README-START-HERE.md`, `opskit/CLAUDE.md`, two opskit skills. Verify: ledger #2 `jq -e` test passes. Owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com` (host reachable now).
