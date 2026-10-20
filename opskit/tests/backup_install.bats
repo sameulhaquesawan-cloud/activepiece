@@ -89,6 +89,7 @@ teardown() {
   local conf="${REG}/clients/demo/rendered/alerts.conf"
   grep -qx 'TIMEZONE=Europe/London' "$conf"
   grep -qx 'APP_URL=https://demo.localhost:18443' "$conf"
+  grep -qx 'TLS_MODE=internal' "$conf"
   grep -qx 'QUIET_FROM=22:00' "$conf"
   grep -qx 'QUIET_TO=07:00' "$conf"
 }

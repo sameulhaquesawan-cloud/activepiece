@@ -54,7 +54,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Acceptance checks:** first run does not alert on old history; no double alerts across runs; read-only SQL only.
 - **Tests required:** bats with a fixture Postgres (docker-tagged) + stubbed unit tests for de-dup and message format.
 
-### [ ] 4.6 — Host health checks
+### [x] 4.6 — Host health checks
 - **Goal:** `agent/health.sh` (cron hourly): disk > 85 %, memory pressure (MemAvailable < 10 %), container restart count increased, HTTPS certificate expiring < 14 days → alert, de-duplicated per condition for 24 h, "recovered" info when cleared.
 - **Spec refs:** 10.4
 - **Files likely touched:** `opskit/agent/health.sh`, tests
