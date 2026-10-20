@@ -22,7 +22,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Acceptance:** passes on clean tree; a deliberately broken fixture script makes it fail.
 - **Tests:** bats with a temp fixture tree.
 
-### [ ] 1.3 — `lib/confirm.sh` + `lib/validate.sh` basics
+### [x] 1.3 — `lib/confirm.sh` + `lib/validate.sh` basics
 - **Goal:** destructive-confirm helper (`--yes` + typed client id); validators for slug, domain, email, port, positive int.
 - **Spec refs:** 3.8; rules "Client safety"
 - **Tests:** bats: wrong typed id aborts, `--yes` alone isn't enough for destructive, validators accept/reject fixtures.
