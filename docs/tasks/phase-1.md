@@ -31,7 +31,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** `opskit/schema/client.schema.json` (SPEC 6 fields; Phase 0 values: `AP_EDITION` fixed `ce`, worker replicas default 1, alert channels telegram/email/slack) and `host.schema.json`; `opskit validate <file>` prints field-level messages.
 - **Tests:** valid + ≥ 6 invalid fixtures (missing field, bad slug, bad domain, unknown channel, replicas 0, bad mode) each with the expected message.
 
-### [ ] 1.5 — `lib/render.sh`
+### [x] 1.5 — `lib/render.sh`
 - **Goal:** envsubst/yq render helper that fails on any unresolved `${...}` and never prints secret values.
 - **Tests:** bats: complete vars render; missing var fails naming the variable (not its value).
 

@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 1 — Opskit foundation (+ openai-compatible piece)
-- **Current task:** 1.5 (1.4 waits for owner Q1; see `docs/tasks/phase-1.md`)
+- **Current task:** 1.6 (1.4 waits for owner Q1; see `docs/tasks/phase-1.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 1.5 render done.** `lib/render.sh` `render_template <tmpl> <out>`: substitutes only `${NAME}` refs, fails listing unresolved/empty names (never values), atomic write. `dev-env` now installs `envsubst` (gettext-base). 4 new tests. Templates must not rely on compose-time `${...}` interpolation — values are rendered in.
 - **2026-10-20 — 1.3 confirm/validate done.** `lib/confirm.sh` (`confirm_destructive <id> <yes> <action>`: needs `--yes` and the id typed on stdin), `lib/validate.sh` (`is_slug`, `is_domain`, `is_email`, `is_port`, `is_positive_int`). 8 new tests. Verify: `bats opskit/tests/confirm_validate.bats`.
 - **2026-10-20 — 1.2 check done.** `opskit/bin/check [--quick]`: shellcheck on all opskit Bash files + `.claude/hooks`, then `bats --recursive opskit/tests` (`--quick` filters `# bats test_tags=docker`). `OPSKIT_CHECK_ROOT` lets tests run it on a fixture tree. 21 tests pass. Verify: `opskit/bin/check`.
 - **2026-10-20 — 1.1 skeleton done.** `opskit/bin/opskit` (commands in `opskit/lib/commands/*.sh`, `# summary:` line + `cmd_main`), `lib/log.sh`, `version` command, `opskit/VERSION`, `opskit/.gitignore` (`/clients/`, `/hosts/`, logs — our file, root `.gitignore` untouched), `opskit/.shellcheckrc`, bats tests (10 pass). Verify: `opskit/bin/opskit --help`, `bats opskit/tests`.

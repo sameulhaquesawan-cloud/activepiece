@@ -8,10 +8,17 @@ usage() {
   cat <<'EOF'
 Usage: opskit/bin/dev-env [--help]
 
-Installs missing tools (shellcheck, bats, rclone, age, jq, yq) with apt and
+Installs missing tools (shellcheck, bats, rclone, age, jq, yq, envsubst) with apt and
 starts the Docker daemon if none is reachable. If HTTPS_PROXY is set, the
 daemon is started with it so image pulls go through the proxy.
 EOF
+}
+
+apt_package_for() {
+  case "$1" in
+    envsubst) printf 'gettext-base' ;;
+    *) printf '%s' "$1" ;;
+  esac
 }
 
 as_root() {
@@ -20,8 +27,8 @@ as_root() {
 
 install_tools() {
   local missing=() tool
-  for tool in shellcheck bats rclone age jq yq; do
-    command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+  for tool in shellcheck bats rclone age jq yq envsubst; do
+    command -v "$tool" >/dev/null 2>&1 || missing+=("$(apt_package_for "$tool")")
   done
   if [ "${#missing[@]}" -eq 0 ]; then
     echo "[ok] tools present"
