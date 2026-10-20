@@ -2,7 +2,7 @@
 
 > Filled during Phase 0 (clone, set up & explore). Facts only — what actually happened on this machine. Blockers or mismatches with the SPEC go to the owner before continuing.
 >
-> **Status (2026-10-20): partial.** Stack installed and healthy; exploration paused by two cloud-session blockers (see Section 7). Items marked *not done yet* are still open.
+> **Status (2026-10-20): partial.** Stack installed and healthy; backup→restore done. Building flows is blocked: containers in the cloud session have no internet, so the piece catalog stays empty (Section 7). Items marked *not done yet* are still open.
 
 ## 1. Setup
 | Item | Value |
@@ -25,7 +25,7 @@
 | Alerts | `GET/POST /api/v1/alerts` | partly | Module registered in CE, but `SHOW_ALERTS=false` in UI; personal projects only allow the owner as receiver |
 | Install piece (npm or archive upload) | read source `pieces/community-piece-module.ts` | available in CE (not tried live) | `POST /api/v1/pieces`, platform admin only, `packageType: REGISTRY` (npm name+version) or `ARCHIVE` (tarball) |
 | Builder, webhook/schedule triggers, branches/loops/delay/code/HTTP, AI step, run logs/retries, import/export, 6 starter flows | — | *not done yet* | Need pieces (blocked) |
-| Backup → restore into fresh stack | — | *not done yet* | Docker commands blocked by session permissions |
+| Backup → restore into fresh stack | admin, 2 projects, worker | works | `pg_dump` via postgres container (2 s, 29 KB gz) + `.env` copy → new project `ap0r` (no `container_name`, port 8081): start postgres+redis, wait for the **second** "ready to accept connections" (first-boot init restarts postgres), `psql` restore (1 s), then `up -d` → healthy in 10 s; admin signs in with the old password, both projects present, worker registers. Stored-connection decrypt not tested yet (no pieces) |
 | Hello-world piece in dev mode | — | *not done yet* | |
 
 **CE feature matrix (platform plan flags, live):** on — tables, analytics, AI providers. Off/locked — API keys (route 404), audit logs (404), Git Sync (404), project members (404), MCP servers (404), manage pieces, manage templates, custom appearance/branding, project roles, custom roles, global connections, SSO, SCIM, secret managers, environments, event streaming, embedding, agents, chat, worker groups, custom domains. `PRIVATE_PIECES_ENABLED=false` flag, yet the CE install-piece endpoint above exists.
@@ -35,7 +35,8 @@
 |---|---|---|---|
 | App start → healthy | empty DB (migrations) | 7 s (after fix) | |
 | Image size | — | — | app 2.15 GB, pgvector 609 MB, redis 171 MB |
-| Idle CPU/RAM | — | — | Worker self-report: host CPU 23 %, host RAM 34 % (includes build/session load). Per-container `docker stats` *not done yet* |
+| Idle CPU/RAM | empty instance | — | `docker stats`: app 480 MiB / 0.2 % CPU, worker 218 MiB, postgres 54 MiB, redis 8 MiB → ≈ 760 MiB total idle |
+| Backup / restore | 29 KB dump | 2 s / 1 s | restored stack healthy 10 s after restore |
 | 20 test runs | — | *not done yet* | |
 
 ## 4. Output quality
@@ -47,7 +48,7 @@ Not assessed yet (no flows could be built without pieces).
 - Code steps run `UNSANDBOXED` by default (OK for one client per server, per upstream docs).
 - Telemetry is on by default (`AP_TELEMETRY_ENABLED` default `true`).
 - Upstream failed-states list (`FAILED_STATES` in `core/execution`): FAILED, INTERNAL_ERROR, QUOTA_EXCEEDED, TIMEOUT, MEMORY_LIMIT_EXCEEDED — not LOG_SIZE_EXCEEDED. All statuses: those + PAUSED, QUEUED, RUNNING, SUCCEEDED, CANCELED, LOG_SIZE_EXCEEDED.
-- `flow_run` columns (source): id, created, updated, projectId, flowId, flowVersionId, environment, logsFileId, parentRunId, failParentOnFailure, status, tags, startTime, triggeredBy, finishTime, timeline, failedStep, archivedAt, stepNameToTest, stepsCount. Live read-only check *not done yet*.
+- `flow_run` columns (source): id, created, updated, projectId, flowId, flowVersionId, environment, logsFileId, parentRunId, failParentOnFailure, status, tags, startTime, triggeredBy, finishTime, timeline, failedStep, archivedAt, stepNameToTest, stepsCount. Live read-only check done: same columns (+ deprecated `pauseMetadata` jsonb); `status` is varchar; indexes include `(projectId, environment, status, created, archivedAt)`, so a status + time-window detector query is indexed.
 
 ## 6. Matches the SPEC? (agent's view)
 - **Custom pieces (Phase 8):** CE admins can install a piece from npm or by uploading an archive through the API, so a custom image may not be needed. Supports suggestion R1; to confirm live.
@@ -56,5 +57,5 @@ Not assessed yet (no flows could be built without pieces).
 - Otherwise not enough explored yet to call it — see Section 7.
 
 ## 7. Questions for the owner (only if blocked or unclear)
-1. **Network:** this cloud environment blocks `cloud.activepieces.com` (piece catalog + templates) and `pkg-containers.githubusercontent.com` (GitHub image downloads). Phase 0 can't build flows until they're allowed.
-2. **Permissions:** this session's safety settings blocked further `docker` commands (and a helper to let containers use the network proxy). Phase 0 needs Docker for the rest.
+1. ~~Network allow-list~~ — done by owner 20 Oct 2026.
+2. **Containers have no internet here:** only the cloud machine itself goes through the agent proxy; Docker containers can't resolve or reach outside hosts, so the app can't sync pieces even though `cloud.activepieces.com` is now allowed. A small relay letting containers use the same proxy was refused by the session safety check — owner decides (allow it, or finish flow-building on the laptop/WSL).
