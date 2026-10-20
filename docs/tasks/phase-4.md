@@ -60,7 +60,7 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Files likely touched:** `opskit/agent/health.sh`, tests
 - **Tests required:** bats with stubbed `df`, `/proc/meminfo`, `docker`, `openssl`.
 
-### [ ] 4.7 — Daily digest
+### [x] 4.7 — Daily digest
 - **Goal:** `agent/digest.sh` (cron daily, client morning in its time zone): one message per client — last backup result, failed runs in 24 h (by flow), health state, held quiet-hour alerts (then cleared).
 - **Spec refs:** 10.1, 10.6
 - **Files likely touched:** `opskit/agent/digest.sh`, tests

@@ -4,7 +4,8 @@ Used by `opskit/agent/alert.sh` (shipped to `<root>/agent/alerts/` on every host
 Each `*.jq` file turns one alert object into a channel payload; `text.jq` is the shared message text.
 
 Alert object: `client`, `severity` (`info|warn|critical`), `what` and `action` (each cut to 300
-characters), `host`, `at` (UTC ISO time), `date` (RFC 2822), `link` (optional, e.g. a run link).
+characters), `host`, `at` (UTC ISO time), `date` (RFC 2822), `link` (optional, e.g. a run link),
+`body` (optional extra lines, ≤ 1500 characters, used by the daily digest).
 
 | Severity | Meaning | Quiet hours |
 |---|---|---|

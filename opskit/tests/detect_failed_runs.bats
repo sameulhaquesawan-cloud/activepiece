@@ -36,7 +36,7 @@ teardown_file() {
 setup() {
   ROOT="$(mktemp -d)"
   mkdir -p "${ROOT}/agent" "${ROOT}/clients/acme"
-  cp "${OPSKIT_ROOT}/agent/alert.sh" "${OPSKIT_ROOT}/agent/detect-failed-runs.sh" "${ROOT}/agent/"
+  cp "${OPSKIT_ROOT}/agent/alert.sh" "${OPSKIT_ROOT}/agent/detect-failed-runs.sh" "${OPSKIT_ROOT}/agent/digest.sh" "${ROOT}/agent/"
   cp -r "${OPSKIT_ROOT}/templates/alerts" "${ROOT}/agent/alerts"
   DETECT="${ROOT}/agent/detect-failed-runs.sh"
   start_mock_http
@@ -139,6 +139,20 @@ https://auto.acme.com/projects/p1/runs/r1" ]
   text="$(texts)"
   [[ "$text" == *"line1 line2 eee"* ]]
   [ "$(head -n 1 <<< "$text" | wc -c)" -lt 420 ]
+}
+
+# bats test_tags=docker
+@test "the digest's 24 h run summary query works on the real schema with the read-only role" {
+  run_row d1 f1 PRODUCTION FAILED
+  run_row d2 f1 PRODUCTION SUCCEEDED
+  run_row d3 f2 PRODUCTION SUCCEEDED
+  run_row d4 f2 TESTING FAILED
+  sql "insert into flow_run values ('old', 'p1', 'f1', 'v1', 'PRODUCTION', 'FAILED', now() - interval '25 hours', null)"
+  run "${ROOT}/agent/digest.sh" acme --root "$ROOT" --now
+  local text
+  text="$(texts)"
+  [[ "$text" == *"Runs (24 h): 3, failed: 1"* ]]
+  [[ "$text" == *"  - Lead capture: 1 of 2 failed"* ]]
 }
 
 @test "detector needs a client id" {

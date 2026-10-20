@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.7 (see `docs/tasks/phase-4.md`)
+- **Current task:** 4.8 (see `docs/tasks/phase-4.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4.7 daily digest `agent/digest.sh` (one message per client: last backup, failed runs 24 h by flow, health state, held quiet-hour alerts then cleared), then 4.8 onwards in order.
+1. Agent: 4.8 install monitoring agents via deploy (ship `detect-failed-runs.sh`, `health.sh`, `digest.sh`; cron lines every 5 min / hourly / hourly), then 4.9 Uptime Kuma via the kit.
 2. Owner (any time, not blocking): Phase 3 runbook `docs/runbooks/backup-restore.md` sections A (own age key) and B (off-server storage); later a monitoring-host domain (Phase 4 Q1).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 4.7 done.** `agent/digest.sh <id>` (cron hourly; sends once a day when the client-local hour = `DIGEST_HOUR`, default 08; `--now` to force): last backup (age, off-server status; > 26 h or not `ok` flagged), PRODUCTION runs in 24 h with failing flows (read-only SQL), open health problems, alerts held in quiet hours (then cleared; kept if the digest is not delivered). Headline names what to check. `alert.sh --body` (≤ 1500 chars) added; `text.jq`/`webhook.jq` render it. Tests: `digest.bats` (8) + real-schema query test in `detect_failed_runs.bats`. Verify: `bats opskit/tests/digest.bats`.
 - **2026-10-20 — 4.6 done.** `agent/health.sh <id>` (hourly, `flock`): disk > 85 % warn / > 95 % critical (`<root>`, `/var/lib/docker`), MemAvailable < 10 % warn, container restart count up (baseline in `state/<id>/health/restarts`) warn, container not running critical, HTTPS cert (SNI to 127.0.0.1) < 14 d warn / < 3 d or unreadable critical, skipped when `TLS_MODE=internal` (rendered into client `alerts.conf`). Each condition alerts once per 24 h per severity and sends one "Recovered" info when it clears. Tests: `health.bats` (9, stubbed df/docker/openssl/meminfo); real run on the explore stack: healthy. Verify: `bats opskit/tests/health.bats`.
 - **2026-10-20 — 4.5 done.** `agent/detect-failed-runs.sh <id>` (standalone, `flock`): read-only SQL as `opskit_ro` on PRODUCTION runs with the SPEC 10.3 statuses finished in `(since, now]` (DB clock; `state/<id>/detector.since`; first run only records the start), grouped per flow → one critical alert per flow (count, status, step display name, error excerpt ≤ 160 chars flattened from `failedStep.message` JSON, run id) with link `APP_URL/projects/<p>/runs/<r>`; `--dedupe-key failed-run:<flowId>` 30 min. Render adds `APP_URL` to client `alerts.conf`. Tests: `detect_failed_runs.bats` (6 docker-tagged on a fixture Postgres with the real role SQL + 1 unit). Known limit: if an alert does not reach the owner, those runs are not re-queried (the next failure of that flow alerts again). Verify: `bats opskit/tests/detect_failed_runs.bats`.
 - **2026-10-20 — 4.4 done.** Deploy creates/refreshes `opskit_ro` from `opskit/templates/readonly-role.sql` (no password → local-socket login only; `SELECT` on flow, flow_version, flow_run, project; read-only default; 30 s statement timeout; `REVOKE CREATE ON SCHEMA public FROM PUBLIC` — app user is superuser, unaffected; drifted grants reset each deploy). **Fix found on the way:** backups now carry grants for `opskit_ro`, which broke `pg_restore --exit-on-error` into a fresh stack; restore now uses `--no-privileges` (deploy re-applies the role). `stack_readonly_check` (verify.sh) runs in selftest: reads runs, cannot delete/create/read connections/log in over the network; negative control (extra grant) fails it. Tests: `readonly_role.bats` + selftest. Verify: `opskit/bin/opskit selftest`.

@@ -13,10 +13,10 @@ IFS=$'\n\t'
 usage() {
   cat <<'EOF'
 Usage: alert.sh --client <id> --severity info|warn|critical --what <text> --action <text>
-                [--link <url>] [--dedupe-key <key> [--window <minutes>]] [--no-quiet] [--root <dir>]
+                [--link <url>] [--body <text>] [--dedupe-key <key> [--window <minutes>]] [--no-quiet] [--root <dir>]
 
 Message: [SEVERITY] <client> on <host>: <what> — First action: <action> (+ link)
-Texts are cut to 300 characters. Never pass secrets or personal data.
+Texts are cut to 300 characters (--body, extra lines for summaries: 1500). Never pass secrets or personal data.
 --dedupe-key: the same key within --window minutes (default 30) is sent only once.
 Quiet hours (client alerts.conf): info/warn for the client's channels are held in
 state/<id>/held.jsonl for the daily digest; critical and the owner's channels always go out.
@@ -31,6 +31,7 @@ SEVERITY=""
 WHAT=""
 ACTION=""
 LINK=""
+BODY=""
 DEDUPE_KEY=""
 DEDUPE_FILE=""
 WINDOW=30
@@ -46,6 +47,7 @@ parse_args() {
       --what) WHAT="$2"; shift 2 ;;
       --action) ACTION="$2"; shift 2 ;;
       --link) LINK="$2"; shift 2 ;;
+      --body) BODY="$2"; shift 2 ;;
       --dedupe-key) DEDUPE_KEY="$2"; shift 2 ;;
       --window) WINDOW="$2"; shift 2 ;;
       --no-quiet) NO_QUIET="true"; shift ;;
@@ -130,7 +132,8 @@ template_dir() {
 alert_json() {
   jq -nc --arg client "$CLIENT" --arg severity "$SEVERITY" --arg what "${WHAT:0:300}" --arg action "${ACTION:0:300}" \
     --arg host "$(hostname)" --arg at "$(date -u -d "@$(now)" +%Y-%m-%dT%H:%M:%SZ)" --arg date "$(date -u -R -d "@$(now)")" --arg link "$LINK" \
-    '{client: $client, severity: $severity, what: $what, action: $action, host: $host, at: $at, date: $date, link: $link}'
+    --arg body "${BODY:0:1500}" \
+    '{client: $client, severity: $severity, what: $what, action: $action, host: $host, at: $at, date: $date, link: $link, body: $body}'
 }
 
 # render <channel> [jq args...]: payload for one channel from the alert object
