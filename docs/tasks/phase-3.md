@@ -23,7 +23,7 @@ SPEC: Section 17 Phase 3, Section 9, 15; reliability rules in `.claude/CLAUDE.md
 - **Goal:** standalone, `flock`, `pg_dump` via the postgres container (`-Fc` or gzip SQL), `age -r <owner pubkey>` on `.env`, compose snapshot, `status.json` (sizes, duration, ok); never writes secrets in clear outside `.env`.
 - **Tests:** bats with stub `docker`/`age`; real run tagged docker on a selftest stack.
 
-### [ ] 3.3 — Off-server copy + retention pruning
+### [x] 3.3 — Off-server copy + retention pruning
 - **Goal:** `rclone copy` + verify remote sizes; prune local > 14 d, remote > 30 d (configurable); never prune the newest successful backup.
 - **Tests:** fixture directories with dated names → exactly the configured days kept; rclone `local` remote for tests.
 

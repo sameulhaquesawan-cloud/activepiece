@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 3 — Backups & restore
-- **Current task:** 3.3 (see `docs/tasks/phase-3.md`)
+- **Current task:** 3.4 (see `docs/tasks/phase-3.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -15,7 +15,7 @@
 | Phase | Name | Status | Verified |
 |---|---|---|---|
 | 0 | Fork, set up & explore Activepieces | Done | Owner OK 20 Oct 2026 |
-| 1 | Opskit foundation (+ openai-compatible piece) | Done except owner tests (CI 1.8, real-key 1.12) | — |
+| 1 | Opskit foundation (+ openai-compatible piece) | Done | Owner tests passed 20 Oct 2026; opskit-ci green (run 4) |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | In progress (owner approved 20 Oct 2026) | — |
 | 4 | Monitoring & alerts | Not started | — |
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-20 — 3.3 done.** backup agent: `backup.conf` (`BACKUP_REMOTE`, `KEEP_LOCAL_DAYS` 14, `KEEP_REMOTE_DAYS` 30; parsed, never sourced), `rclone.conf` (600) in `<root>/agent`; `rclone copy` + byte-for-byte size verification; retention by backup-name timestamp, newest never pruned; exit 0 complete / 1 failed / 2 local only (not counted). Real run with an rclone local remote + 5 new tests (exactly 14 local / 30 remote kept).
 - **2026-10-20 — 3.1 + 3.2 done.** Owner: "go Phase 3, decide later (backup target), ok (age key guide later)". 3.1: Redis-only state analysed (ASSUMPTIONS #8). 3.2: `opskit/agent/backup.sh <id> [--root]` — flock per client, `pg_dump -Fc` via the client's postgres container + `pg_restore --list` check, `.env` → `env.age` with `<root>/agent/owner.age.pub`, compose snapshot, `status.json`, umask 077, `.partial` dir renamed on success / removed on failure, `latest` pointer. bootstrap now installs `age` + `rclone`. Real run on a selftest stack (240 KB dump, env decrypts with test key) + 6 stubbed tests.
 - **2026-10-20 — CI fix: selftest cleanup as non-root.** On GitHub the selftest itself passed (115 s) but cleanup failed: Caddy (root in its container) leaves root-owned files in the bind-mounted data/config dirs, which a non-root runner/Codespace user cannot delete. Cleanup now removes them through a container; verified as a non-root user here (pass, no leftovers).
 - **2026-10-20 — Phase 1 owner tests.** (1.12) Owner's real key via Chrome: connection to an OpenAI-compatible provider (freeinference.org), dropdown loaded 6 live models, Ask Model with glm-5.3-flash and reasoning high returned "Hello! 👋", finishReason stop, reasoning text captured — piece verified. (1.8) Owner chose "a": 41 upstream workflows deleted (ledger #4), Actions enabled; opskit-ci runs on push. Codespace selftest failed only because that Codespace still had the old python `yq` (created before dev-env pinned yq v4) → `validate` now names the fix (`opskit/bin/dev-env`) and selftest runs `doctor --offline` first.
@@ -65,7 +66,7 @@
 - ~~BLOCKER (cloud session network)~~ resolved 20 Oct 2026: owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com`.
 - **BLOCKER (containers have no internet):** in the cloud session, Docker containers can't resolve or reach the internet (only the host goes through the agent proxy), so the app still can't sync pieces. Giving containers proxy access was denied by the session safety check; needs owner permission.
 - **BLOCKER (session permissions):** auto-mode safety classifier denied `docker` commands and a container→proxy relay. Owner decides whether to allow Docker commands.
-- **GitHub Actions disabled repo-wide:** `opskit-ci` is registered but never runs; 41 upstream workflows also registered (they'd fire on PRs/pushes to main once Actions is on). Owner decision pending (Next steps 1).
+- ~~GitHub Actions disabled repo-wide~~ resolved 20 Oct 2026: upstream workflows deleted (ledger #4), Actions on, opskit-ci green (run 4).
 - Full `bun install` fails: a community piece depends on a GitHub tarball (`dust-tt/typescript-sdk`) blocked by the cloud session network policy (403). Filtered installs work.
 - ~~Session hook starts dockerd without proxy~~ fixed 20 Oct 2026 (`opskit/bin/dev-env`).
 - Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.

@@ -43,7 +43,7 @@ Owner check-ins: only at phase end or when blocked (ASSUMPTIONS #1).
 - **Goal:** checks OS (Linux/WSL), Docker + Compose v2, tools (shellcheck, bats, jq, yq v4 flavor, age, rclone, curl, openssl, envsubst, ssh), egress to `cloud.activepieces.com` + `registry.npmjs.org` + image registry; `[ok]/[warn]/[fail]` per line.
 - **Tests:** bats with PATH stubs for present/missing/wrong-yq.
 
-### [~] 1.8 — CI `opskit-ci.yml` (file pushed; GitHub Actions is disabled repo-wide → owner decision)
+### [x] 1.8 — CI `opskit-ci.yml`
 - **Goal:** GitHub Actions: shellcheck + bats on push/PR touching our paths. Owner disables upstream workflows (step-by-step in PROGRESS).
 - **Acceptance:** green run on the branch.
 

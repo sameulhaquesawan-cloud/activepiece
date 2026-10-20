@@ -41,7 +41,7 @@ backups() {
 
 @test "successful backup writes db, encrypted env, compose and status, all private" {
   run "$AGENT" acme --root "$ROOT"
-  [ "$status" -eq 0 ]
+  [ "$status" -eq 2 ]
   local dir="${ROOT}/backups/acme/$(cat "${ROOT}/backups/acme/latest")"
   for f in db.dump env.age compose.yml status.json; do
     [ -s "${dir}/${f}" ]
@@ -90,4 +90,71 @@ backups() {
   [ "$status" -eq 1 ]
   run "$AGENT" acme --root relative
   [ "$status" -eq 1 ]
+}
+
+ago_name() {
+  date -u -d "@$(( $(date +%s) - $1 ))" +%Y%m%dT%H%M%SZ
+}
+
+setup_remote() {
+  REMOTE_DIR="$(mktemp -d)"
+  printf '[offsite]\ntype = local\n' > "${ROOT}/agent/rclone.conf"
+  printf 'BACKUP_REMOTE=offsite:%s\nKEEP_LOCAL_DAYS=%s\nKEEP_REMOTE_DAYS=%s\n' "$REMOTE_DIR" "${1:-14}" "${2:-30}" > "${ROOT}/clients/acme/backup.conf"
+}
+
+@test "off-server copy is verified and recorded" {
+  setup_remote
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 0 ]
+  local name
+  name="$(cat "${ROOT}/backups/acme/latest")"
+  [ -s "${REMOTE_DIR}/acme/${name}/db.dump" ]
+  [ -s "${REMOTE_DIR}/acme/${name}/env.age" ]
+  [ "$(jq -r .remote "${ROOT}/backups/acme/${name}/status.json")" = "ok" ]
+  [ "$(jq -r .remote "${REMOTE_DIR}/acme/${name}/status.json")" = "ok" ]
+  rm -rf "$REMOTE_DIR"
+}
+
+@test "no remote configured: local only, exit 2, not counted as complete" {
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"does not count as complete"* ]]
+  [ "$(jq -r .remote "${ROOT}/backups/acme/$(cat "${ROOT}/backups/acme/latest")/status.json")" = "none" ]
+}
+
+@test "failed off-server copy fails the backup" {
+  printf '[offsite]\ntype = local\n' > "${ROOT}/agent/rclone.conf"
+  printf 'BACKUP_REMOTE=missing-remote:/x\n' > "${ROOT}/clients/acme/backup.conf"
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"rclone copy to missing-remote:/x failed"* ]]
+}
+
+@test "local retention keeps exactly the configured days of nightly backups" {
+  setup_remote 14 30
+  local k
+  for k in $(seq 1 29); do
+    mkdir -p "${ROOT}/backups/acme/$(ago_name $((k * 86400 + 60)))"
+  done
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"local retention 14 days: pruned 16"* ]]
+  [ "$(find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l)" = "14" ]
+  [ -d "${ROOT}/backups/acme/$(ago_name $((13 * 86400 + 60)))" ] || [ -d "${ROOT}/backups/acme/$(ago_name $((13 * 86400 + 61)))" ]
+  rm -rf "$REMOTE_DIR"
+}
+
+@test "remote retention keeps the configured days; zero days still keeps the newest" {
+  setup_remote 0 30
+  local k
+  for k in $(seq 1 40); do
+    mkdir -p "${REMOTE_DIR}/acme/$(ago_name $((k * 86400 + 60)))"
+    echo x > "${REMOTE_DIR}/acme/$(ago_name $((k * 86400 + 60)))/f"
+  done
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"remote retention 30 days: pruned 11"* ]]
+  [ "$(find "${REMOTE_DIR}/acme" -mindepth 1 -maxdepth 1 -type d | wc -l)" = "30" ]
+  [ "$(find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l)" = "1" ]
+  rm -rf "$REMOTE_DIR"
 }
