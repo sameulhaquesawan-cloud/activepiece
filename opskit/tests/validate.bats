@@ -87,11 +87,72 @@ expect_client_error() {
   [[ "$output" == *"not a valid YAML/JSON mapping"* ]]
 }
 
-@test "type cannot be detected without client_id or host_id" {
+@test "type cannot be detected without client_id, host_id or template_id" {
   printf 'name: x\n' > "${WORK}/x.yaml"
   run "$OPSKIT" validate "${WORK}/x.yaml"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"cannot tell client from host"* ]]
+  [[ "$output" == *"cannot tell the file type"* ]]
+}
+
+TEMPLATE="${BATS_TEST_DIRNAME}/../flows/example/template.yaml"
+
+expect_template_error() {
+  yq "$1" "$TEMPLATE" > "${WORK}/template.yaml"
+  run "$OPSKIT" validate "${WORK}/template.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] $2"* ]]
+  [[ "$output" == *"[fail] template.yaml: invalid"* ]]
+}
+
+@test "the example template manifest is valid and detected as a template" {
+  run "$OPSKIT" validate "$TEMPLATE"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] template.yaml: valid"* ]]
+}
+
+@test "every template manifest in the library is valid" {
+  local manifest
+  for manifest in "${BATS_TEST_DIRNAME}"/../flows/*/template.yaml; do
+    run "$OPSKIT" validate "$manifest" --type template
+    [ "$status" -eq 0 ] || { echo "$manifest: $output"; return 1; }
+  done
+}
+
+@test "template: missing pieces list" {
+  expect_template_error 'del(.pieces)' "pieces: is required"
+}
+
+@test "template: piece version must be exact" {
+  expect_template_error '.pieces[0].version = "^0.1.42"' "pieces.0.version: has an invalid format"
+}
+
+@test "template: only official or opskit pieces" {
+  expect_template_error '.pieces[0].name = "evil-piece"' "pieces.0.name: has an invalid format"
+}
+
+@test "template: placeholder keys are capitals" {
+  expect_template_error '.placeholders[0].key = "greeting"' "placeholders.0.key: has an invalid format"
+}
+
+@test "template: placeholder needs an example" {
+  expect_template_error 'del(.placeholders[0].example)' "placeholders.0.example: is required"
+}
+
+@test "template: unknown failure mode" {
+  expect_template_error '.failure = "ignore"' "failure: must be one of: fail-run, notify-and-fail"
+}
+
+@test "template: connection needs ways to connect" {
+  expect_template_error '.connections = [{"piece": "@activepieces/piece-gmail", "purpose": "read mail", "options": []}]' "connections.0.options: must NOT have fewer than 1 items"
+}
+
+@test "template: sample runs expect SUCCEEDED or FAILED with a test/ payload" {
+  expect_template_error '.test.runs[0].expect = "OK"' "test.runs.0.expect: must be one of: SUCCEEDED, FAILED"
+  expect_template_error '.test.runs[0].payload = "../secret.json"' "test.runs.0.payload: has an invalid format"
+}
+
+@test "template: unknown field" {
+  expect_template_error '.api_key = "x"' "api_key: unknown field"
 }
 
 @test "a wrong yq flavor gives a clear fix-it message" {

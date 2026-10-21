@@ -27,7 +27,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 - **Acceptance checks:** each fact has a source/test reference; blockers (e.g. OAuth apps needed) listed for the owner.
 - **Result (21 Oct 2026):** `docs/EXPLORATION_REPORT.md` §8, ASSUMPTIONS #16–18. No blocker for 5.2–5.8. Template 5 needs a Meta app per client + `AP_APP_WEBHOOK_SECRETS` (added to 5.9).
 
-### [ ] 5.2 — Template format, manifest schema and conventions
+### [x] 5.2 — Template format, manifest schema and conventions
 - **Goal:** `opskit/flows/README.md` (how the library works), `opskit/flows/CONVENTIONS.md` (placeholders, naming, failure convention, client-owned credentials, flows start off), `opskit/schema/template.schema.json` for `template.yaml`, one tiny `example/` template used by tests.
 - **Spec refs:** 11, 10, 15
 - **Tests required:** schema validation of good/bad manifests.

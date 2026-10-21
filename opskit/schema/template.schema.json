@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opskit.local/schema/template.schema.json",
+  "title": "opskit flows/<template>/template.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "template_id",
+    "name",
+    "description",
+    "version",
+    "activepieces",
+    "pieces",
+    "placeholders",
+    "connections",
+    "failure"
+  ],
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,38}[a-z0-9]$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 80
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 300
+    },
+    "version": {
+      "$ref": "#/$defs/exactVersion"
+    },
+    "activepieces": {
+      "$ref": "#/$defs/exactVersion"
+    },
+    "pieces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "version"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^@(activepieces|opskit)/piece-[a-z0-9-]+$"
+          },
+          "version": {
+            "$ref": "#/$defs/exactVersion"
+          },
+          "custom": {
+            "type": "string",
+            "pattern": "^packages/pieces/custom/[a-z0-9-]+$"
+          }
+        }
+      }
+    },
+    "placeholders": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "description",
+          "example"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{1,40}$"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 5
+          },
+          "example": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "connections": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "piece",
+          "purpose",
+          "options"
+        ],
+        "properties": {
+          "piece": {
+            "type": "string",
+            "pattern": "^@(activepieces|opskit)/piece-[a-z0-9-]+$"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 5
+          },
+          "options": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 3
+            }
+          }
+        }
+      }
+    },
+    "failure": {
+      "enum": [
+        "fail-run",
+        "notify-and-fail"
+      ]
+    },
+    "test": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runs"
+      ],
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "payload",
+              "expect"
+            ],
+            "properties": {
+              "payload": {
+                "type": "string",
+                "pattern": "^test/[a-z0-9_-]+\\.json$"
+              },
+              "expect": {
+                "enum": [
+                  "SUCCEEDED",
+                  "FAILED"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "exactVersion": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    }
+  }
+}

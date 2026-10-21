@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# summary: check a client.yaml or hosts/<host>.yaml against its schema
+# summary: check a client.yaml, hosts/<host>.yaml or flows/<template>/template.yaml against its schema
 
 # shellcheck source=../schema.sh
 source "${OPSKIT_ROOT}/lib/schema.sh"
 
 validate_usage() {
   cat <<'EOF'
-Usage: opskit validate <file> [--type client|host]
+Usage: opskit validate <file> [--type client|host|template]
 
 Checks the file against opskit/schema/<type>.schema.json and prints one
 "[fail] field: problem" line per error. The type is detected from the
-top-level client_id / host_id key unless --type is given.
+top-level client_id / host_id / template_id key unless --type is given.
 EOF
 }
 
@@ -20,6 +20,8 @@ detect_type() {
     printf 'client'
   elif [ "$(yq '.host_id != null' "$file" 2>/dev/null)" = "true" ]; then
     printf 'host'
+  elif [ "$(yq '.template_id != null' "$file" 2>/dev/null)" = "true" ]; then
+    printf 'template'
   fi
 }
 
@@ -37,9 +39,9 @@ cmd_main() {
   [ -f "$file" ] || die "file not found: ${file}"
   [ -n "$type" ] || type="$(detect_type "$file")"
   case "$type" in
-    client|host) ;;
-    "") die "$(basename "$file"): cannot tell client from host (no client_id/host_id); use --type" ;;
-    *) die "unknown --type: ${type} (client or host)" ;;
+    client|host|template) ;;
+    "") die "$(basename "$file"): cannot tell the file type (no client_id/host_id/template_id); use --type" ;;
+    *) die "unknown --type: ${type} (client, host or template)" ;;
   esac
   validate_against_schema "${OPSKIT_ROOT}/schema/${type}.schema.json" "$file"
 }

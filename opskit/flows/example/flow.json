@@ -1,0 +1,60 @@
+{
+  "name": "opskit example \u2014 webhook greeting",
+  "description": "Smallest opskit template: a webhook receives a name and the flow answers with a greeting. Used by the opskit tests.",
+  "tags": [
+    "opskit",
+    "example"
+  ],
+  "pieces": [
+    "@activepieces/piece-webhook"
+  ],
+  "flows": [
+    {
+      "displayName": "opskit example \u2014 webhook greeting",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Catch webhook",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.42",
+          "triggerName": "catch_webhook",
+          "propertySettings": {},
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Check name",
+          "type": "CODE",
+          "valid": true,
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  const name = String(inputs.name || '').trim();\n  if (name.length === 0) {\n    throw new Error('Missing name in the webhook body');\n  }\n  return { greeting: inputs.greeting + ', ' + name };\n};",
+              "packageJson": "{}"
+            },
+            "input": {
+              "name": "{{trigger['body']['name']}}",
+              "greeting": "{{OPSKIT:GREETING}}"
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "lastUpdatedDate": "2026-10-21T00:00:00.000Z"
+        },
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z"
+      }
+    }
+  ]
+}

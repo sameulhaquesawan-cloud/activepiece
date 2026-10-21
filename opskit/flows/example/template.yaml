@@ -1,0 +1,21 @@
+template_id: example
+name: Example — webhook greeting
+description: Smallest opskit template. A webhook receives a name and the flow builds a greeting; a missing name fails the run. Used by the opskit tests, not sold.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-webhook"
+    version: 0.1.42
+placeholders:
+  - key: GREETING
+    description: Word the greeting starts with
+    example: Hello
+    default: Hello
+connections: []
+failure: fail-run
+test:
+  runs:
+    - payload: test/good.json
+      expect: SUCCEEDED
+    - payload: test/missing-name.json
+      expect: FAILED
