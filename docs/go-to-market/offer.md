@@ -20,7 +20,7 @@ the kit does today (Phases 1â€“4); items marked *coming* are planned (Phases 5â€
 |---|---|---|
 | Your own server | one private server for you only, in the EU or the US | `opskit host bootstrap` (firewall, SSH keys only, automatic security updates) |
 | Activepieces on your domain | e.g. `automations.yourcompany.com` with HTTPS | `opskit deploy` (Caddy, pinned version, health checks) |
-| Nightly encrypted backups | database + settings, copied to a second location, kept 30 days | `agent/backup.sh` + off-server copy (Phase 3) |
+| Nightly backups | database + settings, copied to a private second location, kept 30 days; the settings file with the master key is encrypted, and app passwords stay encrypted inside the database backup | `agent/backup.sh` + off-server copy (Phase 3) |
 | Tested restores | a backup is restored into a test copy every month to prove it works | `opskit restore-test` (Phase 3) |
 | Monitoring and alerts | site checked every minute; failed runs reported within 5 minutes with a link; daily summary | Uptime Kuma + `agent/detect-failed-runs.sh`, `health.sh`, `digest.sh` (Phase 4) |
 | Your alert channels | Telegram, Slack and/or email, with quiet hours | `alerts` in `client.yaml` |
@@ -72,8 +72,9 @@ Unused hours do not roll over.
 
 ## Privacy in one paragraph (for the page and proposals)
 Your automations run on a server that is yours alone, in the region you choose (EU or US). Your data and the
-passwords of your connected apps stay on that server, encrypted. Backups are encrypted before they leave the
-server, and only we hold the key. We look at your data only when you ask us to fix something. Alerts contain
+passwords of your connected apps stay on that server, encrypted. Backups are copied every night to private storage
+in the same region; your app passwords and the master key in them stay encrypted, and only we hold the
+key that unlocks the settings file. We look at your data only when you ask us to fix something. Alerts contain
 the flow name and a short error message, never your customers' full details. EU clients get a
 data-processing agreement and a list of the services we use (`eu/`).
 

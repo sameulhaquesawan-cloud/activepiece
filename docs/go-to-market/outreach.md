@@ -78,8 +78,8 @@ Close: "I'll send a one-page proposal within two days with the flows we'd move, 
   fine."
 - *"What if you disappear?"* — "It's open source on your server; we hand over everything (flows, backups,
   settings) and any Activepieces freelancer can take over."
-- *"Is it secure?"* — "Your own server, firewall, key-only access, automatic security updates, encrypted
-  backups; your app passwords are stored encrypted. EU clients get a data-processing agreement."
+- *"Is it secure?"* — "Your own server, firewall, key-only access, automatic security updates, nightly
+  backups in a second location; your app passwords are stored encrypted. EU clients get a data-processing agreement."
 - *"We need many users."* — "The free edition has one admin login. If you need team roles, we'll tell you
   honestly that this isn't the right fit yet."
 

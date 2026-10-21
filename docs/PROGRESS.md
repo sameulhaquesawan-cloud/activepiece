@@ -2,12 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.7 (see `docs/tasks/phase-4b.md`)
+- **Current task:** 4b.8 — owner sign-off (see `docs/tasks/phase-4b.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4b.7 Europe readiness (`docs/go-to-market/eu/`: DPA template, sub-processors, security measures, privacy notice; site privacy + legal-notice pages), then 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
-3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
+1. **Owner:** review the drafts in `docs/go-to-market/` (start with `README.md`), ask for changes, then sign off (task 4b.8). Decide on the two backup/alert privacy items under Known issues (encrypt whole database backups; option to drop error excerpts for EU clients).
+2. Agent, after sign-off: record it, close Phase 4b, then Phase 5 (flow template library) via `/opskit-start-phase`.
+3. Owner (not blocking): Telegram bot (monitoring runbook A), age key + off-server storage (backup runbook A/B); optionally a real demo server (`demo-script.md` option A).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -26,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 4b.7 draft done.** `docs/go-to-market/eu/`: DPA template (Art. 28; 48 h breach notice to the controller, 30-day deletion, sub-processor notice), security measures (each line points to the kit file/command; no certifications claimed; states what is *not* encrypted), sub-processor list (Hetzner, DigitalOcean, Backblaze EU region *(verify)*, Telegram, Slack, email provider, UptimeRobot), privacy notice; site `privacy.html` + `imprint.html` (legal notice for DE/AT) — all templates for legal review. Found and corrected an over-claim in all drafts ("encrypted backups"); logged two privacy items under Known issues. `docs/go-to-market/README.md` indexes everything. html-validate clean on all three pages.
 - **2026-10-21 — 4b.6 draft done.** `outreach.md` (ideal clients per niche + where to find them incl. Malt for the EU, first-20 mix, EU contact rules — no B2B cold email in DE/AT, three templates + follow-ups, 10 discovery questions, objections), `proposal-template.md` (situation, scope, flow table, price table, 4-week timeline, client duties, terms, signature), `zapier-migration-checklist.md` (inventory, piece check, Zapier/Make → Activepieces mapping verified against `packages/pieces/core` in 0.92.3, CE limits, rebuild/test, side-by-side switch-over, handover). Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.5 draft done.** `docs/go-to-market/demo-script.md`: timed 3-minute script (own builder → deliberate failure → Telegram alert with run link → backups + monthly restore-test result → daily summary → price), fallbacks per step, prospect Q&A. Preparation: option A real demo server `demo.yourbrand.com` (≈ €20/month, recommended — also rehearses the first install); option B Codespace (explore stack for the builder, kept practice stack for alerts/backups; practice stacks only answer on `*.localhost`). Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.4 draft done.** `docs/go-to-market/site/index.html`: one static page (no scripts, no external fonts, no cookies), light/dark, sections hero + facts, problem, how it works, what's included (+ "coming soon"), pricing with a CSS-only EUR/USD switch, FAQ, contact (mailto), footer links to privacy/legal notice pages (4b.7). Checks: html-validate 9.4.0 clean; Playwright at 390 px and 1280 px: no horizontal scroll, currency switch works. Verify: open the file in a browser.
@@ -97,6 +99,8 @@
 - Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.
 - Upstream `main.ts` listens on `::` only; crash-loops on IPv6-less kernels (cloud sandbox). Explore-only shim in `explore/stack`; real hosts unaffected.
 - Host agent logs (`<root>/logs/<id>-{backup,detector,health,digest}.log`) are appended by cron with no rotation (detector ≈ 25 KB/day). Add logrotate in Phase 9 (real VPS).
+- **Database backups are not encrypted** (found 21 Oct 2026 while writing the EU security measures): `agent/backup.sh` encrypts only `env.age`; `db.dump` goes off-server as is (stored credentials inside stay encrypted by `AP_ENCRYPTION_KEY`, but flow data and run history do not). Sales drafts were corrected to say only what is true. Proposed fix (needs owner approval — backup logic): encrypt `db.dump` with the owner's age key too, decrypt on restore; small change + tests.
+- **Alert error excerpts may contain data fragments** (≤ 300 chars from `failedStep.message`, e.g. an invalid email address) and go to Telegram/Slack/email. Disclosed in `docs/go-to-market/eu/`. Possible option: per-client `alerts.include_error_excerpt: false` for EU clients (needs owner decision).
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->

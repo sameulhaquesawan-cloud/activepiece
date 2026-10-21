@@ -29,7 +29,8 @@ flow — if it fails fifty times, you get one message, not fifty."
 Fallback: screenshot of a real Telegram alert taken during preparation.
 
 **1:45 – 2:20 · Backups that are actually tested**
-"Every night the system backs itself up — encrypted, and copied off the server. Once a month we prove it
+"Every night the system backs itself up and copies the backup off the server — your app passwords and the
+master key stay encrypted. Once a month we prove it
 works: we restore the backup into a throwaway copy and check that every flow and every saved connection is
 there."
 [Terminal: `opskit backups <id>` → list with sizes and off-server status; then show the last line of
@@ -88,5 +89,5 @@ summary parts from a kept practice stack in the terminal:
   supported at the hourly rate."
 - *"What about my Zapier zaps?"* — "We rebuild them one by one and run both side by side before switching
   the old one off (migration checklist)."
-- *"Where is my data?"* — "On your server, EU or US, encrypted backups; EU clients get a data-processing
+- *"Where is my data?"* — "On your server, EU or US, with backups in a private second location; EU clients get a data-processing
   agreement."

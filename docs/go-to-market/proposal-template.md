@@ -9,7 +9,7 @@ and how it was noticed.]
 ## What we'll do
 1. **Your own automation system** on a private server in **[EU (Germany/Finland) / US]**, at
    `[automations.clientdomain.com]`, with HTTPS.
-2. **Nightly encrypted backups**, copied to a second location and kept 30 days; a monthly test restore.
+2. **Nightly backups**, copied to a private second location and kept 30 days; a monthly test restore.
 3. **Monitoring and alerts**: the site is checked every minute; failed runs reported within 5 minutes with
    a link; a daily summary; alerts to **[Telegram / Slack / email]** (quiet hours [from–to]).
 4. **Flows** moved or built in the setup:
