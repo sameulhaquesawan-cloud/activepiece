@@ -10,8 +10,21 @@ backup_dir_on() {
   printf '%s/backups/%s/%s' "$(host_root "$1")" "$2" "$3"
 }
 
+# backup_dump_file <host> <id> <name>: prints db.dump.age (encrypted, current) or db.dump (older backups)
+backup_dump_file() {
+  local host="$1" dir file
+  dir="$(backup_dir_on "$host" "$2" "$3")"
+  for file in db.dump.age db.dump; do
+    if host_run "$host" test -s "${dir}/${file}" 2>/dev/null; then
+      printf '%s' "$file"
+      return 0
+    fi
+  done
+  return 1
+}
+
 # restore_locate <source host> <target host> <id> <name|latest>
-# sets RESTORE_NAME and RESTORE_FROM_HOST (the host that holds db.dump + env.age)
+# sets RESTORE_NAME and RESTORE_FROM_HOST (the host that holds db.dump(.age) + env.age)
 restore_locate() {
   local src="$1" dst="$2" id="$3" from="$4" name=""
   RESTORE_NAME=""
@@ -23,9 +36,9 @@ restore_locate() {
     name="$from"
   fi
   [[ "$name" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || { log_fail "no backup '${from}' for ${id} (see: opskit backups ${id})"; return 1; }
-  if host_run "$src" test -s "$(backup_dir_on "$src" "$id" "$name")/db.dump" 2>/dev/null; then
+  if backup_dump_file "$src" "$id" "$name" >/dev/null; then
     RESTORE_FROM_HOST="$src"
-  elif [ "$dst" != "$src" ] && host_run "$dst" test -s "$(backup_dir_on "$dst" "$id" "$name")/db.dump" 2>/dev/null; then
+  elif [ "$dst" != "$src" ] && backup_dump_file "$dst" "$id" "$name" >/dev/null; then
     RESTORE_FROM_HOST="$dst"
   else
     restore_fetch_offsite "$dst" "$id" "$name" || return 1
@@ -68,12 +81,13 @@ restore_fetch_offsite() {
 
 # restore_copy_dump <from host> <to host> <id> <name>: via this machine when the hosts differ
 restore_copy_dump() {
-  local from="$1" to="$2" id="$3" name="$4" tmp
+  local from="$1" to="$2" id="$3" name="$4" tmp file
   [ "$from" != "$to" ] || return 0
+  file="$(backup_dump_file "$from" "$id" "$name")" || { log_fail "no database dump in ${name} on ${from}"; return 1; }
   tmp="$(mktemp -d)"
   chmod 700 "$tmp"
-  if host_get "$from" "$(backup_dir_on "$from" "$id" "$name")/db.dump" "${tmp}/db.dump" \
-    && host_put "$to" "${tmp}/db.dump" "$(backup_dir_on "$to" "$id" "$name")/db.dump" 600; then
+  if host_get "$from" "$(backup_dir_on "$from" "$id" "$name")/${file}" "${tmp}/${file}" \
+    && host_put "$to" "${tmp}/${file}" "$(backup_dir_on "$to" "$id" "$name")/${file}" 600; then
     rm -rf "$tmp"
     log_ok "copied backup ${name} from ${from} to ${to}"
     return 0
@@ -136,14 +150,36 @@ wait_service_healthy() {
   return 1
 }
 
+# restore_decrypt_dump <host> <dir>: db.dump.age → <dir>/.restore.dump (600), decrypted on this machine
+restore_decrypt_dump() {
+  local host="$1" dir="$2" codes
+  # shellcheck disable=SC2016
+  host_run "$host" cat "${dir}/db.dump.age" | age -d -i "$(owner_age_identity)" \
+    | host_run "$host" sh -c 'umask 077 && cat > "$1"' _ "${dir}/.restore.dump"
+  codes=("${PIPESTATUS[@]}")
+  [ "${codes[0]}" -eq 0 ] && [ "${codes[1]}" -eq 0 ] && [ "${codes[2]}" -eq 0 ]
+}
+
 restore_database() {
-  local host="$1" source="$2" name="$3" target="$4" container dump
+  local host="$1" source="$2" name="$3" target="$4" container dir file dump rc=0
   container="$(stack_compose "$host" "$target" ps -q postgres | head -n 1)"
-  dump="$(backup_dir_on "$host" "$source" "$name")/db.dump"
+  dir="$(backup_dir_on "$host" "$source" "$name")"
+  file="$(backup_dump_file "$host" "$source" "$name")" || { log_fail "no database dump in ${source}/${name}"; return 1; }
+  dump="${dir}/db.dump"
+  if [ "$file" = "db.dump.age" ]; then
+    dump="${dir}/.restore.dump"
+    if ! restore_decrypt_dump "$host" "$dir"; then
+      host_run "$host" rm -f "$dump"
+      log_fail "db.dump.age does not decrypt with $(owner_age_identity) (wrong owner key?)"
+      return 1
+    fi
+  fi
   # shellcheck disable=SC2016
   host_run "$host" sh -c 'docker exec -i "$1" sh -c '"'"'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-privileges --exit-on-error'"'"' < "$2"' _ "$container" "$dump" \
-    || { log_fail "pg_restore failed"; return 1; }
-  log_ok "database restored from ${source}/${name}"
+    || rc=1
+  [ "$file" = "db.dump" ] || host_run "$host" rm -f "$dump"
+  [ "$rc" -eq 0 ] || { log_fail "pg_restore failed"; return 1; }
+  log_ok "database restored from ${source}/${name}$([ "$file" = "db.dump.age" ] && printf ' (decrypted with the owner key)')"
 }
 
 restore_report() {

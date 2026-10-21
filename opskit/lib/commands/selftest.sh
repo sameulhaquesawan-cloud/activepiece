@@ -81,7 +81,14 @@ cmd_main() {
   latest="$(cat "${SELFTEST_ROOT}/backups/${SELFTEST_ID}/latest")"
   age -d -i "${SELFTEST_DIR}/owner.key" "${SELFTEST_DIR}/offsite/${SELFTEST_ID}/${latest}/env.age" | grep -q '^AP_ENCRYPTION_KEY=' \
     || die "selftest: off-server env.age does not decrypt with the owner key"
-  log_ok "backup off-server and env escrow decrypts"
+  local offsite="${SELFTEST_DIR}/offsite/${SELFTEST_ID}/${latest}"
+  [ ! -e "${offsite}/db.dump" ] || die "selftest: a plain database dump left the server"
+  if ! age -d -i "${SELFTEST_DIR}/owner.key" -o "${SELFTEST_DIR}/check.dump" "${offsite}/db.dump.age" \
+    || [ "$(head -c 5 "${SELFTEST_DIR}/check.dump")" != "PGDMP" ]; then
+    die "selftest: off-server db.dump.age does not decrypt to a database dump"
+  fi
+  rm -f "${SELFTEST_DIR}/check.dump"
+  log_ok "backup off-server; database dump and env escrow are encrypted and decrypt with the owner key"
   OPSKIT_OWNER_AGE_KEY="${SELFTEST_DIR}/owner.key" "${OPSKIT_ROOT}/bin/opskit" restore "$SELFTEST_ID" --target "${SELFTEST_ID}-rt" \
     || die "selftest: restore into ${SELFTEST_ID}-rt failed"
   rt_verify selftest "${SELFTEST_ID}-rt" "${SELFTEST_ID}-rt.localhost" "$https_port" || die "selftest: restored copy is incomplete"

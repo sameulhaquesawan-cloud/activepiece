@@ -25,6 +25,7 @@ SH
 #!/usr/bin/env bash
 out=""; in=""
 while [ "$#" -gt 0 ]; do case "$1" in -o) out="$2"; shift 2 ;; -R) shift 2 ;; *) in="$1"; shift ;; esac; done
+if [ -n "${FAKE_AGE_FAIL_ON:-}" ] && [ "$(basename "$in")" = "$FAKE_AGE_FAIL_ON" ]; then exit 1; fi
 printf 'age-encrypted:%s' "$(wc -c < "$in")" > "$out"
 SH
   chmod +x "${STUB}/docker" "${STUB}/age"
@@ -39,11 +40,15 @@ backups() {
   find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l
 }
 
-@test "successful backup writes db, encrypted env, compose and status, all private" {
+@test "successful backup writes encrypted db and env, compose and status, all private" {
   run "$AGENT" acme --root "$ROOT"
   [ "$status" -eq 2 ]
   local dir="${ROOT}/backups/acme/$(cat "${ROOT}/backups/acme/latest")"
-  for f in db.dump env.age compose.yml status.json; do
+  [ ! -e "${dir}/db.dump" ]
+  ! grep -q PGDMP "${dir}/db.dump.age"
+  [ "$(jq -r .encrypted "${dir}/status.json")" = "true" ]
+  [ "$(jq -r .db_bytes "${dir}/status.json")" = "$(stat -c %s "${dir}/db.dump.age")" ]
+  for f in db.dump.age env.age compose.yml status.json; do
     [ -s "${dir}/${f}" ]
     [ "$(stat -c %a "${dir}/${f}")" = "600" ]
   done
@@ -67,6 +72,14 @@ backups() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"integrity check"* ]]
   [ "$(backups)" = "0" ]
+}
+
+@test "a failed database encryption fails and leaves no backup (no plain dump kept)" {
+  FAKE_AGE_FAIL_ON=db.dump run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"database encryption failed"* ]]
+  [ "$(backups)" = "0" ]
+  [ -z "$(find "${ROOT}/backups" -name 'db.dump*')" ]
 }
 
 @test "missing owner public key fails (secrets are never stored unencrypted)" {
@@ -108,7 +121,8 @@ setup_remote() {
   [ "$status" -eq 0 ]
   local name
   name="$(cat "${ROOT}/backups/acme/latest")"
-  [ -s "${REMOTE_DIR}/acme/${name}/db.dump" ]
+  [ -s "${REMOTE_DIR}/acme/${name}/db.dump.age" ]
+  [ ! -e "${REMOTE_DIR}/acme/${name}/db.dump" ]
   [ -s "${REMOTE_DIR}/acme/${name}/env.age" ]
   [ "$(jq -r .remote "${ROOT}/backups/acme/${name}/status.json")" = "ok" ]
   [ "$(jq -r .remote "${REMOTE_DIR}/acme/${name}/status.json")" = "ok" ]

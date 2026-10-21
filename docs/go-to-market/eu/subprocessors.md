@@ -7,7 +7,7 @@ sub-processor is added or changed (DPA §5). Check each provider's own DPA and d
 |---|---|---|---|---|
 | Hetzner Online GmbH (Germany) | client server (hosting) | everything processed by the client's automations | Germany (Falkenstein/Nuremberg) or Finland (Helsinki) | EU company; sign Hetzner's DPA in its console |
 | DigitalOcean, LLC (US) | client server for US/other clients | as above | only if the client chooses a non-EU region | not used for EU clients by default |
-| Backblaze, Inc. (US) | off-server backup storage | database backups (see security measures: credentials inside stay encrypted) | EU Central region (Amsterdam) — choose it when creating the bucket *(verify)* | US company; standard contractual clauses in its DPA *(verify)* |
+| Backblaze, Inc. (US) | off-server backup storage | encrypted backups only (database and settings are encrypted before upload; the provider cannot read them) | EU Central region (Amsterdam) — choose it when creating the bucket *(verify)* | US company; standard contractual clauses in its DPA *(verify)* |
 | Telegram (Telegram FZ-LLC) | alert messages to the provider (and the client, if chosen) | client name, flow name, failing step, error excerpt ≤ 300 characters | outside the EU *(verify)* | alerts may contain small data fragments; offer email/Slack instead if the client prefers |
 | Slack (Salesforce) | alert messages, only if the client chooses Slack | as above | per the client's own Slack workspace | client's own account |
 | [Email provider, e.g. Brevo (Sendinblue SAS, France)] | alert emails, only if email alerts are used | as above + recipient addresses | EU | |

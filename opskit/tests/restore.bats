@@ -171,3 +171,50 @@ teardown() {
   [ "$(yq '.host.name' "${REG}/clients/demo/client.yaml")" = "other" ]
   rm -rf "$remote" "$OTHER"
 }
+
+encrypt_dump() {
+  local dir="${HOSTROOT}/backups/demo/${NAME}"
+  printf 'PGDMP-encrypted-test' | age -r "$(age-keygen -y "${KEYDIR}/key")" -o "${dir}/db.dump.age"
+  rm "${dir}/db.dump"
+}
+
+restore_libs() {
+  local lib
+  for lib in log validate schema registry render secrets stack ssh host deploy confirm verify restore; do
+    source "${OPSKIT_ROOT}/lib/${lib}.sh"
+  done
+}
+
+@test "an encrypted backup (db.dump.age only) is found and copied to another host" {
+  encrypt_dump
+  OTHER="$(mktemp -d)"
+  yq ".host_id = \"other\" | .opskit_root = \"${OTHER}\"" "${REG}/hosts/local-practice.yaml" > "${REG}/hosts/other.yaml"
+  run "$OPSKIT" restore demo --target demo-copy --host other
+  [[ "$output" == *"copied backup ${NAME} from local-practice to other"* ]]
+  [ -s "${OTHER}/backups/demo/${NAME}/db.dump.age" ]
+  [ ! -e "${OTHER}/backups/demo/${NAME}/db.dump" ]
+  rm -rf "$OTHER"
+}
+
+@test "the encrypted dump is decrypted with the owner key into a private temporary file" {
+  encrypt_dump
+  restore_libs
+  local dir="${HOSTROOT}/backups/demo/${NAME}"
+  restore_decrypt_dump local-practice "$dir"
+  [ "$(cat "${dir}/.restore.dump")" = "PGDMP-encrypted-test" ]
+  [ "$(stat -c %a "${dir}/.restore.dump")" = "600" ]
+  [ "$(backup_dump_file local-practice demo "$NAME")" = "db.dump.age" ]
+}
+
+@test "a wrong owner key cannot decrypt the database dump" {
+  encrypt_dump
+  restore_libs
+  age-keygen -o "${KEYDIR}/wrong" 2>/dev/null
+  OPSKIT_OWNER_AGE_KEY="${KEYDIR}/wrong" run restore_decrypt_dump local-practice "${HOSTROOT}/backups/demo/${NAME}"
+  [ "$status" -ne 0 ]
+}
+
+@test "older backups with a plain db.dump are still recognised" {
+  restore_libs
+  [ "$(backup_dump_file local-practice demo "$NAME")" = "db.dump" ]
+}

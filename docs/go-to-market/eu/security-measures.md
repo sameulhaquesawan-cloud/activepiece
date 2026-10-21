@@ -23,9 +23,10 @@ names where it is implemented so it can be checked. No certifications (ISO 27001
   (AES-256-CBC, `AP_ENCRYPTION_KEY`).
 - The settings file containing that key is encrypted with the provider's public key before it is backed up
   (age encryption; the private key is kept offline by the provider, never on servers).
-- **Not encrypted by us:** the database backup file itself (it contains flow definitions and run history;
-  stored credentials inside it remain encrypted). It is stored with a private storage provider in the same
-  region as the server. *[Planned: encrypt the whole database backup — see owner decision.]*
+- The database backup (flow definitions, run history and the already-encrypted credentials) is encrypted
+  with the provider's public key on the server, right after its readability check; no unencrypted copy is
+  kept or sent off the server (`agent/backup.sh`, `db.dump.age`). Restores decrypt it on the provider's own
+  computer (`opskit restore`).
 - Server disks: as provided by the hosting company (not additionally encrypted by us).
 
 ## Availability and resilience

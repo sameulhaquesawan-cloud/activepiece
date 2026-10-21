@@ -29,8 +29,8 @@ flow — if it fails fifty times, you get one message, not fifty."
 Fallback: screenshot of a real Telegram alert taken during preparation.
 
 **1:45 – 2:20 · Backups that are actually tested**
-"Every night the system backs itself up and copies the backup off the server — your app passwords and the
-master key stay encrypted. Once a month we prove it
+"Every night the system backs itself up, encrypts the backup and copies it off the server. Once a month we
+prove it
 works: we restore the backup into a throwaway copy and check that every flow and every saved connection is
 there."
 [Terminal: `opskit backups <id>` → list with sizes and off-server status; then show the last line of

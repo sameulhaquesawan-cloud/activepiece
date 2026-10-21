@@ -5,9 +5,11 @@ Design and reasons: ADR-015 in `docs/DECISIONS.md`.
 
 ## How backups work (nothing to do day to day)
 - Every night (default 02:30 server time, `backup.schedule` in `client.yaml`) the server runs
-  `<root>/agent/backup.sh <id>`: database dump (`pg_dump -Fc`, checked with `pg_restore --list`),
-  the client's `.env` encrypted to **your** age public key (`env.age`), a copy of `compose.yml` and
-  `status.json`, in `<root>/backups/<id>/<UTC time>/`.
+  `<root>/agent/backup.sh <id>`: database dump (`pg_dump -Fc`, checked with `pg_restore --list`, then
+  encrypted to **your** age public key as `db.dump.age`; no plain copy is kept), the client's `.env`
+  encrypted the same way (`env.age`), a copy of `compose.yml` and `status.json`, in
+  `<root>/backups/<id>/<UTC time>/`. Restores decrypt both on your machine with your private key; backups
+  made before 21 Oct 2026 (plain `db.dump`) still restore.
 - Then it copies that folder off the server with rclone (`backup.remote`) and checks the sizes.
 - Kept: 14 days on the server, 30 days off-server (`backup.retention_days`); the newest good backup
   is never deleted.

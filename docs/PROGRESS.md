@@ -1,14 +1,13 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 4b done (owner signed off 21 Oct 2026); approved follow-up: encrypt database backups
-- **Current task:** backup encryption (owner approved 21 Oct 2026) — then Phase 5 planning
+- **Current phase:** Phase 4b done (owner signed off 21 Oct 2026); next: Phase 5 (flow template library)
+- **Current task:** none — waiting for the owner to say "go Phase 5"
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: encrypt database backups (owner approved): `agent/backup.sh` writes `db.dump.age` (age, owner public key) after the readability check and removes the plain dump; restore/restore-test decrypt with the owner key (old plain backups still restore); tests + selftest; update docs (`docs/go-to-market/eu/security-measures.md`, offer wording, runbook).
-2. Agent: then Phase 5 (flow template library) via `/opskit-start-phase`.
-3. Owner (not blocking): business name/domain (replace "YourBrand"), Telegram bot, age key + off-server storage, optional demo server; lawyer review of `docs/go-to-market/eu/`, accountant for VAT.
+1. Agent, when the owner says go: Phase 5 (flow template library) via `/opskit-start-phase` → `docs/tasks/phase-5.md` for owner review.
+2. Owner (not blocking): business name/domain (replace "YourBrand"), Telegram bot (monitoring runbook A), age key + off-server storage (backup runbook A/B), optional demo server; lawyer review of `docs/go-to-market/eu/`, accountant for VAT; decide on the alert error-excerpt option (Known issues).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -27,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — Database backups encrypted (owner approved).** `agent/backup.sh`: after the `pg_restore --list` check the dump is encrypted with the owner's age public key to `db.dump.age` and the plain dump is deleted (status.json `encrypted: true`, `db_bytes` = encrypted size); a failed encryption leaves no backup. `lib/restore.sh`: `backup_dump_file` finds `db.dump.age` (or an older plain `db.dump`), copies it between hosts as is, and `restore_decrypt_dump` streams it through `age -d` on the operator machine into a 600 temp file on the target host that is removed after `pg_restore` (every pipeline stage checked). selftest now checks that the off-server copy has no plain dump and that `db.dump.age` decrypts to a pg dump; the round trip restores from the encrypted dump. Docs/sales drafts/EU security measures/ADR-015/runbook updated. Tests: `backup_agent.bats` (+1), `restore.bats` (+4); full check incl. docker passes.
 - **2026-10-21 — Phase 4b closed.** Owner signed off all go-to-market drafts (4b.8) and approved encrypting the database backups (Known issue). `docs/go-to-market/README.md` statuses updated.
 - **2026-10-21 — 4b.7 draft done.** `docs/go-to-market/eu/`: DPA template (Art. 28; 48 h breach notice to the controller, 30-day deletion, sub-processor notice), security measures (each line points to the kit file/command; no certifications claimed; states what is *not* encrypted), sub-processor list (Hetzner, DigitalOcean, Backblaze EU region *(verify)*, Telegram, Slack, email provider, UptimeRobot), privacy notice; site `privacy.html` + `imprint.html` (legal notice for DE/AT) — all templates for legal review. Found and corrected an over-claim in all drafts ("encrypted backups"); logged two privacy items under Known issues. `docs/go-to-market/README.md` indexes everything. html-validate clean on all three pages.
 - **2026-10-21 — 4b.6 draft done.** `outreach.md` (ideal clients per niche + where to find them incl. Malt for the EU, first-20 mix, EU contact rules — no B2B cold email in DE/AT, three templates + follow-ups, 10 discovery questions, objections), `proposal-template.md` (situation, scope, flow table, price table, 4-week timeline, client duties, terms, signature), `zapier-migration-checklist.md` (inventory, piece check, Zapier/Make → Activepieces mapping verified against `packages/pieces/core` in 0.92.3, CE limits, rebuild/test, side-by-side switch-over, handover). Awaiting owner sign-off (4b.8).
@@ -100,7 +100,7 @@
 - Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.
 - Upstream `main.ts` listens on `::` only; crash-loops on IPv6-less kernels (cloud sandbox). Explore-only shim in `explore/stack`; real hosts unaffected.
 - Host agent logs (`<root>/logs/<id>-{backup,detector,health,digest}.log`) are appended by cron with no rotation (detector ≈ 25 KB/day). Add logrotate in Phase 9 (real VPS).
-- **Database backups are not encrypted** (found 21 Oct 2026 while writing the EU security measures): `agent/backup.sh` encrypts only `env.age`; `db.dump` goes off-server as is (stored credentials inside stay encrypted by `AP_ENCRYPTION_KEY`, but flow data and run history do not). Sales drafts were corrected to say only what is true. Proposed fix (needs owner approval — backup logic): encrypt `db.dump` with the owner's age key too, decrypt on restore; small change + tests.
+- ~~**Database backups are not encrypted**~~ fixed 21 Oct 2026 (owner approved): `backup.sh` writes `db.dump.age`; restore decrypts with the owner key.
 - **Alert error excerpts may contain data fragments** (≤ 300 chars from `failedStep.message`, e.g. an invalid email address) and go to Telegram/Slack/email. Disclosed in `docs/go-to-market/eu/`. Possible option: per-client `alerts.include_error_excerpt: false` for EU clients (needs owner decision).
 
 ## Phase verification reports

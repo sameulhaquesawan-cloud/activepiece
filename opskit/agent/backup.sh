@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # opskit backup agent — standalone (no repo on the host). One client per run; safe from cron.
-# Layout: <root>/backups/<id>/<UTC ts>/{db.dump, env.age, compose.yml, status.json}
+# Layout: <root>/backups/<id>/<UTC ts>/{db.dump.age, env.age, compose.yml, status.json}
+# The database dump and .env are both encrypted to the owner's age public key; no plain copy is kept.
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -177,6 +178,15 @@ dump_database() {
     || { fail "database dump failed the pg_restore --list integrity check"; return 1; }
 }
 
+# encrypt_database <dir>: db.dump (already checked) → db.dump.age, then the plain dump is removed
+encrypt_database() {
+  local dir="$1" key="${ROOT}/agent/owner.age.pub"
+  [ -s "$key" ] || { fail "owner age public key missing: ${key}"; return 1; }
+  age -R "$key" -o "${dir}/db.dump.age" "${dir}/db.dump" || { fail "database encryption failed"; return 1; }
+  [ -s "${dir}/db.dump.age" ] || { fail "encrypted database dump is empty"; return 1; }
+  rm -f "${dir}/db.dump"
+}
+
 encrypt_env() {
   local target="$1" key="${ROOT}/agent/owner.age.pub"
   [ -s "$key" ] || { fail "owner age public key missing: ${key}"; return 1; }
@@ -188,9 +198,9 @@ write_status() {
   local dir="$1" started="$2" name="$3"
   local now db_bytes env_bytes
   now="$(date +%s)"
-  db_bytes="$(stat -c %s "${dir}/db.dump")"
+  db_bytes="$(stat -c %s "${dir}/db.dump.age")"
   env_bytes="$(stat -c %s "${dir}/env.age")"
-  printf '{"client":"%s","backup":"%s","db_bytes":%s,"env_bytes":%s,"duration_s":%s,"local":"ok"}\n' \
+  printf '{"client":"%s","backup":"%s","db_bytes":%s,"env_bytes":%s,"duration_s":%s,"encrypted":true,"local":"ok"}\n' \
     "$CLIENT" "$name" "$db_bytes" "$env_bytes" "$((now - started))" > "${dir}/status.json"
 }
 
@@ -208,11 +218,12 @@ run_backup() {
   mkdir -p "${dir}.partial"
   chmod 700 "$base" "${dir}.partial"
   dump_database "$container" "${dir}.partial/db.dump" || { rm -rf "${dir}.partial"; return 1; }
+  encrypt_database "${dir}.partial" || { rm -rf "${dir}.partial"; return 1; }
   encrypt_env "${dir}.partial/env.age" || { rm -rf "${dir}.partial"; return 1; }
   cp "${ROOT}/clients/${CLIENT}/compose.yml" "${dir}.partial/compose.yml"
   write_status "${dir}.partial" "$started" "$ts"
   mv "${dir}.partial" "$dir"
-  ok "backup ${CLIENT}/${ts}: db $(stat -c %s "${dir}/db.dump") bytes, env.age $(stat -c %s "${dir}/env.age") bytes"
+  ok "backup ${CLIENT}/${ts}: db.dump.age $(stat -c %s "${dir}/db.dump.age") bytes, env.age $(stat -c %s "${dir}/env.age") bytes (both encrypted)"
   BACKUP_DIR="$dir"
 }
 
