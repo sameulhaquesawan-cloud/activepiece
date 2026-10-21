@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: end-to-end check on this machine: throwaway host + client → deploy → backup → restore → teardown
 
-for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e practice; do
+for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e flows e2e_flows practice; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -93,6 +93,7 @@ cmd_main() {
     || die "selftest: restore into ${SELFTEST_ID}-rt failed"
   rt_verify selftest "${SELFTEST_ID}-rt" "${SELFTEST_ID}-rt.localhost" "$https_port" || die "selftest: restored copy is incomplete"
   e2e_monitoring selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: monitoring end-to-end check failed"
+  e2e_flow_templates "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: flow template import check failed"
   if [ "$SELFTEST_KEEP" = "true" ]; then
     log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: docker compose -p ${SELFTEST_ID} down -v; docker compose -p ${SELFTEST_ID}-rt down -v; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
   fi

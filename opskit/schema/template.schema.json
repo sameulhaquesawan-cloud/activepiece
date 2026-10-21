@@ -88,6 +88,21 @@
           },
           "default": {
             "type": "string"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "number"
+            ]
+          },
+          "choices": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         }
       }
@@ -136,6 +151,15 @@
         "runs"
       ],
       "properties": {
+        "set": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Z][A-Z0-9_]{1,40}$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "runs": {
           "type": "array",
           "items": {
@@ -155,6 +179,31 @@
                   "SUCCEEDED",
                   "FAILED"
                 ]
+              },
+              "stubs": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^test/[a-z0-9_-]+\\.json$"
+                }
+              },
+              "ran": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                }
+              },
+              "not_ran": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                }
               }
             }
           }

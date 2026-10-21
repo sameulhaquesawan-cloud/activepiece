@@ -132,6 +132,26 @@ CODE_INPUT='.flows[0].trigger.nextAction.settings.input'
   expect_problem "failure is fail-run but these steps continue on failure: step_1"
 }
 
+@test "number and choice placeholders need valid examples and defaults" {
+  yq -i '.placeholders[0].type = "number"' "${T}/template.yaml"
+  expect_problem "placeholder GREETING: Hello is not a valid number"
+  yq -i '.placeholders[0].type = "string" | .placeholders[0].choices = ["Hi", "Hey"]' "${T}/template.yaml"
+  expect_problem "placeholder GREETING: Hello is not a valid string (one of: Hi, Hey)"
+}
+
+@test "test.set must name declared placeholders with valid values" {
+  yq -i '.test.set = {"NOPE": "x"}' "${T}/template.yaml"
+  expect_problem "test.set: NOPE is not a declared placeholder"
+  yq -i '.test.set = {"GREETING": "Yo"} | .placeholders[0].choices = ["Hello", "Hi"]' "${T}/template.yaml"
+  expect_problem "test.set: GREETING=Yo is not valid for that placeholder"
+}
+
+@test "sample runs: stub files must exist and named steps must be in the flow" {
+  yq -i '.test.runs[0].stubs = {"step_1": "test/nope.json"} | .test.runs[1].not_ran = ["step_9"]' "${T}/template.yaml"
+  expect_problem "test payload missing: test/nope.json"
+  [[ "$output" == *"test step step_9 does not exist in flow.json"* ]]
+}
+
 @test "missing README, CHECKLIST and test payload" {
   rm "${T}/README.md" "${T}/CHECKLIST.md" "${T}/test/good.json"
   expect_problem "missing file: README.md"

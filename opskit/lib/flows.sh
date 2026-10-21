@@ -142,8 +142,27 @@ flows_leak_problems() {
     if length > 0 then "flow.json: real-looking ids in step inputs (use a placeholder): \(join(" "))" else empty end' "${dir}/flow.json"
 }
 
+flows_placeholder_value_problems() {
+  local dir="$1"
+  yq -o=json '.' "${dir}/template.yaml" | jq -r '
+    def bad($p; $v): ($p.type == "number" and ($v | test("^-?[0-9]+([.][0-9]+)?$") | not))
+      or ($p.choices != null and ($p.choices | index($v)) == null);
+    (.placeholders // []) as $ps
+    | ($ps[] | . as $p | ([.example] + (if has("default") then [.default] else [] end))[]
+        | select(bad($p; .)) | "placeholder \($p.key): \(.) is not a valid \($p.type // "string")\(if $p.choices then " (one of: " + ($p.choices | join(", ")) + ")" else "" end)"),
+    ((.test.set // {}) | to_entries[] | . as $e | ($ps | map(select(.key == $e.key)) | first) as $p
+      | if $p == null then "test.set: \($e.key) is not a declared placeholder"
+        elif bad($p; $e.value) then "test.set: \($e.key)=\($e.value) is not valid for that placeholder"
+        else empty end)'
+}
+
 flows_test_problems() {
-  local dir="$1" payload
+  local dir="$1" payload steps
+  flows_placeholder_value_problems "$dir"
+  steps="$(jq -c '[.. | objects | select(has("type") and has("name") and has("settings")) | .name]' "${dir}/flow.json")"
+  yq -o=json '.test.runs // []' "${dir}/template.yaml" | jq -r --argjson steps "$steps" '
+    .[] | ((.stubs // {}) | keys[]), (.ran // [])[], (.not_ran // [])[]
+    | select(. as $s | $steps | index($s) | not) | "test step \(.) does not exist in flow.json"' | sort -u
   while IFS= read -r payload; do
     [ -n "$payload" ] || continue
     if [ ! -f "${dir}/${payload}" ]; then
@@ -151,7 +170,7 @@ flows_test_problems() {
     elif ! jq -e . "${dir}/${payload}" >/dev/null 2>&1; then
       printf 'test payload is not valid JSON: %s\n' "$payload"
     fi
-  done < <(yq -r '.test.runs[]?.payload' "${dir}/template.yaml")
+  done < <(yq -r '.test.runs[]? | [.payload] + ((.stubs // {}) | to_entries | map(.value)) | .[]' "${dir}/template.yaml" | sort -u)
 }
 
 # flows_validate_one <id>: prints [ok]/[fail] lines; returns 1 when invalid

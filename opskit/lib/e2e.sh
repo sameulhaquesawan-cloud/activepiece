@@ -37,11 +37,12 @@ e2e_mock_stop() {
 }
 
 e2e_skip() {
+  local label="${2:-monitoring e2e}"
   if [ "${OPSKIT_REQUIRE_PIECES:-0}" = "1" ]; then
-    log_fail "monitoring e2e: $1 (OPSKIT_REQUIRE_PIECES=1)"
+    log_fail "${label}: $1 (OPSKIT_REQUIRE_PIECES=1)"
     return 1
   fi
-  log_warn "monitoring e2e SKIPPED: $1 — runs where pieces load (CI, Codespaces)"
+  log_warn "${label} SKIPPED: $1 — runs where pieces load (CI, Codespaces)"
   return 0
 }
 

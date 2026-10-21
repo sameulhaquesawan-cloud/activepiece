@@ -1,6 +1,6 @@
 start_mock_http() {
   MOCK_DIR="$(mktemp -d)"
-  python3 -I "${OPSKIT_ROOT}/tests/helpers/mock_http.py" "${MOCK_DIR}/requests.jsonl" "${MOCK_DIR}/port" &
+  python3 -I "${OPSKIT_ROOT}/tests/helpers/mock_http.py" "${MOCK_DIR}/requests.jsonl" "${MOCK_DIR}/port" "${MOCK_RESPONSES:-}" &
   MOCK_PID=$!
   local _
   for _ in $(seq 1 50); do
