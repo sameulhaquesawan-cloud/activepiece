@@ -1,0 +1,18 @@
+Item,EU (EUR),US (USD),Note
+Server per client per month,20,24,EU: Hetzner CPX22 19.99 EUR; US: DigitalOcean 2 vCPU/4 GB 24 USD (research.md)
+Buffer per client (backups storage + price rises),5,6,Backblaze B2 is cents per client; the rest is safety margin
+Share of the monitoring server per client,4,5,One Uptime Kuma server (about 20 EUR/month) shared by about 5 clients
+Your hourly rate,55,60,Start here; raise after the first three clients
+Watching and alert handling minutes per client per month,30,30,Reading alerts and digests even when nothing is broken
+Care: included hours per month,1,1,
+Care Plus: included hours per month,3,3,
+Target margin (percent),30,30,Share of the price that is profit after costs and your hours
+Setup hours (server + deploy + 3 flows + handover),11,11,About 3 h kit + 6 h flows + 1 h handover + 1 h admin
+Setup buffer for surprises (percent),15,15,
+Care: monthly cost,=B2+B3+B4+B5*(B6/60+B7),=C2+C3+C4+C5*(C6/60+C7),Calculated
+Care: monthly price,=B12/(1-B9/100),=C12/(1-C9/100),Calculated; round to a nice number by hand
+Care Plus: monthly cost,=B2+B3+B4+B5*(B6/60+B8),=C2+C3+C4+C5*(C6/60+C8),Calculated
+Care Plus: monthly price,=B14/(1-B9/100),=C14/(1-C9/100),Calculated
+Setup: one-time price,=B5*B10*(1+B11/100),=C5*C10*(1+C11/100),Calculated
+Care: your profit per month,=B13-B12,=C13-C12,Calculated
+Care Plus: your profit per month,=B15-B14,=C15-C14,Calculated

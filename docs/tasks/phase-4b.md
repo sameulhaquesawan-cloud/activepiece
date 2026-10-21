@@ -30,7 +30,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** no promise depends on a CE paid-only feature (SPEC 18 list) or a V2 item; every included item maps to an opskit command or runbook.
 - **Manual verification:** owner reads it as if they were a client.
 
-### [ ] 4b.3 — Pricing sheet + cost calculator
+### [x] 4b.3 — Pricing sheet + cost calculator
 - **Goal:** cost per client (server, backup storage, monitoring share, your hours) → setup price and monthly plans with a visible margin; comparison against what the client pays Zapier/Make today; a small calculator the owner can edit (CSV that opens in Google Sheets/Excel) and a printable one-page pricing table.
 - **Spec refs:** 18 (≥ 2 vCPU / 4 GB per client, dedicated hosts until the first paying client)
 - **Files likely touched:** `docs/go-to-market/pricing.md`, `docs/go-to-market/pricing-calculator.csv`

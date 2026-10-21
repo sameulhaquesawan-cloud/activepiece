@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.3 (see `docs/tasks/phase-4b.md`)
+- **Current task:** 4b.4 (see `docs/tasks/phase-4b.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4b.3 pricing + calculator (`pricing.md`, `pricing-calculator.csv`), then 4b.4 one-page site, 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
+1. Agent: 4b.4 one-page site (`docs/go-to-market/site/index.html`), then 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
 3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 4b.3 draft done.** `pricing-calculator.csv` (inputs as whole numbers — minutes and percent — and plain formulas without functions, so it imports into any spreadsheet locale; results re-computed by script: Care €159.29/$178.57, Care Plus €316.43/$350, setup €695.75/$759) and `pricing.md`: setup €690/$749, Care €159/$179, Care Plus €319/$349, extra hour €55/$60, flows €120–290/$140–330, migration €90/$100 per Zap, 3-month minimum, yearly = 10 months, pilot 50 % off setup; cost breakdown and comparison with Zapier/Make/Activepieces Cloud/freelancers. Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.2 draft done.** `docs/go-to-market/offer.md`: one-line pitch; setup (own server EU/US, HTTPS, nightly encrypted off-server backups, monthly restore test, monitoring + alerts, up to 3 flows, handover call) mapped to opskit commands; Care / Care Plus (1 h / 3 h, 12 h / 4 h response, version updates quarterly/monthly), add-ons, client responsibilities, exclusions (incl. CE paid-only features, one admin login), no-lock-in exit (30-day retention then purge), privacy paragraph, guard-rails. Items from Phases 5–7 marked *coming*. Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.1 done.** `docs/go-to-market/research.md`: dated prices with official/secondary marks — Zapier Professional from $19.99 (annual) / ≈ $29.99 monthly, Team from $69 / ≈ $103.50; Make $9/$16/$29 annual (not verified, site blocked); Activepieces Cloud now credit-based $0/$20/$200 (the per-flow model in RESEARCH is outdated — flagged there); Hetzner CX23 €5.99 sold out, CPX22 €19.99 EU, CPX21 €32.49 US; DigitalOcean 2 vCPU/4 GiB $24; B2 $6.95/TB; Brevo free 300/day; freelance rates $40–235/h. Owner Q4 adjusted: EU → Hetzner, US → DigitalOcean. Starting rate assumption $60/€55 per hour.
 - **2026-10-21 — Phase 4b planned; CI fix.** Owner said "go Phase 4b". `docs/tasks/phase-4b.md`: 7 tasks (facts, offer, pricing + calculator, one-page site, demo script, outreach kit incl. Zapier migration checklist, sign-off), questions Q1–Q5 with defaults. CI run 26 was red: the new edge readiness probe (`wget localhost:2019` in the Caddy container) never answered on GitHub runners; replaced by retrying `caddy reload` (what callers need). Verify: `bats opskit/tests/bootstrap.bats`.
