@@ -218,7 +218,20 @@ setup_edge() {
       -v "${ROOT}/caddy/data:/data" -v "${ROOT}/caddy/config:/config" \
       "$CADDY_IMAGE"
   fi
+  wait_edge_ready || return 1
   ok "edge: ${EDGE_NAME} (${CADDY_IMAGE}) on ${HTTP_PORT}/${HTTPS_PORT}, network ${EDGE_NETWORK}, TLS ${TLS}"
+}
+
+# Caddy accepts reloads only once its admin endpoint (localhost:2019 in the container) answers
+wait_edge_ready() {
+  local _
+  [ "$DRY_RUN" = "false" ] || return 0
+  for _ in $(seq 1 30); do
+    docker exec "$EDGE_NAME" wget -q -O /dev/null http://localhost:2019/config/ 2>/dev/null && return 0
+    sleep 1
+  done
+  fail "edge ${EDGE_NAME} started but its admin endpoint did not answer in 30 s (docker logs ${EDGE_NAME})"
+  return 1
 }
 
 main() {
