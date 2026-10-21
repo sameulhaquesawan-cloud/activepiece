@@ -19,7 +19,7 @@
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
-| 5 | Flow template library | Done — waiting for owner sign-off (5 templates; Elmo dropped by the owner) | `check` + CI run 33 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
+| 5 | Flow template library | Done — waiting for owner sign-off (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
@@ -120,7 +120,7 @@
 ### Phase 5 — 21 Oct 2026
 | Acceptance (SPEC 17 Phase 5) | Evidence |
 |---|---|
-| Each template imports into a fresh local stack | `opskit selftest` imports all five client templates + `example` with `opskit flows import` (password at the prompt, our `openai-compatible` piece installed from its committed archive), each arrives switched off; mandatory in CI (`OPSKIT_REQUIRE_PIECES=1`), green on CI run 33 (runs 34+ add the lead-ad alert) |
+| Each template imports into a fresh local stack | `opskit selftest` imports all five client templates + `example` with `opskit flows import` (password at the prompt, our `openai-compatible` piece installed from its committed archive), each arrives switched off; mandatory in CI (`OPSKIT_REQUIRE_PIECES=1`), green on CI run 33 and on run 34, which includes the lead-ad alert and the `AP_APP_WEBHOOK_SECRETS` render |
 | … and passes its sample-run instructions | CI replays every `test.runs` payload on a stub copy (account steps → code steps returning input/stub, non-webhook triggers → webhook) and checks status and steps run/not run: lead capture (good / invalid email), invoice reminder (stub rows / broken row fails after reminding the rest), review request (real Store + 1-minute Delay; repeat order and unpaid order not emailed), AI email sorter (urgent → label + Slack, newsletter → label only, bad AI answer fails), lead-ad alert; code steps unit-tested with node (`flows_code.bats`) |
 | Paid third-party accounts → documented manual test | `opskit/flows/<template>/CHECKLIST.md` per template (Google, Gmail, Slack, HubSpot, Meta, SMTP, AI key) — **not done yet** (owner, Codespace, own test accounts) |
 | `flows validate` catches malformed JSON and missing placeholders | `flows_validate.bats`: malformed JSON, non-export JSON, undeclared/unused/malformed placeholders, piece pin mismatch, old-style step references, leaked emails/URLs/keys/ids/connection refs, fail-run violations, missing files/payloads/stubs, custom piece archive checksum |
