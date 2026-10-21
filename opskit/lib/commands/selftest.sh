@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: end-to-end check on this machine: throwaway host + client → deploy → backup → restore → teardown
 
-for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e flows e2e_flows smoke smoke_flows e2e_smoke practice; do
+for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e flows e2e_flows smoke smoke_flows e2e_smoke e2e_upgrade practice; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -19,7 +19,9 @@ flows and the connection decrypts → a deliberately failing flow produces exact
 alert (mock API) via the failed-run detector (skipped when pieces are offline unless
 OPSKIT_REQUIRE_PIECES=1) → the upgrade smoke checks pass, and fail when the stack is broken on
 purpose (lowered baseline, stopped worker, connection with another key, newer schema), plus a
-webhook and a schedule flow run (pieces) → teardown of only what it created.
+webhook and a schedule flow run (pieces) → upgrade rounds on two more throwaway clients: 0.92.2 →
+pinned (plan, staging, switch, checks) and 0.91.4 → pinned with an injected production failure that
+must roll back with data intact and one owner alert → teardown of only what it created.
 --keep leaves everything running for inspection (prints how to remove it).
 Needs Docker and network access for image pulls. Touches no real client.
 EOF
@@ -28,7 +30,7 @@ EOF
 selftest_cleanup() {
   [ "${SELFTEST_KEEP:-false}" = "true" ] && return 0
   [ -n "${SELFTEST_DIR:-}" ] || return 0
-  practice_teardown "$SELFTEST_ROOT" "${SELFTEST_EDGE:-}" ${SELFTEST_ID:+"$SELFTEST_ID" "${SELFTEST_ID}-rt"}
+  practice_teardown "$SELFTEST_ROOT" "${SELFTEST_EDGE:-}" ${SELFTEST_ID:+"$SELFTEST_ID" "${SELFTEST_ID}-rt" "${SELFTEST_ID}-up" "${SELFTEST_ID}-rb"}
   practice_remove_tree "$SELFTEST_DIR"
 }
 
@@ -97,8 +99,10 @@ cmd_main() {
   e2e_monitoring selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: monitoring end-to-end check failed"
   e2e_flow_templates "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: flow template import check failed"
   e2e_smoke selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: upgrade smoke checks failed"
+  [ "$SELFTEST_KEEP" = "true" ] || practice_teardown "$SELFTEST_ROOT" "" "${SELFTEST_ID}-rt"
+  e2e_upgrade "$SELFTEST_ID" "$https_port" "$SELFTEST_DIR" || die "selftest: upgrade rounds failed"
   if [ "$SELFTEST_KEEP" = "true" ]; then
-    log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: docker compose -p ${SELFTEST_ID} down -v; docker compose -p ${SELFTEST_ID}-rt down -v; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
+    log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: for p in ${SELFTEST_ID} ${SELFTEST_ID}-rt ${SELFTEST_ID}-up ${SELFTEST_ID}-rb; do docker compose -p \$p down -v; done; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
   fi
   log_ok "selftest passed in $(( $(date +%s) - start ))s"
 }

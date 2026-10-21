@@ -19,6 +19,8 @@ load helpers/common
   [[ "$output" == *"[ok] smoke e2e: a connection stored with another key detected"*"(wrong AP_ENCRYPTION_KEY?)"* ]]
   [[ "$output" == *"[ok] smoke e2e: a database newer than the image detected"* ]]
   [[ "$output" == *"healthy again after the broken-condition checks"* ]]
+  [[ "$output" == *"[ok] upgrade e2e: promote 0.92.2 → "*" passed staging and production checks, data intact, history 'upgraded'"* ]]
+  [[ "$output" == *"[ok] upgrade e2e: injected production failure on 0.91.4 → "*" rolled back to 0.91.4, schema and data intact, 1 owner alert"* ]]
   if [ "${OPSKIT_REQUIRE_PIECES:-0}" = "1" ]; then
     [[ "$output" == *"[ok] smoke webhook flow: run SUCCEEDED"* ]]
     [[ "$output" == *"[ok] smoke schedule flow: run SUCCEEDED"* ]]
@@ -46,4 +48,10 @@ load helpers/common
   [ -z "$(docker volume ls -q --filter "label=com.docker.compose.project=${id}")" ]
   [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=${id}-rt")" ]
   [ -z "$(docker volume ls -q --filter "label=com.docker.compose.project=${id}-rt")" ]
+  local p
+  for p in "${id}-up" "${id}-rb"; do
+    [ -z "$(docker ps -aq --filter "label=com.docker.compose.project=${p}")" ]
+    [ -z "$(docker volume ls -q --filter "label=com.docker.compose.project=${p}")" ]
+  done
+  [ -z "$(docker ps -aq --filter "name=upgradestage-")" ]
 }
