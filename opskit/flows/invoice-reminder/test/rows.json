@@ -1,0 +1,50 @@
+[
+  {
+    "row": 2,
+    "values": {
+      "Invoice": "INV-1001",
+      "Customer": "Sam Example",
+      "Email": "sam@example.com",
+      "Amount": "€120.00",
+      "Due date": "2026-01-10",
+      "Status": "open",
+      "Reminded at": ""
+    }
+  },
+  {
+    "row": 3,
+    "values": {
+      "Invoice": "INV-1002",
+      "Customer": "Paid Example",
+      "Email": "paid@example.com",
+      "Amount": "€80.00",
+      "Due date": "2026-01-10",
+      "Status": "paid",
+      "Reminded at": ""
+    }
+  },
+  {
+    "row": 4,
+    "values": {
+      "Invoice": "INV-1003",
+      "Customer": "Future Example",
+      "Email": "future@example.com",
+      "Amount": "€50.00",
+      "Due date": "2099-01-01",
+      "Status": "open",
+      "Reminded at": ""
+    }
+  },
+  {
+    "row": 5,
+    "values": {
+      "Invoice": "INV-1004",
+      "Customer": "Recent Example",
+      "Email": "recent@example.com",
+      "Amount": "€60.00",
+      "Due date": "2026-01-10",
+      "Status": "open",
+      "Reminded at": "2099-01-01T08:00:00.000Z"
+    }
+  }
+]

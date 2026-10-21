@@ -38,20 +38,20 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 - **Files likely touched:** `opskit/lib/commands/flows.sh`, `opskit/lib/flows.sh`, `opskit/tests/flows_validate.bats`, `opskit/tests/fixtures/flows/*`
 - **Tests required:** malformed JSON, undeclared placeholder, unused placeholder, piece mismatch, leaked email/key — each fails with a clear message; all real templates pass (runs in `check`).
 
-### [ ] 5.4 — `opskit flows import <template> <client> [--set K=V…]`
+### [x] 5.4 — `opskit flows import <template> <client> [--set K=V…]`
 - **Goal:** validate → fill placeholders → sign in to the client's builder (Q5) → install required custom pieces (Q2) → create the flow (switched off) → print the connections the client must create and the next steps; `--print-steps` for UI-only import.
 - **Spec refs:** 11, USER_FLOWS (import templates during onboarding)
 - **Files likely touched:** `opskit/lib/flows.sh`, `opskit/lib/commands/flows.sh`, tests
 - **Tests required:** mock API (sign-in, create, import) for argument/placeholder/error handling; password never written to disk or printed; docker-tagged import of `example/` on a selftest stack (pieces required in CI).
 
-### [ ] 5.5 — Template 1: lead capture
+### [x] 5.5 — Template 1: lead capture
 - **Goal:** webhook form → Google Sheets row → email to the owner → auto-reply to the lead; based on the Phase 0 flow (`docs/phase0-flows/lead_capture.py`); invalid email → run fails (detector alerts).
 - **Tests required:** validate passes; CI import; sample run with `test/` payloads (Sheets/email steps as manual checklist).
 
-### [ ] 5.6 — Template 4: invoice reminder
+### [x] 5.6 — Template 4: invoice reminder
 - **Goal:** schedule → unpaid rows from Google Sheets → loop → reminder email → mark "reminded"; based on Phase 0 `invoice_reminder.py`.
 
-### [ ] 5.7 — Template 3: review request
+### [x] 5.7 — Template 3: review request
 - **Goal:** "order paid" webhook (Q3) → wait 7 days (Delay; shortened by a placeholder for testing) → review-request email; duplicate orders ignored.
 
 ### [ ] 5.8 — Template 2: AI email sorter

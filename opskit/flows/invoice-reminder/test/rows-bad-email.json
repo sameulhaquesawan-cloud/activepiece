@@ -1,0 +1,26 @@
+[
+  {
+    "row": 2,
+    "values": {
+      "Invoice": "INV-1001",
+      "Customer": "Sam Example",
+      "Email": "sam@example.com",
+      "Amount": "€120.00",
+      "Due date": "2026-01-10",
+      "Status": "open",
+      "Reminded at": ""
+    }
+  },
+  {
+    "row": 6,
+    "values": {
+      "Invoice": "INV-1005",
+      "Customer": "Typo Example",
+      "Email": "typo-at-example.com",
+      "Amount": "€10.00",
+      "Due date": "2026-01-10",
+      "Status": "open",
+      "Reminded at": ""
+    }
+  }
+]

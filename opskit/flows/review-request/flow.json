@@ -1,0 +1,230 @@
+{
+  "name": "Review request",
+  "description": "Paid order (shop webhook) → wait a few days → polite email asking for a review. Each order is asked once.",
+  "tags": [
+    "opskit",
+    "reviews"
+  ],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-store",
+    "@activepieces/piece-delay",
+    "@activepieces/piece-smtp"
+  ],
+  "flows": [
+    {
+      "displayName": "Review request",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Order paid (webhook)",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.42",
+          "triggerName": "catch_webhook",
+          "propertySettings": {},
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Read order",
+          "type": "CODE",
+          "valid": true,
+          "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  const body = inputs.body || {};\n  const stripe = body.data && body.data.object ? body.data.object : null;\n  const pick = (...values) => values.find((v) => v !== undefined && v !== null && String(v).trim() !== '');\n  const orderId = String(pick(body.order_id, body.id, stripe && stripe.id, '') ?? '').trim();\n  const email = String(pick(\n    body.email, body.customer_email, body.contact_email,\n    body.customer && body.customer.email, body.billing && body.billing.email,\n    stripe && stripe.customer_details && stripe.customer_details.email, stripe && stripe.receipt_email, '',\n  ) ?? '').trim().toLowerCase();\n  const firstName = String(pick(\n    body.first_name, body.customer && body.customer.first_name, body.billing && body.billing.first_name,\n    stripe && stripe.customer_details && stripe.customer_details.name && stripe.customer_details.name.split(' ')[0], '',\n  ) ?? '').trim();\n  const status = String(pick(body.financial_status, body.status, stripe && (stripe.payment_status || stripe.status), 'paid')).toLowerCase();\n  const paid = ['paid', 'processing', 'completed', 'complete', 'succeeded'].includes(status);\n  if (orderId === '') {\n    throw new Error('Order webhook without an order id');\n  }\n  if (paid && !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new Error('Paid order ' + orderId + ' has no valid customer email');\n  }\n  return { orderId, email, firstName: firstName || 'there', paid, status };\n};",
+              "packageJson": "{}"
+            },
+            "input": {
+              "body": "{{trigger['body']}}"
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "displayName": "Look up order",
+            "type": "PIECE",
+            "valid": true,
+            "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+            "settings": {
+              "pieceName": "@activepieces/piece-store",
+              "pieceVersion": "0.6.20",
+              "actionName": "get",
+              "propertySettings": {},
+              "input": {
+                "key": "review-request:{{step_1['orderId']}}",
+                "store_scope": "FLOW"
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": true
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "displayName": "Already asked?",
+              "type": "CODE",
+              "valid": true,
+              "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+              "settings": {
+                "sourceCode": {
+                  "code": "export const code = async (inputs) => {\n  const seen = inputs.seen !== undefined && inputs.seen !== null && String(inputs.seen) !== '';\n  return { send: inputs.paid === true && !seen, duplicate: seen };\n};",
+                  "packageJson": "{}"
+                },
+                "input": {
+                  "seen": "{{step_2}}",
+                  "paid": "{{step_1['paid']}}"
+                },
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "displayName": "New paid order?",
+                "type": "ROUTER",
+                "valid": true,
+                "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                "settings": {
+                  "executionType": "EXECUTE_FIRST_MATCH",
+                  "branches": [
+                    {
+                      "branchName": "New paid order",
+                      "branchType": "CONDITION",
+                      "conditions": [
+                        [
+                          {
+                            "firstValue": "{{step_3['send']}}",
+                            "operator": "BOOLEAN_IS_TRUE"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "branchName": "Duplicate or not paid - nothing to do",
+                      "branchType": "FALLBACK"
+                    }
+                  ]
+                },
+                "children": [
+                  {
+                    "name": "step_5",
+                    "displayName": "Remember this order",
+                    "type": "PIECE",
+                    "valid": true,
+                    "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                    "settings": {
+                      "pieceName": "@activepieces/piece-store",
+                      "pieceVersion": "0.6.20",
+                      "actionName": "put",
+                      "propertySettings": {},
+                      "input": {
+                        "key": "review-request:{{step_1['orderId']}}",
+                        "value": "{{step_1['email']}}",
+                        "store_scope": "FLOW"
+                      },
+                      "errorHandlingOptions": {
+                        "continueOnFailure": {
+                          "value": false
+                        },
+                        "retryOnFailure": {
+                          "value": true
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_6",
+                      "displayName": "Wait before asking",
+                      "type": "PIECE",
+                      "valid": true,
+                      "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                      "settings": {
+                        "pieceName": "@activepieces/piece-delay",
+                        "pieceVersion": "0.4.0",
+                        "actionName": "delayFor",
+                        "propertySettings": {},
+                        "input": {
+                          "delayFor": "{{OPSKIT:WAIT_AMOUNT}}",
+                          "unit": "{{OPSKIT:WAIT_UNIT}}"
+                        },
+                        "errorHandlingOptions": {
+                          "continueOnFailure": {
+                            "value": false
+                          },
+                          "retryOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_7",
+                        "displayName": "Send review request",
+                        "type": "PIECE",
+                        "valid": true,
+                        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                        "settings": {
+                          "pieceName": "@activepieces/piece-smtp",
+                          "pieceVersion": "0.5.0",
+                          "actionName": "send-email",
+                          "propertySettings": {},
+                          "input": {
+                            "from": "{{OPSKIT:FROM_EMAIL}}",
+                            "senderName": "{{OPSKIT:BUSINESS_NAME}}",
+                            "to": [
+                              "{{step_1['email']}}"
+                            ],
+                            "cc": [],
+                            "bcc": [],
+                            "replyTo": "{{OPSKIT:REPLY_TO}}",
+                            "subject": "{{OPSKIT:SUBJECT}}",
+                            "body_type": "plain_text",
+                            "body": "Hi {{step_1['firstName']}},\n\nThank you for your order. If you have a minute, we would love to hear how it went:\n\n{{OPSKIT:REVIEW_URL}}\n\nThank you!\n{{OPSKIT:BUSINESS_NAME}}",
+                            "attachments": [],
+                            "customHeaders": {}
+                          },
+                          "errorHandlingOptions": {
+                            "continueOnFailure": {
+                              "value": false
+                            },
+                            "retryOnFailure": {
+                              "value": false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  null
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

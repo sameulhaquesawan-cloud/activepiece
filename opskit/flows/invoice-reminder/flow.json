@@ -1,0 +1,198 @@
+{
+  "name": "Invoice reminder",
+  "description": "Every weekday morning: unpaid, overdue invoices in a Google Sheet get a polite reminder email, and the row is marked so nobody is reminded twice in a week.",
+  "tags": [
+    "opskit",
+    "invoices"
+  ],
+  "pieces": [
+    "@activepieces/piece-schedule",
+    "@activepieces/piece-google-sheets",
+    "@activepieces/piece-gmail"
+  ],
+  "flows": [
+    {
+      "displayName": "Invoice reminder",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Every morning",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+        "settings": {
+          "pieceName": "@activepieces/piece-schedule",
+          "pieceVersion": "0.1.22",
+          "triggerName": "every_day",
+          "propertySettings": {},
+          "input": {
+            "hour_of_the_day": 8,
+            "timezone": "{{OPSKIT:TIMEZONE}}",
+            "run_on_weekends": false
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Read invoices sheet",
+          "type": "PIECE",
+          "valid": true,
+          "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+          "settings": {
+            "pieceName": "@activepieces/piece-google-sheets",
+            "pieceVersion": "0.18.2",
+            "actionName": "get-many-rows",
+            "propertySettings": {},
+            "input": {
+              "includeTeamDrives": false,
+              "first_row_headers": true
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": true
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "displayName": "Pick overdue unpaid invoices",
+            "type": "CODE",
+            "valid": true,
+            "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+            "settings": {
+              "sourceCode": {
+                "code": "export const code = async (inputs) => {\n  const list = Array.isArray(inputs.rows) ? inputs.rows : (inputs.rows && Array.isArray(inputs.rows.rows) ? inputs.rows.rows : []);\n  const overdueDays = Number(inputs.overdueDays) || 0;\n  const repeatDays = Number(inputs.repeatDays) || 7;\n  const day = 24 * 60 * 60 * 1000;\n  const now = Date.now();\n  const field = (values, name) => {\n    const key = Object.keys(values || {}).find((k) => k.trim().toLowerCase() === name);\n    return key === undefined ? '' : String(values[key] ?? '').trim();\n  };\n  const due = [];\n  const problems = [];\n  for (const item of list) {\n    const values = item.values || {};\n    const status = field(values, 'status').toLowerCase();\n    if (status === 'paid' || status === 'cancelled' || field(values, 'invoice') === '') {\n      continue;\n    }\n    const dueAt = Date.parse(field(values, 'due date'));\n    const email = field(values, 'email');\n    if (Number.isNaN(dueAt) || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n      problems.push(item.row);\n      continue;\n    }\n    const remindedAt = Date.parse(field(values, 'reminded at'));\n    const isOverdue = now - dueAt >= overdueDays * day;\n    const recentlyReminded = !Number.isNaN(remindedAt) && now - remindedAt < repeatDays * day;\n    if (isOverdue && !recentlyReminded) {\n      due.push({\n        row: item.row,\n        invoice: field(values, 'invoice'),\n        customer: field(values, 'customer') || 'there',\n        email,\n        amount: field(values, 'amount'),\n        dueDate: field(values, 'due date'),\n      });\n    }\n  }\n  return { due, count: due.length, problems, checkedAt: new Date(now).toISOString() };\n};",
+                "packageJson": "{}"
+              },
+              "input": {
+                "rows": "{{step_1}}",
+                "overdueDays": "{{OPSKIT:OVERDUE_DAYS}}",
+                "repeatDays": "{{OPSKIT:REPEAT_DAYS}}"
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "displayName": "For each overdue invoice",
+              "type": "LOOP_ON_ITEMS",
+              "valid": true,
+              "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+              "settings": {
+                "items": "{{step_2['due']}}"
+              },
+              "firstLoopAction": {
+                "name": "step_4",
+                "displayName": "Send reminder email",
+                "type": "PIECE",
+                "valid": true,
+                "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                "settings": {
+                  "pieceName": "@activepieces/piece-gmail",
+                  "pieceVersion": "0.18.1",
+                  "actionName": "send_email",
+                  "propertySettings": {},
+                  "input": {
+                    "receiver": [
+                      "{{step_3['item']['email']}}"
+                    ],
+                    "subject": "Reminder: invoice {{step_3['item']['invoice']}} is due",
+                    "body_type": "plain_text",
+                    "body": "Hi {{step_3['item']['customer']}},\n\nThis is a friendly reminder that invoice {{step_3['item']['invoice']}} over {{step_3['item']['amount']}} was due on {{step_3['item']['dueDate']}}.\n\n{{OPSKIT:PAYMENT_INFO}}\n\nIf you have already paid, please ignore this message.\n\n{{OPSKIT:BUSINESS_NAME}}",
+                    "reply_to": [
+                      "{{OPSKIT:OWNER_EMAIL}}"
+                    ],
+                    "bcc": [
+                      "{{OPSKIT:OWNER_EMAIL}}"
+                    ],
+                    "sender_name": "{{OPSKIT:BUSINESS_NAME}}",
+                    "draft": false
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_5",
+                  "displayName": "Mark invoice as reminded",
+                  "type": "PIECE",
+                  "valid": true,
+                  "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                  "settings": {
+                    "pieceName": "@activepieces/piece-google-sheets",
+                    "pieceVersion": "0.18.2",
+                    "actionName": "update_row",
+                    "propertySettings": {},
+                    "input": {
+                      "includeTeamDrives": false,
+                      "row_id": "{{step_3['item']['row']}}",
+                      "first_row_headers": false,
+                      "values": {
+                        "values": [
+                          "",
+                          "",
+                          "",
+                          "",
+                          "",
+                          "",
+                          "{{step_2['checkedAt']}}"
+                        ]
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "continueOnFailure": {
+                        "value": false
+                      },
+                      "retryOnFailure": {
+                        "value": true
+                      }
+                    }
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_6",
+                "displayName": "Report rows that could not be reminded",
+                "type": "CODE",
+                "valid": true,
+                "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+                "settings": {
+                  "sourceCode": {
+                    "code": "export const code = async (inputs) => {\n  const rows = Array.isArray(inputs.problems) ? inputs.problems : [];\n  if (rows.length > 0) {\n    throw new Error(rows.length + ' invoice row(s) skipped - invalid email or due date in sheet rows ' + rows.join(', '));\n  }\n  return { reminded: inputs.count };\n};",
+                    "packageJson": "{}"
+                  },
+                  "input": {
+                    "problems": "{{step_2['problems']}}",
+                    "count": "{{step_2['count']}}"
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

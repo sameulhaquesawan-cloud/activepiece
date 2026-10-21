@@ -1,0 +1,7 @@
+{
+  "id": 820982911946154500,
+  "email": "jane@example.com",
+  "financial_status": "paid",
+  "customer": { "first_name": "Jane", "last_name": "Example", "email": "jane@example.com" },
+  "total_price": "49.00"
+}

@@ -1,0 +1,4 @@
+{
+  "type": "checkout.session.completed",
+  "data": { "object": { "id": "cs_test_example", "payment_status": "paid", "customer_details": { "name": "No Mail" } } }
+}

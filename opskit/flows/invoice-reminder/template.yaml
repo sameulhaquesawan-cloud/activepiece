@@ -1,0 +1,56 @@
+template_id: invoice-reminder
+name: Invoice reminder
+description: Every weekday morning, unpaid overdue invoices in a Google Sheet get a polite reminder email and the row is marked, so nobody is reminded twice in a week.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-schedule"
+    version: 0.1.22
+  - name: "@activepieces/piece-google-sheets"
+    version: 0.18.2
+  - name: "@activepieces/piece-gmail"
+    version: 0.18.1
+placeholders:
+  - key: OWNER_EMAIL
+    description: Gets a copy (bcc) of every reminder and the customers' replies
+    example: accounts@example.com
+  - key: BUSINESS_NAME
+    description: Sender name and signature
+    example: Example Dental
+  - key: TIMEZONE
+    description: Time zone for the 08:00 weekday run (same as client.yaml timezone)
+    example: Europe/Berlin
+  - key: PAYMENT_INFO
+    description: How to pay, one paragraph (bank details or payment link page)
+    example: Please transfer the amount to our account shown on the invoice, quoting the invoice number.
+  - key: OVERDUE_DAYS
+    description: Days after the due date before the first reminder
+    example: "3"
+    default: "3"
+  - key: REPEAT_DAYS
+    description: Days between two reminders for the same invoice
+    example: "7"
+    default: "7"
+connections:
+  - piece: "@activepieces/piece-google-sheets"
+    purpose: read the invoices sheet and mark reminded rows
+    options:
+      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
+      - "Service Account (Advanced): share the sheet with the service account's email; no third party"
+  - piece: "@activepieces/piece-gmail"
+    purpose: send the reminders from the client's mailbox
+    options:
+      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
+      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Service Account (Advanced): Google Workspace with domain-wide delegation only"
+failure: fail-run
+test:
+  runs:
+    - payload: test/tick.json
+      expect: SUCCEEDED
+      stubs:
+        step_1: test/rows.json
+    - payload: test/tick.json
+      expect: FAILED
+      stubs:
+        step_1: test/rows-bad-email.json

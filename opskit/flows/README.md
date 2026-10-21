@@ -5,10 +5,12 @@ starts switched off; the client connects their own accounts, we test it, then sw
 
 | Template | What it does | Connections the client creates |
 |---|---|---|
+| `lead-capture/` | website form → Google Sheet row → owner email → auto-reply | Google Sheets, Gmail |
+| `invoice-reminder/` | weekday mornings: overdue unpaid invoices in a sheet → reminder email, row marked | Google Sheets, Gmail |
+| `review-request/` | paid order webhook → wait 7 days → review request email, once per order | SMTP |
 | `example/` | test template (webhook → greeting); not for clients | none |
 
-The five client templates (lead capture, AI email sorter, review request, invoice reminder, lead-ad
-alert) are added in Phase 5 tasks 5.5–5.9.
+Still to come (Phase 5): AI email sorter (5.8), lead-ad alert (5.9).
 
 ## One folder per template
 | File | Purpose |
@@ -22,7 +24,13 @@ alert) are added in Phase 5 tasks 5.5–5.9.
 ## Commands
 - `opskit flows list` — templates, descriptions, connections the client creates.
 - `opskit flows validate [<template>]` — everything below plus the manifest schema; runs in `opskit/bin/check`.
-- `opskit flows import <template> <client>` — task 5.4.
+- `opskit flows import <template> <client> [--set KEY=value]…` — fills placeholders, asks for the
+  client's builder admin password (used once, never stored), installs our custom pieces, creates the
+  flow switched off and prints the connections to create. Same flow name already there → nothing
+  changes (`--again` for a copy). `--print-steps` writes the filled file to `clients/<id>/flows/` and
+  prints the click-by-click builder import instead.
+- `opskit selftest` imports every template into its practice stack and replays the `test/` payloads of
+  templates that need no accounts (needs pieces: CI, Codespaces).
 
 Rules for writing a template: [`CONVENTIONS.md`](CONVENTIONS.md). Facts behind them:
 `docs/EXPLORATION_REPORT.md` §8.

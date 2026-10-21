@@ -11,6 +11,9 @@
   one is used.
 - `flows import --set KEY=value` fills them; `default` is used when not set; a missing or unknown key
   stops the import. Placeholders hold settings (addresses, names, wording, wait times), never secrets.
+- `type: number` for numeric inputs (wait times, counts): written as the whole value
+  (`"delayFor": "{{OPSKIT:WAIT_AMOUNT}}"`) it is filled as a JSON number. `choices: [...]` limits the
+  allowed values (e.g. a dropdown's units).
 - No real ids, emails, URLs, sheet links or keys in a template. Examples use `example.com`.
 
 ## Pieces
@@ -40,6 +43,16 @@
   never on sending an email.
 - Error messages must not quote whole records; name the field ("Invalid email in field email") —
   alerts carry up to 300 characters of them.
+
+## Tests
+- Code steps are tested offline with node (`opskit/tests/flows_code.bats`): good input, each failure,
+  edge cases.
+- `test.runs` in `template.yaml`: payloads replayed by `opskit selftest` (CI) on a stub copy of the
+  flow: steps of pieces listed in `connections` become code steps that return their input, or the
+  run's `stubs` file (e.g. the rows a Sheets read would return); a non-webhook trigger becomes a
+  webhook whose body is the payload. Each run must end with `expect` and may list steps that must have
+  run (`ran`) or not (`not_ran`). `test.set` gives placeholder values for the test (e.g. a 1-minute
+  wait). Real accounts are covered by `CHECKLIST.md`.
 
 ## Switched off until tested
 - Imported flows are drafts (not published) = off. Order for the client: connect accounts → test with

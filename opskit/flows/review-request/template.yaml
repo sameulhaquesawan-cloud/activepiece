@@ -1,0 +1,63 @@
+template_id: review-request
+name: Review request
+description: Paid order from the shop (webhook) → wait a few days → a polite email asking for a review. Each order is asked once; unpaid orders and repeats are ignored.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-webhook"
+    version: 0.1.42
+  - name: "@activepieces/piece-store"
+    version: 0.6.20
+  - name: "@activepieces/piece-delay"
+    version: 0.4.0
+  - name: "@activepieces/piece-smtp"
+    version: 0.5.0
+placeholders:
+  - key: BUSINESS_NAME
+    description: Shop name used as sender name and signature
+    example: Example Shop
+  - key: FROM_EMAIL
+    description: Sender address; the SMTP account must be allowed to send from it
+    example: hello@example.com
+  - key: REPLY_TO
+    description: Where customers' replies go
+    example: support@example.com
+  - key: REVIEW_URL
+    description: The page where customers leave a review (Google, Trustpilot, the shop)
+    example: https://example.com/review
+  - key: SUBJECT
+    description: Email subject
+    example: How did we do?
+    default: How did we do?
+  - key: WAIT_AMOUNT
+    description: How long to wait after payment (with WAIT_UNIT)
+    example: "7"
+    default: "7"
+    type: number
+  - key: WAIT_UNIT
+    description: Unit of WAIT_AMOUNT
+    example: days
+    default: days
+    choices: [minutes, hours, days]
+connections:
+  - piece: "@activepieces/piece-smtp"
+    purpose: send the review request from the shop's own mail account
+    options:
+      - "SMTP: host, port, user and password of the shop's mail provider (or an app password); no third party"
+failure: fail-run
+test:
+  set:
+    WAIT_AMOUNT: "1"
+    WAIT_UNIT: minutes
+  runs:
+    - payload: test/shopify-paid.json
+      expect: SUCCEEDED
+      ran: [step_7]
+    - payload: test/shopify-paid.json
+      expect: SUCCEEDED
+      not_ran: [step_5, step_7]
+    - payload: test/woo-pending.json
+      expect: SUCCEEDED
+      not_ran: [step_5, step_7]
+    - payload: test/stripe-no-email.json
+      expect: FAILED

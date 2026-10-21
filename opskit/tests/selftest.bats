@@ -15,8 +15,13 @@ load helpers/common
   [[ "$output" == *"has the 3 flows, sign-in works and the connection decrypts"* ]]
   if [ "${OPSKIT_REQUIRE_PIECES:-0}" = "1" ]; then
     [[ "$output" == *"[ok] monitoring e2e: failing flow → exactly 1 Telegram alert with flow name and run link"* ]]
+    [[ "$output" == *"[ok] templates e2e: example imported"* ]]
+    [[ "$output" == *"[ok] templates e2e: example: run 1 test/good.json → SUCCEEDED"* ]]
+    [[ "$output" == *"[ok] templates e2e: example: run 2 test/missing-name.json → FAILED"* ]]
+    [[ "$output" == *"[ok] templates e2e: lead-capture: run 2 test/bad-email.json → FAILED"* ]]
   else
     [[ "$output" == *"[ok] monitoring e2e: failing flow"* || "$output" == *"monitoring e2e SKIPPED"* ]]
+    [[ "$output" == *"[ok] templates e2e: example imported"* || "$output" == *"templates e2e SKIPPED"* ]]
   fi
   [[ "$output" == *"[ok] selftest passed"* ]]
   local id

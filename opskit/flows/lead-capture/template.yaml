@@ -1,0 +1,50 @@
+template_id: lead-capture
+name: Lead capture
+description: Website form → lead saved to Google Sheets → owner emailed → the lead gets an auto-reply. An invalid email fails the run, so a lead is never lost silently.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-webhook"
+    version: 0.1.42
+  - name: "@activepieces/piece-google-sheets"
+    version: 0.18.2
+  - name: "@activepieces/piece-gmail"
+    version: 0.18.1
+placeholders:
+  - key: OWNER_EMAIL
+    description: Who gets each new lead (and receives replies to the auto-reply)
+    example: owner@example.com
+  - key: BUSINESS_NAME
+    description: Business name used as sender name and signature
+    example: Example Dental
+  - key: LEAD_SOURCE
+    description: Source written to the sheet when the form sends none
+    example: website
+    default: website
+  - key: REPLY_SUBJECT
+    description: Subject of the auto-reply
+    example: Thanks for getting in touch
+    default: Thanks for getting in touch
+  - key: REPLY_TEXT
+    description: Text of the auto-reply (between "Hi <name>," and the signature)
+    example: We received your message and will get back to you within one business day.
+    default: We received your message and will get back to you within one business day.
+connections:
+  - piece: "@activepieces/piece-google-sheets"
+    purpose: add each lead as a row to the client's leads sheet
+    options:
+      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
+      - "Service Account (Advanced): share the sheet with the service account's email; no third party"
+  - piece: "@activepieces/piece-gmail"
+    purpose: send the owner notification and the auto-reply from the client's mailbox
+    options:
+      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
+      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Service Account (Advanced): Google Workspace with domain-wide delegation only"
+failure: fail-run
+test:
+  runs:
+    - payload: test/good-lead.json
+      expect: SUCCEEDED
+    - payload: test/bad-email.json
+      expect: FAILED
