@@ -13,7 +13,15 @@ load helpers/common
   [[ "$output" == *"[ok] round trip: seeded 3 flows"* ]]
   [[ "$output" == *"[ok] all 1 stored connections decrypt with the restored key"* ]]
   [[ "$output" == *"has the 3 flows, sign-in works and the connection decrypts"* ]]
+  [[ "$output" == *"[ok] smoke e2e: all production checks pass on "* ]]
+  [[ "$output" == *"[ok] smoke e2e: a lowered flow count detected: counts of "*" dropped: flows "* ]]
+  [[ "$output" == *"[ok] smoke e2e: a stopped worker detected: containers of "*": worker exited"* ]]
+  [[ "$output" == *"[ok] smoke e2e: a connection stored with another key detected"*"(wrong AP_ENCRYPTION_KEY?)"* ]]
+  [[ "$output" == *"[ok] smoke e2e: a database newer than the image detected"* ]]
+  [[ "$output" == *"healthy again after the broken-condition checks"* ]]
   if [ "${OPSKIT_REQUIRE_PIECES:-0}" = "1" ]; then
+    [[ "$output" == *"[ok] smoke webhook flow: run SUCCEEDED"* ]]
+    [[ "$output" == *"[ok] smoke schedule flow: run SUCCEEDED"* ]]
     [[ "$output" == *"[ok] monitoring e2e: failing flow → exactly 1 Telegram alert with flow name and run link"* ]]
     [[ "$output" == *"[ok] templates e2e: example imported"* ]]
     [[ "$output" == *"[ok] templates e2e: example: run 1 test/good.json → SUCCEEDED"* ]]
@@ -28,6 +36,7 @@ load helpers/common
   else
     [[ "$output" == *"[ok] monitoring e2e: failing flow"* || "$output" == *"monitoring e2e SKIPPED"* ]]
     [[ "$output" == *"[ok] templates e2e: example imported"* || "$output" == *"templates e2e SKIPPED"* ]]
+    [[ "$output" == *"[ok] smoke webhook flow: run SUCCEEDED"* || "$output" == *"smoke flow checks SKIPPED"* ]]
   fi
   [[ "$output" == *"[ok] selftest passed"* ]]
   local id

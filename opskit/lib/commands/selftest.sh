@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: end-to-end check on this machine: throwaway host + client → deploy → backup → restore → teardown
 
-for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e flows e2e_flows practice; do
+for lib in validate schema registry render secrets stack ssh host deploy verify roundtrip e2e flows e2e_flows smoke smoke_flows e2e_smoke practice; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -17,7 +17,9 @@ deploy → re-deploy (must keep the same containers) → seed 3 flows + a stored
 backup (off-server copy to a local rclone remote) → restore into "<id>-rt" → the copy has the
 flows and the connection decrypts → a deliberately failing flow produces exactly one Telegram
 alert (mock API) via the failed-run detector (skipped when pieces are offline unless
-OPSKIT_REQUIRE_PIECES=1) → teardown of only what it created.
+OPSKIT_REQUIRE_PIECES=1) → the upgrade smoke checks pass, and fail when the stack is broken on
+purpose (lowered baseline, stopped worker, connection with another key, newer schema), plus a
+webhook and a schedule flow run (pieces) → teardown of only what it created.
 --keep leaves everything running for inspection (prints how to remove it).
 Needs Docker and network access for image pulls. Touches no real client.
 EOF
@@ -94,6 +96,7 @@ cmd_main() {
   rt_verify selftest "${SELFTEST_ID}-rt" "${SELFTEST_ID}-rt.localhost" "$https_port" || die "selftest: restored copy is incomplete"
   e2e_monitoring selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: monitoring end-to-end check failed"
   e2e_flow_templates "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: flow template import check failed"
+  e2e_smoke selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: upgrade smoke checks failed"
   if [ "$SELFTEST_KEEP" = "true" ]; then
     log_warn "kept: OPSKIT_REGISTRY=${SELFTEST_DIR}; remove with: docker compose -p ${SELFTEST_ID} down -v; docker compose -p ${SELFTEST_ID}-rt down -v; docker rm -f ${SELFTEST_EDGE}; rm -rf ${SELFTEST_DIR}"
   fi
