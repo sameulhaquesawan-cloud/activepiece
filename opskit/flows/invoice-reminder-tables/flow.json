@@ -1,0 +1,190 @@
+{
+  "name": "Invoice reminder (built-in table)",
+  "description": "Every weekday morning: unpaid, overdue invoices in an Activepieces table get a polite reminder email and the row is marked. No Google account needed.",
+  "tags": [
+    "opskit",
+    "invoices"
+  ],
+  "pieces": [
+    "@activepieces/piece-schedule",
+    "@activepieces/piece-tables",
+    "@activepieces/piece-smtp"
+  ],
+  "flows": [
+    {
+      "displayName": "Invoice reminder (built-in table)",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Every morning",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+        "settings": {
+          "pieceName": "@activepieces/piece-schedule",
+          "pieceVersion": "0.1.22",
+          "triggerName": "every_day",
+          "propertySettings": {},
+          "input": {
+            "hour_of_the_day": 8,
+            "timezone": "{{OPSKIT:TIMEZONE}}",
+            "run_on_weekends": false
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Read invoices table",
+          "type": "PIECE",
+          "valid": true,
+          "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+          "settings": {
+            "pieceName": "@activepieces/piece-tables",
+            "pieceVersion": "0.6.2",
+            "actionName": "tables-find-records",
+            "propertySettings": {},
+            "input": {
+              "table_id": "opskit-invoices",
+              "filters": {}
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": true
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "displayName": "Pick overdue unpaid invoices",
+            "type": "CODE",
+            "valid": true,
+            "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+            "settings": {
+              "sourceCode": {
+                "code": "export const code = async (inputs) => {\n  const list = Array.isArray(inputs.records) ? inputs.records : [];\n  const overdueDays = Number(inputs.overdueDays) || 0;\n  const repeatDays = Number(inputs.repeatDays) || 7;\n  const day = 24 * 60 * 60 * 1000;\n  const now = Date.now();\n  const cell = (record, column) => {\n    const found = Object.values((record && record.cells) || {}).find(\n      (entry) => String(entry.fieldName ?? '').trim().toLowerCase() === column,\n    );\n    return found && found.value !== undefined && found.value !== null ? String(found.value).trim() : '';\n  };\n  const due = [];\n  const problems = [];\n  for (const record of list) {\n    const status = cell(record, 'status').toLowerCase();\n    const invoice = cell(record, 'invoice');\n    if (status === 'paid' || status === 'cancelled' || invoice === '') {\n      continue;\n    }\n    const dueAt = Date.parse(cell(record, 'due date'));\n    const email = cell(record, 'email');\n    if (Number.isNaN(dueAt) || !/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n      problems.push(invoice);\n      continue;\n    }\n    const remindedAt = Date.parse(cell(record, 'reminded at'));\n    const isOverdue = now - dueAt >= overdueDays * day;\n    const recentlyReminded = !Number.isNaN(remindedAt) && now - remindedAt < repeatDays * day;\n    if (isOverdue && !recentlyReminded) {\n      due.push({\n        row: record.id,\n        invoice,\n        customer: cell(record, 'customer') || 'there',\n        email,\n        amount: cell(record, 'amount'),\n        dueDate: cell(record, 'due date'),\n      });\n    }\n  }\n  return { due, count: due.length, problems, checkedAt: new Date(now).toISOString() };\n};",
+                "packageJson": "{}"
+              },
+              "input": {
+                "records": "{{step_1['output']}}",
+                "overdueDays": "{{OPSKIT:OVERDUE_DAYS}}",
+                "repeatDays": "{{OPSKIT:REPEAT_DAYS}}"
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "displayName": "For each overdue invoice",
+              "type": "LOOP_ON_ITEMS",
+              "valid": true,
+              "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+              "settings": {
+                "items": "{{step_2['output']['due']}}"
+              },
+              "firstLoopAction": {
+                "name": "step_4",
+                "displayName": "Send reminder email",
+                "type": "PIECE",
+                "valid": false,
+                "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+                "settings": {
+                  "pieceName": "@activepieces/piece-smtp",
+                  "pieceVersion": "0.5.0",
+                  "actionName": "send-email",
+                  "propertySettings": {},
+                  "input": {
+                    "from": "{{OPSKIT:FROM_EMAIL}}",
+                    "senderName": "{{OPSKIT:BUSINESS_NAME}}",
+                    "to": [
+                      "{{step_3['output']['item']['email']}}"
+                    ],
+                    "cc": [],
+                    "bcc": [
+                      "{{OPSKIT:OWNER_EMAIL}}"
+                    ],
+                    "replyTo": "{{OPSKIT:OWNER_EMAIL}}",
+                    "subject": "Reminder: invoice {{step_3['output']['item']['invoice']}} is due",
+                    "body_type": "plain_text",
+                    "body": "Hi {{step_3['output']['item']['customer']}},\n\nThis is a friendly reminder that invoice {{step_3['output']['item']['invoice']}} over {{step_3['output']['item']['amount']}} was due on {{step_3['output']['item']['dueDate']}}.\n\n{{OPSKIT:PAYMENT_INFO}}\n\nIf you have already paid, please ignore this message.\n\n{{OPSKIT:BUSINESS_NAME}}",
+                    "attachments": [],
+                    "customHeaders": {}
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_5",
+                  "displayName": "Mark invoice as reminded",
+                  "type": "PIECE",
+                  "valid": true,
+                  "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+                  "settings": {
+                    "pieceName": "@activepieces/piece-tables",
+                    "pieceVersion": "0.6.2",
+                    "actionName": "tables-update-record",
+                    "propertySettings": {},
+                    "input": {
+                      "table_id": "opskit-invoices",
+                      "record_id": "{{step_3['output']['item']['row']}}",
+                      "values": {
+                        "reminded_at": "{{step_2['output']['checkedAt']}}"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "continueOnFailure": {
+                        "value": false
+                      },
+                      "retryOnFailure": {
+                        "value": true
+                      }
+                    }
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_6",
+                "displayName": "Report invoices that could not be reminded",
+                "type": "CODE",
+                "valid": true,
+                "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+                "settings": {
+                  "sourceCode": {
+                    "code": "export const code = async (inputs) => {\n  const invoices = Array.isArray(inputs.problems) ? inputs.problems : [];\n  if (invoices.length > 0) {\n    throw new Error(invoices.length + ' invoice(s) skipped - invalid email or due date: ' + invoices.join(', '));\n  }\n  return { reminded: inputs.count };\n};",
+                    "packageJson": "{}"
+                  },
+                  "input": {
+                    "problems": "{{step_2['output']['problems']}}",
+                    "count": "{{step_2['output']['count']}}"
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+template_id: lead-capture-tables
+name: Lead capture (built-in table)
+description: Website form → lead saved in an Activepieces table → owner emailed → the lead gets an auto-reply. No Google account needed; an invalid email fails the run.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-webhook"
+    version: 0.1.42
+  - name: "@activepieces/piece-tables"
+    version: 0.6.2
+  - name: "@activepieces/piece-smtp"
+    version: 0.5.0
+placeholders:
+  - key: OWNER_EMAIL
+    description: Who gets each new lead (and receives replies to the auto-reply)
+    example: owner@example.com
+  - key: BUSINESS_NAME
+    description: Business name used as sender name and signature
+    example: Example Dental
+  - key: FROM_EMAIL
+    description: Sender address; the SMTP account must be allowed to send from it
+    example: hello@example.com
+  - key: LEAD_SOURCE
+    description: Source saved when the form sends none
+    example: website
+    default: website
+  - key: REPLY_SUBJECT
+    description: Subject of the auto-reply
+    example: Thanks for getting in touch
+    default: Thanks for getting in touch
+  - key: REPLY_TEXT
+    description: Text of the auto-reply (between "Hi <name>," and the signature)
+    example: We received your message and will get back to you within one business day.
+    default: We received your message and will get back to you within one business day.
+tables:
+  - id: opskit-leads
+    name: Leads
+    fields:
+      - { id: received_at, name: Received at, type: TEXT }
+      - { id: name, name: Name, type: TEXT }
+      - { id: email, name: Email, type: TEXT }
+      - { id: phone, name: Phone, type: TEXT }
+      - { id: message, name: Message, type: TEXT }
+      - { id: source, name: Source, type: TEXT }
+connections:
+  - piece: "@activepieces/piece-smtp"
+    purpose: send the owner notification and the auto-reply from the business's own mail account
+    options:
+      - "SMTP: host, port, user and password of the business's mail provider (or an app password); no third party"
+failure: fail-run
+test:
+  runs:
+    - payload: test/good-lead.json
+      expect: SUCCEEDED
+      ran: [step_2, step_3, step_4]
+      rows: { opskit-leads: 1 }
+      filled: { opskit-leads: { email: 1, name: 1, source: 1 } }
+    - payload: test/bad-email.json
+      expect: FAILED
+      not_ran: [step_2]
+      rows: { opskit-leads: 1 }

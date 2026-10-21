@@ -122,6 +122,7 @@ flows_import() {
   [ -n "$email" ] || die "no admin email given (--email)"
   flows_sign_in "$email" || return 1
   flows_ensure_pieces "$dir" || return 1
+  flows_ensure_tables "$dir" || return 1
   # shellcheck disable=SC2034 # used by flows_import_one in lib/flows_import.sh
   FLOWS_CONNECTION_PIECES="$(yq -o=json -I=0 '[.connections[]?.piece]' "${dir}/template.yaml")"
   count="$(jq '.flows | length' "$filled")"

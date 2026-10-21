@@ -145,3 +145,42 @@ sorter_mail() {
   [ "$status" -eq 3 ]
   [ "$output" = "THROWN: Lead lead-example-2 has no valid email - add an email question to the form or handle it by hand" ]
 }
+
+table_records() {
+  jq -nc --slurpfile rows "${OPSKIT_ROOT}/flows/invoice-reminder-tables/test/$1" '{records: $rows[0], overdueDays: 3, repeatDays: 7}'
+}
+
+@test "invoice reminder (table): records are read by column name; only the open, overdue, not recently reminded one is picked" {
+  run run_code invoice-reminder-tables step_2 "$(table_records records.json)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -c '[.due[] | [.row, .invoice, .email, .amount, .dueDate]]' <<< "$output")" = '[["rec000001","INV-1001","sam@example.com","€120.00","2026-01-10"]]' ]
+  [ "$(jq -c .problems <<< "$output")" = '[]' ]
+}
+
+@test "invoice reminder (table): a broken row is named by its invoice number and fails the run after the others" {
+  run run_code invoice-reminder-tables step_2 "$(table_records records-bad-email.json)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -c '[.due[].invoice]' <<< "$output")" = '["INV-1001"]' ]
+  [ "$(jq -c .problems <<< "$output")" = '["INV-1005"]' ]
+  run run_code invoice-reminder-tables step_6 '{"problems": ["INV-1005", "INV-1009"], "count": 1}'
+  [ "$status" -eq 3 ]
+  [ "$output" = "THROWN: 2 invoice(s) skipped - invalid email or due date: INV-1005, INV-1009" ]
+  run run_code invoice-reminder-tables step_6 '{"problems": [], "count": 1}'
+  [ "$status" -eq 0 ]
+}
+
+@test "invoice reminder (table): an empty table and column-name differences in case are fine" {
+  run run_code invoice-reminder-tables step_2 '{"records": [], "overdueDays": 3, "repeatDays": 7}'
+  [ "$status" -eq 0 ]
+  [ "$(jq -r .count <<< "$output")" = "0" ]
+  run run_code invoice-reminder-tables step_2 '{"records": [{"id": "r1", "cells": {"x": {"fieldName": " INVOICE ", "value": "A-1"}, "y": {"fieldName": "email", "value": "a@example.com"}, "z": {"fieldName": "Due Date", "value": "2020-01-01"}}}], "overdueDays": "0", "repeatDays": "7"}'
+  [ "$(jq -c '[.due[] | [.row, .invoice, .customer]]' <<< "$output")" = '[["r1","A-1","there"]]' ]
+}
+
+@test "lead capture (table) shares the lead check with lead capture" {
+  run run_code lead-capture-tables step_1 "{\"body\": $(cat "${OPSKIT_ROOT}/flows/lead-capture-tables/test/good-lead.json"), \"defaultSource\": \"website\"}"
+  [ "$status" -eq 0 ]
+  [ "$(jq -c '{email, greetingName, source}' <<< "$output")" = '{"email":"jane@example.com","greetingName":"Jane","source":"contact form"}' ]
+  run run_code lead-capture-tables step_1 "{\"body\": $(cat "${OPSKIT_ROOT}/flows/lead-capture-tables/test/bad-email.json"), \"defaultSource\": \"website\"}"
+  [ "$status" -eq 3 ]
+}

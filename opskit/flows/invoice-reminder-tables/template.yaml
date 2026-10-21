@@ -1,0 +1,75 @@
+template_id: invoice-reminder-tables
+name: Invoice reminder (built-in table)
+description: Every weekday morning, unpaid overdue invoices in an Activepieces table get a polite reminder email and the row is marked. No Google account needed.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-schedule"
+    version: 0.1.22
+  - name: "@activepieces/piece-tables"
+    version: 0.6.2
+  - name: "@activepieces/piece-smtp"
+    version: 0.5.0
+placeholders:
+  - key: OWNER_EMAIL
+    description: Gets a copy (bcc) of every reminder and the customers' replies
+    example: accounts@example.com
+  - key: BUSINESS_NAME
+    description: Sender name and signature
+    example: Example Dental
+  - key: FROM_EMAIL
+    description: Sender address; the SMTP account must be allowed to send from it
+    example: hello@example.com
+  - key: TIMEZONE
+    description: Time zone for the 08:00 weekday run (same as client.yaml timezone)
+    example: Europe/Berlin
+  - key: PAYMENT_INFO
+    description: How to pay, one paragraph (bank details or payment link page)
+    example: Please transfer the amount to our account shown on the invoice, quoting the invoice number.
+  - key: OVERDUE_DAYS
+    description: Days after the due date before the first reminder
+    example: "3"
+    default: "3"
+    type: number
+  - key: REPEAT_DAYS
+    description: Days between two reminders for the same invoice
+    example: "7"
+    default: "7"
+    type: number
+tables:
+  - id: opskit-invoices
+    name: Invoices
+    fields:
+      - { id: invoice, name: Invoice, type: TEXT }
+      - { id: customer, name: Customer, type: TEXT }
+      - { id: email, name: Email, type: TEXT }
+      - { id: amount, name: Amount, type: TEXT }
+      - { id: due_date, name: Due date, type: TEXT }
+      - { id: status, name: Status, type: TEXT }
+      - { id: reminded_at, name: Reminded at, type: TEXT }
+connections:
+  - piece: "@activepieces/piece-smtp"
+    purpose: send the reminders from the business's own mail account
+    options:
+      - "SMTP: host, port, user and password of the business's mail provider (or an app password); no third party"
+failure: fail-run
+test:
+  runs:
+    - payload: test/tick.json
+      expect: SUCCEEDED
+      seed:
+        opskit-invoices:
+          - { invoice: INV-1, customer: Test Open, email: open@example.com, amount: "€120.00", due_date: "2026-01-10", status: open }
+          - { invoice: INV-2, customer: Test Paid, email: paid@example.com, amount: "€80.00", due_date: "2026-01-10", status: paid }
+          - { invoice: INV-3, customer: Test Future, email: future@example.com, amount: "€50.00", due_date: "2099-01-01", status: open }
+      rows: { opskit-invoices: 3 }
+      filled: { opskit-invoices: { reminded_at: 1 } }
+    - payload: test/tick.json
+      expect: SUCCEEDED
+      filled: { opskit-invoices: { reminded_at: 1 } }
+    - payload: test/tick.json
+      expect: FAILED
+      seed:
+        opskit-invoices:
+          - { invoice: INV-4, customer: Broken, email: not-an-email, amount: "€10.00", due_date: "2026-01-10", status: open }
+      filled: { opskit-invoices: { reminded_at: 1 } }

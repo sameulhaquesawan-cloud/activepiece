@@ -98,3 +98,14 @@ steps() {
   [ "$(steps)" = '[["trigger","PIECE_TRIGGER"],["step_1","CODE"],["step_2","CODE"],["step_3","CODE"]]' ]
   [ "$(jq -r '.request.trigger.nextAction.settings.input.lead' "${WORK}/request.json")" = "{{trigger['output']['body']}}" ]
 }
+
+@test "table variants: only SMTP is stubbed; the Tables steps stay real so rows are really written" {
+  stubbed lead-capture-tables 0
+  [ "$(steps)" = '[["trigger","PIECE_TRIGGER"],["step_1","CODE"],["step_2","PIECE"],["step_3","CODE"],["step_4","CODE"]]' ]
+  [ "$(jq -r '[.. | objects | select(.name? == "step_2")][0].settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-tables" ]
+  stubbed invoice-reminder-tables 0
+  [ "$(jq -r '.request.trigger.settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-webhook" ]
+  [ "$(jq -r '[.. | objects | select(.name? == "step_1")][0].settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-tables" ]
+  [ "$(jq -r '[.. | objects | select(.name? == "step_5")][0].settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-tables" ]
+  [ "$(jq -r '[.. | objects | select(.name? == "step_4")][0].type' "${WORK}/request.json")" = "CODE" ]
+}

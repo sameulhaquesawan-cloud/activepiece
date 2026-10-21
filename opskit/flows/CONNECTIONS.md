@@ -49,6 +49,11 @@ bot to the channel. Check the scopes once against the error message if posting f
 (private apps) → create → scopes `crm.objects.contacts.read`, `crm.objects.contacts.write` → copy the
 token into the connection.
 
+## Built-in Tables
+No connection and no account: tables live in the client's own Activepieces database (included in the
+nightly backup). The import creates them. Rows are edited in the app under Tables (add rows, Import
+CSV) or filled by flows.
+
 ## SMTP (any mail provider)
 Host, port, user, password of the client's mail provider. Gmail: `smtp.gmail.com`, port 465, TLS on,
 password = a Google **app password** (Google Account → Security → 2-Step Verification → App passwords).

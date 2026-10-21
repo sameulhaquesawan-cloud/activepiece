@@ -30,11 +30,16 @@ responses() {
   jq -n --arg step "Check name" '{
     "POST /api/v1/authentication/sign-in": {body: {token: "tok-123", projectId: "proj1", platformRole: "ADMIN"}},
     "GET /api/v1/pieces/@activepieces/piece-webhook?*": {body: {name: "@activepieces/piece-webhook", version: "0.1.42"}},
+    "GET /api/v1/pieces/@activepieces/piece-tables?*": {body: {name: "@activepieces/piece-tables", version: "0.6.2"}},
+    "GET /api/v1/pieces/@activepieces/piece-smtp?*": {body: {name: "@activepieces/piece-smtp", version: "0.5.0"}},
     "GET /api/v1/flows?*": {body: {data: []}},
     "POST /api/v1/flows": {body: {id: "flow1"}},
     "POST /api/v1/flows/flow1": {body: {id: "flow1", version: {trigger: {name: "trigger", displayName: "Catch webhook", valid: true, settings: {},
       nextAction: {name: "step_1", displayName: $step, valid: true, settings: {}}}}}},
-    "DELETE /api/v1/flows/flow1": {body: {}}
+    "DELETE /api/v1/flows/flow1": {body: {}},
+    "GET /api/v1/tables?*": {body: {data: []}},
+    "POST /api/v1/tables": {body: {id: "tbl1"}},
+    "GET /api/v1/fields?*": {body: []}
   } | '"$1" > "$MOCK_RESPONSES"
 }
 
@@ -122,6 +127,59 @@ requests_to() {
   PW="$PASSWORD" import example acme --set GREETING=Yo
   [ "$status" -eq 1 ]
   [[ "$output" == *"GREETING=Yo: must be one of: Hello Hi"* ]]
+}
+
+use_tables_template() {
+  rm -rf "${OPSKIT_FLOWS_DIR}/example"
+  cp -r "${OPSKIT_ROOT}/flows/lead-capture-tables" "${OPSKIT_FLOWS_DIR}/leads"
+  yq -i '.template_id = "leads" | .connections = []' "${OPSKIT_FLOWS_DIR}/leads/template.yaml"
+  jq '(.. | objects | select(has("valid")) | .valid) = true' "${OPSKIT_FLOWS_DIR}/leads/flow.json" > "${WORK}/f.json" && mv "${WORK}/f.json" "${OPSKIT_FLOWS_DIR}/leads/flow.json"
+}
+
+import_leads() {
+  PW="$PASSWORD" import leads acme --set OWNER_EMAIL=owner@example.com --set BUSINESS_NAME=Acme --set FROM_EMAIL=hello@example.com "$@"
+}
+
+@test "tables the template needs are created with fixed ids and columns before the flow" {
+  use_tables_template
+  import_leads
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'[ok] created table "Leads" (Received at, Name, Email, Phone, Message, Source)'* ]]
+  local body
+  body="$(requests_to POST /api/v1/tables | jq -r .body)"
+  [ "$(jq -r '[.projectId, .name, .externalId] | join(" ")' <<< "$body")" = "proj1 Leads opskit-leads" ]
+  [ "$(jq -c '.fields[0]' <<< "$body")" = '{"name":"Received at","type":"TEXT","data":null,"externalId":"received_at"}' ]
+  [ "$(jq '.fields | length' <<< "$body")" = "6" ]
+  [ "$(mock_requests | jq -rs 'map(select(.method == "POST" and (.path == "/api/v1/tables" or .path == "/api/v1/flows"))) | map(.path) | join(" ")')" = "/api/v1/tables /api/v1/flows" ]
+}
+
+@test "an existing table is kept as it is" {
+  use_tables_template
+  responses '."GET /api/v1/tables?*" = {body: {data: [{id: "tbl9", externalId: "opskit-leads", name: "My leads"}]}}
+    | ."GET /api/v1/fields?*" = {body: [{name: "Received at"}, {name: "Name"}, {name: "Email"}, {name: "Phone"}, {name: "Message"}, {name: "Source"}, {name: "Extra"}]}'
+  import_leads
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'[ok] table "Leads" is already there; kept as it is'* ]]
+  [ -z "$(requests_to POST /api/v1/tables)" ]
+}
+
+@test "an existing table that lacks a column stops the import" {
+  use_tables_template
+  responses '."GET /api/v1/tables?*" = {body: {data: [{id: "tbl9", externalId: "opskit-leads", name: "Leads"}]}}
+    | ."GET /api/v1/fields?*" = {body: [{name: "Name"}, {name: "Email"}]}'
+  import_leads
+  [ "$status" -eq 1 ]
+  [[ "$output" == *'table "Leads" (opskit-leads) exists but lacks the column(s): Received at, Phone, Message, Source'* ]]
+  [ -z "$(requests_to POST /api/v1/flows)" ]
+}
+
+@test "a refused table creation stops the import before the flow" {
+  use_tables_template
+  responses '."POST /api/v1/tables" = {status: 402, body: {code: "FEATURE_DISABLED"}}'
+  import_leads
+  [ "$status" -eq 1 ]
+  [[ "$output" == *'could not create table "Leads": HTTP 402 FEATURE_DISABLED'* ]]
+  [ -z "$(requests_to POST /api/v1/flows)" ]
 }
 
 @test "a wrong password stops before anything is created" {

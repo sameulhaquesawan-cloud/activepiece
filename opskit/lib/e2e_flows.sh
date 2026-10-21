@@ -36,6 +36,49 @@ e2e_flow_wait_run() {
   return 1
 }
 
+# e2e_table_internal_id <domain> <port> <token> <project> <table external id>
+e2e_table_internal_id() {
+  rt_api "$1" "$2" GET "/v1/tables?projectId=${4}&limit=100" "$3" \
+    | jq -r --arg i "$5" '[.data[]? | select(.externalId == $i)][0].id // empty'
+}
+
+# e2e_table_seed <domain> <port> <token> <project> <table external id> <rows json: [{field id: value}]>
+e2e_table_seed() {
+  local table fields body
+  table="$(e2e_table_internal_id "$1" "$2" "$3" "$4" "$5")"
+  [ -n "$table" ] || return 1
+  fields="$(rt_api "$1" "$2" GET "/v1/fields?tableId=${table}" "$3" | jq -c 'if type == "array" then . else (.data // []) end')"
+  body="$(jq -nc --arg t "$table" --argjson rows "$6" --argjson f "$fields" '
+    {tableId: $t, records: ($rows | map(to_entries | map({fieldId: (. as $e | $f | map(select(.externalId == $e.key))[0].id), value: .value})))}')"
+  rt_api "$1" "$2" POST /v1/records "$3" "$body" | jq -e 'length > 0 or (.records? != null)' >/dev/null
+}
+
+# e2e_table_problems <template dir> <run index> <domain> <port> <token> <project>: rows / filled expectations
+e2e_table_problems() {
+  local dir="$1" index="$2" domain="$3" port="$4" token="$5" project="$6" tid table records fields want got fid fname
+  while IFS= read -r tid; do
+    [ -n "$tid" ] || continue
+    table="$(e2e_table_internal_id "$domain" "$port" "$token" "$project" "$tid")"
+    [ -n "$table" ] || { printf 'table %s does not exist' "$tid"; return 1; }
+    records="$(rt_api "$domain" "$port" GET "/v1/records?tableId=${table}&limit=1000" "$token" | jq -c '.data // []')"
+    want="$(I="$index" T="$tid" yq -r '.test.runs[env(I)].rows[env(T)] // ""' "${dir}/template.yaml")"
+    got="$(jq 'length' <<< "$records")"
+    if [ -n "$want" ] && [ "$got" != "$want" ]; then
+      printf 'table %s has %s row(s), expected %s' "$tid" "$got" "$want"
+      return 1
+    fi
+    while IFS=$'\t' read -r fid want; do
+      [ -n "$fid" ] || continue
+      fname="$(T="$tid" F="$fid" yq -r '.tables[] | select(.id == env(T)) | .fields[] | select(.id == env(F)) | .name' "${dir}/template.yaml")"
+      got="$(jq --arg n "$fname" '[.[] | select([.cells[]? | select(.fieldName == $n and .value != null and .value != "")] | length > 0)] | length' <<< "$records")"
+      if [ "$got" != "$want" ]; then
+        printf 'table %s: %s row(s) have "%s" filled, expected %s' "$tid" "$got" "$fname" "$want"
+        return 1
+      fi
+    done < <(I="$index" T="$tid" yq -r '.test.runs[env(I)].filled[env(T)] // {} | to_entries[] | [.key, .value] | @tsv' "${dir}/template.yaml")
+  done < <(I="$index" yq -r '.test.runs[env(I)] | ((.rows // {}) + (.filled // {})) | keys | .[]' "${dir}/template.yaml")
+}
+
 # e2e_flow_stubbed <template dir> <filled flow> <run index> <webhook version>: IMPORT_FLOW request
 e2e_flow_stubbed() {
   local dir="$1" filled="$2" index="$3" version="$4" pieces stubs step file
@@ -62,7 +105,7 @@ e2e_flow_check_steps() {
 # e2e_flow_runs <template dir> <id> <domain> <port> <token> <project> <webhook version>
 e2e_flow_runs() {
   local dir="$1" id="$2" domain="$3" port="$4" token="$5" project="$6" version="$7" template filled name flow
-  local count index payload expect request last="" run_id run got problem
+  local count index payload expect request last="" run_id run got problem seed_table seed_rows
   template="$(basename "$dir")"
   filled="$(client_dir "$id")/flows/${template}.json"
   name="$(jq -r '.flows[0].displayName' "${dir}/flow.json") (opskit stub test)"
@@ -72,6 +115,12 @@ e2e_flow_runs() {
   for index in $(seq 0 $((count - 1))); do
     payload="$(I="$index" yq -r '.test.runs[env(I)].payload' "${dir}/template.yaml")"
     expect="$(I="$index" yq -r '.test.runs[env(I)].expect' "${dir}/template.yaml")"
+    while IFS= read -r seed_table; do
+      [ -n "$seed_table" ] || continue
+      seed_rows="$(I="$index" T="$seed_table" yq -o=json -I=0 '.test.runs[env(I)].seed[env(T)]' "${dir}/template.yaml")"
+      e2e_table_seed "$domain" "$port" "$token" "$project" "$seed_table" "$seed_rows" \
+        || { log_fail "templates e2e: ${template}: could not add the test rows to table ${seed_table}"; return 1; }
+    done < <(I="$index" yq -r '.test.runs[env(I)].seed // {} | keys | .[]' "${dir}/template.yaml")
     request="$(e2e_flow_stubbed "$dir" "$filled" "$index" "$version")"
     if [ "$request" != "$last" ]; then
       rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" "$request" | jq -e '.id' >/dev/null \
@@ -90,6 +139,10 @@ e2e_flow_runs() {
       return 1
     fi
     if ! problem="$(e2e_flow_check_steps "$dir" "$index" "$run")"; then
+      log_fail "templates e2e: ${template}: run $((index + 1)) (${payload}): ${problem}"
+      return 1
+    fi
+    if ! problem="$(e2e_table_problems "$dir" "$index" "$domain" "$port" "$token" "$project")"; then
       log_fail "templates e2e: ${template}: run $((index + 1)) (${payload}): ${problem}"
       return 1
     fi

@@ -220,3 +220,34 @@ flows_print_steps() {
   printf '3. The flow opens unpublished (off).\n'
   flows_next_steps "$dir"
 }
+
+# flows_ensure_tables <template dir>: create the tables the flow uses (fixed ids and columns) if missing
+flows_ensure_tables() {
+  local dir="$1" table id name existing fields body missing
+  while IFS= read -r table; do
+    [ -n "$table" ] || continue
+    id="$(jq -r '.id' <<< "$table")"
+    name="$(jq -r '.name' <<< "$table")"
+    existing="$(flows_api GET "/v1/tables?projectId=${FLOWS_PROJECT}&limit=100" \
+      | jq -r --arg i "$id" '[.data[]? | select(.externalId == $i)][0].id // empty' 2>/dev/null || true)"
+    if [ -n "$existing" ]; then
+      fields="$(flows_api GET "/v1/fields?tableId=${existing}" | jq -r 'if type == "array" then . else (.data // []) end | map(.name) | .[]' 2>/dev/null || true)"
+      missing="$(jq -r --argjson have "$(jq -Rsc 'split("\n") | map(select(. != ""))' <<< "$fields")" \
+        '.fields | map(.name) | map(select(. as $n | $have | index($n) | not)) | join(", ")' <<< "$table")"
+      if [ -n "$missing" ]; then
+        log_fail "table \"${name}\" (${id}) exists but lacks the column(s): ${missing}; add them or rename the old table"
+        return 1
+      fi
+      log_ok "table \"${name}\" is already there; kept as it is"
+      continue
+    fi
+    body="${FLOWS_TMP}/table.json"
+    jq -c --arg p "$FLOWS_PROJECT" '{projectId: $p, name, externalId: .id,
+      fields: (.fields | map({name, type, data: null, externalId: .id}))}' <<< "$table" > "$body"
+    flows_api POST /v1/tables "$body" >/dev/null
+    case "$(flows_status)" in
+      200|201) log_ok "created table \"${name}\" ($(jq -r '.fields | map(.name) | join(", ")' <<< "$table"))" ;;
+      *) log_fail "could not create table \"${name}\": $(flows_api_error)"; return 1 ;;
+    esac
+  done < <(yq -o=json -I=0 '.tables[]?' "${dir}/template.yaml")
+}

@@ -216,3 +216,41 @@ CODE_INPUT='.flows[0].trigger.nextAction.settings.input'
   yq -i '.connections = [{"piece": "@activepieces/piece-webhook", "purpose": "pretend it needs an account", "options": ["Connect"]}]' "${T}/template.yaml"
   expect_problem "steps that need the client's connection must be \"valid\": false: trigger"
 }
+
+use_tables_template() {
+  rm -rf "${OPSKIT_FLOWS_DIR:?}/demo"
+  cp -r "${OPSKIT_ROOT}/flows/lead-capture-tables" "${OPSKIT_FLOWS_DIR}/demo"
+  T="${OPSKIT_FLOWS_DIR}/demo"
+  yq -i '.template_id = "demo"' "${T}/template.yaml"
+}
+
+@test "tables: a template that declares its table and writes existing columns is valid" {
+  use_tables_template
+  run "$OPSKIT" flows validate demo
+  [ "$status" -eq 0 ]
+}
+
+@test "tables: a table used by a step must be declared, and a declared one must be used" {
+  use_tables_template
+  yq -i '.tables[0].id = "opskit-other"' "${T}/template.yaml"
+  expect_problem "table opskit-leads is used by a step but not declared in template.yaml tables"
+  [[ "$output" == *"table opskit-other is declared in template.yaml but no step uses it"* ]]
+}
+
+@test "tables: writing a column the table does not have is reported (the piece would drop it silently)" {
+  use_tables_template
+  jq '(.. | objects | select(.actionName? == "tables-create-records") | .input.records[0]) += {"Typo": "x"}' "${T}/flow.json" > "${WORK}/f.json" && mv "${WORK}/f.json" "${T}/flow.json"
+  expect_problem "tables-create-records writes column \"Typo\" which table opskit-leads does not have"
+}
+
+@test "tables: update-record may only set known field ids; test expectations may only name declared tables and fields" {
+  rm -rf "${OPSKIT_FLOWS_DIR:?}/demo"
+  cp -r "${OPSKIT_ROOT}/flows/invoice-reminder-tables" "${OPSKIT_FLOWS_DIR}/demo"
+  T="${OPSKIT_FLOWS_DIR}/demo"
+  yq -i '.template_id = "demo"' "${T}/template.yaml"
+  jq '(.. | objects | select(.actionName? == "tables-update-record") | .input.values) |= {"remindedat": "x"}' "${T}/flow.json" > "${WORK}/f.json" && mv "${WORK}/f.json" "${T}/flow.json"
+  yq -i '.test.runs[0].rows = {"nope": 1} | .test.runs[1].filled = {"opskit-invoices": {"ghost": 1}}' "${T}/template.yaml"
+  expect_problem "tables-update-record sets field id \"remindedat\" which table opskit-invoices does not have"
+  [[ "$output" == *"test run refers to table nope which template.yaml does not declare"* ]]
+  [[ "$output" == *"test run \"filled\" names field ghost which table opskit-invoices does not have"* ]]
+}

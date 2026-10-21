@@ -1,0 +1,198 @@
+[
+  {
+    "id": "rec000001",
+    "created": "2026-10-01T00:00:00.000Z",
+    "updated": "2026-10-01T00:00:00.000Z",
+    "cells": {
+      "fAA001": {
+        "fieldName": "Invoice",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "INV-1001"
+      },
+      "fBB001": {
+        "fieldName": "Customer",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "Sam Example"
+      },
+      "fCC001": {
+        "fieldName": "Email",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "sam@example.com"
+      },
+      "fDD001": {
+        "fieldName": "Amount",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "€120.00"
+      },
+      "fEE001": {
+        "fieldName": "Due date",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "2026-01-10"
+      },
+      "fFF001": {
+        "fieldName": "Status",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "open"
+      },
+      "fGG001": {
+        "fieldName": "Reminded at",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": null
+      }
+    }
+  },
+  {
+    "id": "rec000002",
+    "created": "2026-10-01T00:00:00.000Z",
+    "updated": "2026-10-01T00:00:00.000Z",
+    "cells": {
+      "fAA002": {
+        "fieldName": "Invoice",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "INV-1002"
+      },
+      "fBB002": {
+        "fieldName": "Customer",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "Paid Example"
+      },
+      "fCC002": {
+        "fieldName": "Email",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "paid@example.com"
+      },
+      "fDD002": {
+        "fieldName": "Amount",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "€80.00"
+      },
+      "fEE002": {
+        "fieldName": "Due date",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "2026-01-10"
+      },
+      "fFF002": {
+        "fieldName": "Status",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "paid"
+      },
+      "fGG002": {
+        "fieldName": "Reminded at",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": null
+      }
+    }
+  },
+  {
+    "id": "rec000003",
+    "created": "2026-10-01T00:00:00.000Z",
+    "updated": "2026-10-01T00:00:00.000Z",
+    "cells": {
+      "fAA003": {
+        "fieldName": "Invoice",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "INV-1003"
+      },
+      "fBB003": {
+        "fieldName": "Customer",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "Future Example"
+      },
+      "fCC003": {
+        "fieldName": "Email",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "future@example.com"
+      },
+      "fDD003": {
+        "fieldName": "Amount",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "€50.00"
+      },
+      "fEE003": {
+        "fieldName": "Due date",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "2099-01-01"
+      },
+      "fFF003": {
+        "fieldName": "Status",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "open"
+      },
+      "fGG003": {
+        "fieldName": "Reminded at",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": null
+      }
+    }
+  },
+  {
+    "id": "rec000004",
+    "created": "2026-10-01T00:00:00.000Z",
+    "updated": "2026-10-01T00:00:00.000Z",
+    "cells": {
+      "fAA004": {
+        "fieldName": "Invoice",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "INV-1004"
+      },
+      "fBB004": {
+        "fieldName": "Customer",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "Recent Example"
+      },
+      "fCC004": {
+        "fieldName": "Email",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "recent@example.com"
+      },
+      "fDD004": {
+        "fieldName": "Amount",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "€60.00"
+      },
+      "fEE004": {
+        "fieldName": "Due date",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "2026-01-10"
+      },
+      "fFF004": {
+        "fieldName": "Status",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "open"
+      },
+      "fGG004": {
+        "fieldName": "Reminded at",
+        "updated": "2026-10-01T00:00:00.000Z",
+        "created": "2026-10-01T00:00:00.000Z",
+        "value": "2099-01-01T08:00:00.000Z"
+      }
+    }
+  }
+]

@@ -1,0 +1,169 @@
+{
+  "name": "Lead capture (built-in table)",
+  "description": "Website form → lead saved in an Activepieces table → owner emailed → lead gets an auto-reply. No Google account needed.",
+  "tags": [
+    "opskit",
+    "leads"
+  ],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-tables",
+    "@activepieces/piece-smtp"
+  ],
+  "flows": [
+    {
+      "displayName": "Lead capture (built-in table)",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Website form (webhook)",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+        "settings": {
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "0.1.42",
+          "triggerName": "catch_webhook",
+          "propertySettings": {},
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          }
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Check lead",
+          "type": "CODE",
+          "valid": true,
+          "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  const body = inputs.body || {};\n  const text = (value, max) => String(value ?? '').trim().slice(0, max);\n  const email = text(body.email, 254).toLowerCase();\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new Error('Invalid email in field \"email\" - lead not saved');\n  }\n  const name = text(body.name, 200);\n  return {\n    receivedAt: new Date().toISOString(),\n    name,\n    email,\n    greetingName: name.split(/\\s+/)[0] || 'there',\n    label: name || email,\n    phone: text(body.phone, 50),\n    message: text(body.message, 5000),\n    source: text(body.source, 100) || inputs.defaultSource,\n  };\n};",
+              "packageJson": "{}"
+            },
+            "input": {
+              "body": "{{trigger['output']['body']}}",
+              "defaultSource": "{{OPSKIT:LEAD_SOURCE}}"
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "displayName": "Save lead to the Leads table",
+            "type": "PIECE",
+            "valid": true,
+            "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+            "settings": {
+              "pieceName": "@activepieces/piece-tables",
+              "pieceVersion": "0.6.2",
+              "actionName": "tables-create-records",
+              "propertySettings": {},
+              "input": {
+                "table_id": "opskit-leads",
+                "values": {},
+                "records": [
+                  {
+                    "Received at": "{{step_1['output']['receivedAt']}}",
+                    "Name": "{{step_1['output']['name']}}",
+                    "Email": "{{step_1['output']['email']}}",
+                    "Phone": "{{step_1['output']['phone']}}",
+                    "Message": "{{step_1['output']['message']}}",
+                    "Source": "{{step_1['output']['source']}}"
+                  }
+                ]
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "displayName": "Email the new lead to the owner",
+              "type": "PIECE",
+              "valid": false,
+              "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+              "settings": {
+                "pieceName": "@activepieces/piece-smtp",
+                "pieceVersion": "0.5.0",
+                "actionName": "send-email",
+                "propertySettings": {},
+                "input": {
+                  "from": "{{OPSKIT:FROM_EMAIL}}",
+                  "senderName": "{{OPSKIT:BUSINESS_NAME}} leads",
+                  "to": [
+                    "{{OPSKIT:OWNER_EMAIL}}"
+                  ],
+                  "cc": [],
+                  "bcc": [],
+                  "replyTo": "{{step_1['output']['email']}}",
+                  "subject": "New lead: {{step_1['output']['label']}}",
+                  "body_type": "plain_text",
+                  "body": "New lead from {{step_1['output']['source']}} at {{step_1['output']['receivedAt']}}\n\nName: {{step_1['output']['name']}}\nEmail: {{step_1['output']['email']}}\nPhone: {{step_1['output']['phone']}}\n\n{{step_1['output']['message']}}\n\nSaved to your Leads table.",
+                  "attachments": [],
+                  "customHeaders": {}
+                },
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "displayName": "Auto-reply to the lead",
+                "type": "PIECE",
+                "valid": false,
+                "lastUpdatedDate": "2026-10-22T00:00:00.000Z",
+                "settings": {
+                  "pieceName": "@activepieces/piece-smtp",
+                  "pieceVersion": "0.5.0",
+                  "actionName": "send-email",
+                  "propertySettings": {},
+                  "input": {
+                    "from": "{{OPSKIT:FROM_EMAIL}}",
+                    "senderName": "{{OPSKIT:BUSINESS_NAME}}",
+                    "to": [
+                      "{{step_1['output']['email']}}"
+                    ],
+                    "cc": [],
+                    "bcc": [],
+                    "replyTo": "{{OPSKIT:OWNER_EMAIL}}",
+                    "subject": "{{OPSKIT:REPLY_SUBJECT}}",
+                    "body_type": "plain_text",
+                    "body": "Hi {{step_1['output']['greetingName']}},\n\n{{OPSKIT:REPLY_TEXT}}\n\n{{OPSKIT:BUSINESS_NAME}}",
+                    "attachments": [],
+                    "customHeaders": {}
+                  },
+                  "errorHandlingOptions": {
+                    "continueOnFailure": {
+                      "value": false
+                    },
+                    "retryOnFailure": {
+                      "value": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
