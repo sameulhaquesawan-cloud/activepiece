@@ -1,14 +1,14 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 4 — Monitoring & alerts
-- **Current task:** 4.11 (see `docs/tasks/phase-4.md`)
+- **Current phase:** Phase 4 — Monitoring & alerts (done; owner check-in)
+- **Current task:** none — Phase 4 complete, waiting for the owner check-in (next: Phase 4b go to market, owner-led)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4.11 end-to-end acceptance — a deliberately failing demo flow → detector → exactly one Telegram message (mock) within 10 min with flow name + run link; second run sends nothing; no ops-hub. Pieces are offline in the cloud session (ASSUMPTIONS #14): run the real flow where pieces load (CI/Codespace) and fall back to an honest skip message here.
-2. Agent: 4.12 runbook `docs/runbooks/monitoring.md` (Telegram bot + chat id, SMTP, Uptime Kuma first login, UptimeRobot), ADR-016, ENVIRONMENT, phase verification.
-3. Owner (any time, not blocking): Phase 3 runbook sections A (own age key) and B (off-server storage); a monitoring-host domain (Phase 4 Q1).
+1. **Owner check-in (end of Phase 4):** read the summary in chat. When convenient (none of it blocks the agent): `docs/runbooks/monitoring.md` section A (your Telegram bot, ~5 min), later C (monitoring server + domain, before the first client); Phase 3 runbook sections A (age key) and B (off-server storage).
+2. Agent, after the owner says go: Phase 4b (go to market, owner-led, agent assists) — run `/opskit-start-phase` to create `docs/tasks/phase-4b.md`.
+3. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest` (now also runs the failing-flow alert check, since Codespaces have internet).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -17,7 +17,7 @@
 | 1 | Opskit foundation (+ openai-compatible piece) | Done | Owner tests passed 20 Oct 2026; opskit-ci green (run 4) |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
-| 4 | Monitoring & alerts | In progress (owner accepted Q1–Q4 recommendations 20 Oct 2026) | — |
+| 4 | Monitoring & alerts | Done (owner check-in pending) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Not started | — |
 | 5 | Flow template library | Not started | — |
 | 6 | Safe upgrades | Not started | — |
@@ -27,6 +27,8 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 4.12 done; Phase 4 complete.** `docs/runbooks/monitoring.md` (what watches what, Telegram bot + chat id steps, SMTP, Uptime Kuma server, UptimeRobot, first actions per alert), ADR-016, ENVIRONMENT (Uptime Kuma admin, `OPSKIT_MONITOR_HOST`, `OPSKIT_REQUIRE_PIECES`, test-only variables). Fixes found while closing: practice heartbeats use an exported, readable copy of Caddy's public local root CA (`<root>/caddy/local-root.crt`; the original is root-only, failed in CI as non-root); `bootstrap.sh` waits for Caddy's admin endpoint before returning (reload race seen once after a machine restart). Monitor tests also verified as a non-root user.
+- **2026-10-21 — 4.11 done.** `lib/e2e.sh`, called by `opskit selftest`: publishes "E2E deliberately failing flow" (webhook trigger + code step that throws) via the API, triggers it, waits for the FAILED run, runs the host detector twice against a mock Telegram API → requires exactly 1 message containing the flow name and `/projects/<p>/runs/<r>`. Skipped with a warning when the app has no piece metadata (cloud session); `OPSKIT_REQUIRE_PIECES=1` in opskit-ci makes it mandatory. Passed on GitHub CI run 24 (selftest test 204). CI timeout 20 → 40 min.
 - **2026-10-20 — CI fix.** opskit-ci runs 17–21 were red: `opskit/.gitignore` `*.sql` (meant for dumps) also ignored `templates/readonly-role.sql`, so deploy failed on a fresh checkout while local runs passed. Fixed with a `!/templates/*.sql` exception + `ignore.bats` test that fails if any file under `templates/ agent/ lib/ bin/ schema/` is ignored. Full check verified from a fresh clone. Lesson: run `opskit/bin/check` from a fresh clone before closing a phase.
 - **2026-10-20 — 4.10 done.** `opskit monitor sync <id>` / `monitor remove <id>` (`lib/monitor_sync.sh`, `templates/monitor/sync.js`): in the owner's Uptime Kuma (the one host with a `monitor` section, or `OPSKIT_MONITOR_HOST`) creates/updates "opskit owner" notification (owner Telegram, else owner webhook), "<id> uptime" (HTTP `/api/v1/health`, 60 s; practice clients via `http://<id>-app` on the edge network) and "<id> backup" (push, 26 h); edits keep history and the push token; saves `backup.heartbeat_url` and pushes the new `backup.conf` to the client host. Practice heartbeats trust Caddy's local root CA (`HEARTBEAT_CACERT`, rendered only for internal TLS; backup.sh `--cacert`). `client offboard` removes the monitors (best effort). Real runs: app stop → owner Telegram "[… uptime] [🔴 Down]" after 55 s; 20 s push window → "[… backup] [🔴 Down] No heartbeat in the time window". Tests: docker `monitor.bats` (6, ~2 min, mock Telegram reachable from containers via the edge gateway) + `monitor_render.bats` (12). Verify: `bats opskit/tests/monitor.bats`.
 - **2026-10-20 — 4.9 done.** `opskit monitor deploy <host>` (`lib/monitor.sh`, `lib/commands/monitor.sh`, `templates/monitor/{compose.yml.tmpl,site.caddy.tmpl,admin.js}`; host schema `monitor: {domain, image (official or mirror.gcr.io), tag 2.5.5, memory 512m}`): Uptime Kuma as compose project `opskit-monitor` on `opskit_edge` (alias `opskit-monitor`, no published port, SQLite, healthcheck), admin account via its socket API from inside the container (password generated once into `hosts/<host>.monitor/admin.env`, 600), Caddy site, HTTPS check. Fresh deploy 26 s; re-run idempotent. Tests: `monitor_render.bats` (7) + docker `monitor.bats` (2). ASSUMPTIONS #15. Verify: `bats opskit/tests/monitor.bats`.
@@ -92,6 +94,17 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 4 — 21 Oct 2026
+| Acceptance (SPEC 17 Phase 4) | Evidence |
+|---|---|
+| A deliberately failing demo flow produces exactly one Telegram alert within 10 minutes with flow name and run link | `opskit selftest` monitoring e2e (`lib/e2e.sh`): real flow run, detector, mock Telegram, exactly 1 message, second detector run silent; mandatory in CI (`OPSKIT_REQUIRE_PIECES=1`), passed on CI runs 24 and 25 (run 25 fully green); detector every 5 min by cron |
+| Stopping a client stack triggers an uptime alert | `opskit/tests/monitor.bats` (Uptime Kuma 2.5.5 → owner Telegram mock "[acme uptime] [🔴 Down]"); manual run: alert 55 s after `stop app` |
+| A missed backup heartbeat triggers the watchdog after 26 h (time-shifted test) | `monitor.bats`: 20 s push window → "No heartbeat in the time window"; same sync reports the default window as 26 h (93600 s) |
+| Slack and email adapters pass payload tests | `opskit/tests/alert_channels.bats` (mock HTTP + mock SMTP, auth, no header injection) |
+| Alerts still arrive when no ops-hub exists | no ops-hub anywhere: host agents → `alert.sh` → channels directly; Uptime Kuma → owner Telegram directly (ADR-016) |
+| `opskit/bin/check` passes | full run incl. docker (local, fresh clone); monitor tests as non-root; CI |
+Not verified here: real Telegram/Slack/SMTP accounts and a real monitoring VPS with ACME (owner setup, runbook sections A–C; Phase 9 at the latest).
+
 ### Phase 3 — 20 Oct 2026
 | Acceptance (SPEC 17 Phase 3) | Evidence |
 |---|---|

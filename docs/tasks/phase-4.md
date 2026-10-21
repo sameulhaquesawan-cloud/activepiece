@@ -84,11 +84,11 @@ SPEC: Section 17 Phase 4, Section 10, 3.9, 15; reliability rules in `.claude/CLA
 - **Acceptance checks:** stopping a client stack → Uptime Kuma notification (mock webhook in tests); missed heartbeat → watchdog alert (time-shifted: short interval in the test, 26 h asserted in rendered settings).
 - **Tests required:** docker-tagged with a local Uptime Kuma.
 
-### [ ] 4.11 — End-to-end acceptance test
+### [x] 4.11 — End-to-end acceptance test
 - **Goal:** extend `selftest` (or `selftest --monitoring`): failing demo flow → detector → exactly one Telegram message (mock `OPSKIT_TELEGRAM_API`) within 10 min with flow name and run link; second detector run sends nothing; no ops-hub present.
 - **Spec refs:** 17 Phase 4 accept
 - **Tests required:** docker-tagged; CI runs it.
 
-### [ ] 4.12 — Docs + phase close
+### [x] 4.12 — Docs + phase close
 - **Goal:** `docs/runbooks/monitoring.md` (plain steps: create a Telegram bot and find chat ids, SMTP account, Uptime Kuma first login, UptimeRobot watching Uptime Kuma, what each alert means and the first action); ADR-016; ENVIRONMENT; PROGRESS + phase verification report.
 - **Manual verification:** owner reads the runbook; `opskit/bin/check` + `opskit selftest` pass.
