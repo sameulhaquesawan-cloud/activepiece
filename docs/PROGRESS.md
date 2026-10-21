@@ -1,14 +1,14 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 4 — Monitoring & alerts (done; owner check-in)
-- **Current task:** none — Phase 4 complete, waiting for the owner check-in (next: Phase 4b go to market, owner-led)
+- **Current phase:** Phase 4b — Go to market (owner-led)
+- **Current task:** 4b.1 after owner review of `docs/tasks/phase-4b.md` (Q1–Q5)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner check-in (end of Phase 4):** read the summary in chat. When convenient (none of it blocks the agent): `docs/runbooks/monitoring.md` section A (your Telegram bot, ~5 min), later C (monitoring server + domain, before the first client); Phase 3 runbook sections A (age key) and B (off-server storage).
-2. Agent, after the owner says go: Phase 4b (go to market, owner-led, agent assists) — run `/opskit-start-phase` to create `docs/tasks/phase-4b.md`.
-3. Owner Codespace: `git pull`, `opskit/bin/dev-env`, `opskit/bin/opskit selftest` (now also runs the failing-flow alert check, since Codespaces have internet).
+1. **Owner:** review `docs/tasks/phase-4b.md` and answer Q1–Q5 (or "ok" to the recommended defaults).
+2. Agent: then 4b.1 (fresh market and cost facts with sources) and on through 4b.6; drafts go to `docs/go-to-market/`; the owner signs off in 4b.7.
+3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -17,8 +17,8 @@
 | 1 | Opskit foundation (+ openai-compatible piece) | Done | Owner tests passed 20 Oct 2026; opskit-ci green (run 4) |
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
-| 4 | Monitoring & alerts | Done (owner check-in pending) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
-| 4b | Go to market (owner-led) | Not started | — |
+| 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
+| 4b | Go to market (owner-led) | Planned — task file awaiting owner review | — |
 | 5 | Flow template library | Not started | — |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — Phase 4b planned; CI fix.** Owner said "go Phase 4b". `docs/tasks/phase-4b.md`: 7 tasks (facts, offer, pricing + calculator, one-page site, demo script, outreach kit incl. Zapier migration checklist, sign-off), questions Q1–Q5 with defaults. CI run 26 was red: the new edge readiness probe (`wget localhost:2019` in the Caddy container) never answered on GitHub runners; replaced by retrying `caddy reload` (what callers need). Verify: `bats opskit/tests/bootstrap.bats`.
 - **2026-10-21 — 4.12 done; Phase 4 complete.** `docs/runbooks/monitoring.md` (what watches what, Telegram bot + chat id steps, SMTP, Uptime Kuma server, UptimeRobot, first actions per alert), ADR-016, ENVIRONMENT (Uptime Kuma admin, `OPSKIT_MONITOR_HOST`, `OPSKIT_REQUIRE_PIECES`, test-only variables). Fixes found while closing: practice heartbeats use an exported, readable copy of Caddy's public local root CA (`<root>/caddy/local-root.crt`; the original is root-only, failed in CI as non-root); `bootstrap.sh` waits for Caddy's admin endpoint before returning (reload race seen once after a machine restart). Monitor tests also verified as a non-root user.
 - **2026-10-21 — 4.11 done.** `lib/e2e.sh`, called by `opskit selftest`: publishes "E2E deliberately failing flow" (webhook trigger + code step that throws) via the API, triggers it, waits for the FAILED run, runs the host detector twice against a mock Telegram API → requires exactly 1 message containing the flow name and `/projects/<p>/runs/<r>`. Skipped with a warning when the app has no piece metadata (cloud session); `OPSKIT_REQUIRE_PIECES=1` in opskit-ci makes it mandatory. Passed on GitHub CI run 24 (selftest test 204). CI timeout 20 → 40 min.
 - **2026-10-20 — CI fix.** opskit-ci runs 17–21 were red: `opskit/.gitignore` `*.sql` (meant for dumps) also ignored `templates/readonly-role.sql`, so deploy failed on a fresh checkout while local runs passed. Fixed with a `!/templates/*.sql` exception + `ignore.bats` test that fails if any file under `templates/ agent/ lib/ bin/ schema/` is ignored. Full check verified from a fresh clone. Lesson: run `opskit/bin/check` from a fresh clone before closing a phase.
