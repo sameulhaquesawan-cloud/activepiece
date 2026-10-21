@@ -23,7 +23,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Tests required:** `opskit/bin/check` stays green (docs only).
 - **Manual verification:** owner skims the table.
 
-### [ ] 4b.2 — The offer
+### [x] 4b.2 — The offer
 - **Goal:** what is sold, in plain words: one-time setup (server, HTTPS, backups, monitoring, first flows or Zapier migration), monthly "hosting + care" plans, add-ons (extra flows, migration from Zapier/Make, WhatsApp alerts later), what is included and excluded, response times (Q3), what the client must provide (accounts, API keys they own), how they can leave (handover, data export), privacy note summary (A4). Only features that exist in Phases 1–4 are promised; Phases 5–7 are listed as "coming".
 - **Spec refs:** 1, 2, 18, App. C A4/A5
 - **Files likely touched:** `docs/go-to-market/offer.md`
