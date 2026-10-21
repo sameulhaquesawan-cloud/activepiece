@@ -2,12 +2,12 @@
 
 ## Current status
 - **Current phase:** Phase 5 — Flow template library
-- **Current task:** Phase 6 planned (`docs/tasks/phase-6.md`); waiting for the owner's answers to its 6 questions. Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** 6.2 (see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Owner: read `docs/tasks/phase-6.md`, answer its 6 questions (or say "ok" to accept the defaults) → agent starts 6.1.
-2. Owner: create `main` on GitHub (branch dropdown → "main" → create from `claude/funny-keller-x6sgy1`; Settings → Default branch → main). The agent may not push `main`.
+1. Agent: 6.2 `opskit upgrade <id> --to <tag> --plan` (read-only gates, breaking-change notes, checklist), then 6.3 onwards. Owner: object to ASSUMPTIONS #24 (rollback restores the pre-switch dump) if you disagree.
+2. Owner: bring `main` up to date after each signed-off phase (Pull request: base `main` ← `claude/funny-keller-x6sgy1` → Merge).
 3. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
@@ -21,13 +21,14 @@
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
-| 6 | Safe upgrades | Planned — task file `docs/tasks/phase-6.md` (12 tasks, 6 questions) waiting for the owner's approval | — |
+| 6 | Safe upgrades | In progress (plan approved by the owner, 22 Oct 2026) | — |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 6.1 upgrade facts verified.** Real upgrade 0.91.4 → 0.92.3 on a local practice stack: 15 s, 11 migrations, data intact. Upstream rollback: `--to` picks wrong migrations (mislabelled releases), `--manifest` picks the right ones but `--force` failed half way (`DROP INDEX CONCURRENTLY` in a transaction); old image runs "healthy" on a newer schema. Design adjusted: rollback restores a dump taken right before the switch (app stopped), schema check in smoke tests. 0.92.2 → 0.92.3 has no schema change. Files: `docs/EXPLORATION_REPORT.md` §9, `docs/ASSUMPTIONS.md` #24–26, `docs/tasks/phase-6.md` (6.6/6.7 updated). Experiment stack removed.
 - **2026-10-22 — Phase 6 planned (no code).** `docs/tasks/phase-6.md`: 12 tasks — verify facts (image tags, upstream `npm run rollback`), `upgrade --plan` with breaking-change notes and pre-flight gates, image pre-pull + lock/state, smoke-test library, staging on the operator machine, production switch, automatic rollback (migration rollback first, backup restore as fallback), history + monitoring hooks, post-upgrade pieces/templates check, selftest/CI round with an injected failure, fork-sync rehearsal, runbook + ADR-018. Six owner questions with recommended defaults.
 - **2026-10-22 — Built-in Tables variants (owner request: no Google needed, Google/other clouds as alternatives).** `opskit/flows/lead-capture-tables/` and `invoice-reminder-tables/`: data in an Activepieces table, mail by SMTP, no Google and no sign-in service. Template manifests gained `tables` (id/name/columns) and sample runs gained `seed`/`rows`/`filled`; `flows import` creates missing tables (fixed ids, refuses an existing one lacking a column); `flows validate` checks table use and written column names (the piece drops unknown names silently); selftest seeds rows and checks them with the Tables steps running for real. Verified on a real local stack: table/field/record API calls, record shape (cells by internal id + `fieldName`), the new check functions and `flows_ensure_tables`. Tests: +10 bats (code steps, validate, import, stub). Docs: README "Where the client's data lives" (Tables default; Sheets; Airtable/Excel 365/Notion as half-day add-ons, not built), CONVENTIONS, CONNECTIONS, runbook, ASSUMPTIONS #23. CI run 38 green (real imports, rows written/checked, sample runs). Pending: real SMTP test.
 - **2026-10-22 — Browser test 2 (owner, Claude in Chrome).** Confirmed live: fresh import lists the 3 step names; both Gmail send steps are valid as soon as the Gmail connection is picked (no "Incomplete"); the auto-reply greets "Hi Jane,"; bad email fails at "Check lead" with `Invalid email in field "email" - lead not saved`; owner and auto-reply emails were sent (step outputs; mailbox not opened). Not tested: Sheets (Google Cloud needs 2-step verification on the test account since 25 Jul 2026 → no service account), so the full T1 run, T2 and the Sheets read shape are still open (shape read from the piece code: ASSUMPTIONS #22). T3–T5 skipped. Environment: Codespace port 8080 resets to Private on every restart, and Chrome kept a 404 until its site data for app.github.dev was cleared (tip added to the test plan).
