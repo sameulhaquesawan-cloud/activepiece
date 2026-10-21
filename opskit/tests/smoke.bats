@@ -113,3 +113,11 @@ stub_stack() {
   [ "$(grep -c '^\[fail\]' <<< "$output")" = "1" ]
   [[ "$output" == *"[ok] failed runs of acme"* ]]
 }
+
+@test "a scoped injected failure only fires in that scope" {
+  OPSKIT_SMOKE_FAIL=production:schema SMOKE_SCOPE=staging run smoke_schema h acme
+  [ "$status" -eq 0 ]
+  OPSKIT_SMOKE_FAIL=production:schema SMOKE_SCOPE=production run smoke_schema h acme
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"smoke schema: injected failure"* ]]
+}

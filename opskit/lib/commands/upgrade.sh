@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: upgrade a client to a newer Activepieces release (plan, pre-pull, lock; staging, switch and rollback follow)
 
-for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch; do
+for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch upgrade_rollback; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -9,7 +9,7 @@ done
 upgrade_usage() {
   cat <<'USAGE'
 Usage: opskit upgrade <client id> --to <x.y.z> [--plan | --yes [--now]]
-       opskit upgrade <client id> --resume --yes [--now] | --rollback | --unlock
+       opskit upgrade <client id> --resume --yes [--now] | --rollback --yes | --unlock
 
 --plan      read-only: checks the target release exists and is newer, lists the breaking changes
             Activepieces documents between the two versions, the database changes (when both
@@ -22,10 +22,12 @@ Usage: opskit upgrade <client id> --to <x.y.z> [--plan | --yes [--now]]
             owner key and internet for pieces), then the switch: app stopped, encrypted pre-switch
             dump on the host, new version deployed, production checks against the counts taken
             with the app stopped. Needs --yes and the typed client id; only inside the client's
-            quiet hours (alerts.quiet_hours, client time zone) unless --now. Automatic rollback:
-            task 6.7.
+            quiet hours (alerts.quiet_hours, client time zone) unless --now. Any failure after the
+            app was stopped rolls back on its own: the pre-switch dump replaces the database, the
+            old version is deployed and checked, the owner gets a critical alert.
 --resume    continues an interrupted upgrade that had not reached the switch
---rollback  puts an interrupted upgrade back on the previous version (task 6.7)
+--rollback  puts the client back on the version before its last upgrade (interrupted, or
+            finished less than 7 days ago): data since the switch is lost; needs --yes + typed id
 --unlock    gives up an interrupted upgrade that had not reached the switch (releases its lock)
 State of every run: opskit/clients/<id>/upgrades/<time>/state.json. Checklist:
 docs/runbooks/upgrade-checklist.md
@@ -61,7 +63,7 @@ cmd_main() {
     plan) upgrade_plan "$id" "$to" ;;
     resume) upgrade_resume "$id" ;;
     unlock) upgrade_unlock "$id" ;;
-    rollback) die "rollback is not available yet (Phase 6, task 6.7)" ;;
+    rollback) upgrade_rollback_manual "$id" ;;
     *) upgrade_start "$id" "$to" ;;
   esac
 }

@@ -77,7 +77,7 @@ upgrade_do_stage() {
   log_info "Staging: restoring ${name} into a temporary stack on this machine with ${to} (a few minutes)"
   if temp_stack_restore "$id" "$name" upgrade-stage "$to"; then
     log_ok "staging copy ${TEMP_ID} restored and started on ${to}"
-    ( export OPSKIT_REGISTRY="$TEMP_WORK"; upgrade_stage_checks "$id" "$baseline" "$since" ) 2>&1 | tee "${dir}/stage-checks.log" \
+    ( export OPSKIT_REGISTRY="$TEMP_WORK" SMOKE_SCOPE=staging; upgrade_stage_checks "$id" "$baseline" "$since" ) 2>&1 | tee "${dir}/stage-checks.log" \
       || true
     grep -q '^\[fail\]' "${dir}/stage-checks.log" && rc=1
   else

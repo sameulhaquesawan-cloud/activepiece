@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 # Smoke checks for a running client stack (upgrade staging and production, selftest). Each prints one
 # [ok]/[fail] line and returns non-zero on failure. OPSKIT_SMOKE_FAIL=<check> makes that check fail on
-# purpose (tests of the rollback path). Needs deploy.sh, verify.sh (and roundtrip.sh for the flow checks).
+# purpose (tests of the rollback path); <scope>:<check> only where SMOKE_SCOPE is that scope
+# (the upgrade sets staging / production). Needs deploy.sh, verify.sh (and roundtrip.sh for the flow checks).
 
 SMOKE_ENGINE_ERRORS="'INTERNAL_ERROR', 'TIMEOUT', 'MEMORY_LIMIT_EXCEEDED'"
 SMOKE_SERVICES=(app worker postgres redis)
 SMOKE_MANIFEST="/usr/src/app/packages/server/api/dist/src/migration-manifest.json"
 
 smoke_injected() {
-  [ "${OPSKIT_SMOKE_FAIL:-}" = "$1" ] || return 1
+  local want="${OPSKIT_SMOKE_FAIL:-}"
+  if [[ "$want" == *:* ]]; then
+    [ "${want%%:*}" = "${SMOKE_SCOPE:-}" ] || return 1
+    want="${want#*:}"
+  fi
+  [ "$want" = "$1" ] || return 1
   log_fail "smoke ${1}: injected failure (OPSKIT_SMOKE_FAIL)"
 }
 

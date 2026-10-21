@@ -86,6 +86,10 @@ upgrade_lock_check() {
       log_fail "upgrade ${run} of ${id} to $(jq -r '.to' "$file") was interrupted at step $(upgrade_current_step "$file"): $(upgrade_next_action "$id" "$file")"
       return 1
       ;;
+    rollback_failed)
+      log_fail "the rollback of upgrade ${run} of ${id} failed: opskit upgrade ${id} --rollback --yes (or restore the latest backup)"
+      return 1
+      ;;
     "")
       age="$(upgrade_age_hours "$run" || printf '?')"
       log_fail "upgrade ${run} (${age} h ago, from another machine) holds the lock of ${id}$([ "$age" != "?" ] && [ "$age" -ge "$UPGRADE_LOCK_STALE_H" ] && printf ' and looks stale'): if no upgrade is running, opskit upgrade ${id} --unlock"
@@ -127,7 +131,7 @@ upgrade_unlock() {
   run="$(upgrade_lock_owner "$host" "$id")"
   [ -n "$run" ] || { log_ok "no upgrade lock on ${id}"; return 0; }
   file="$(upgrade_state_file "$id" "$run")"
-  if [ -f "$file" ] && jq -e '.status == "running" and (.steps | has("switch"))' "$file" >/dev/null; then
+  if [ -f "$file" ] && jq -e '(.status == "running" or .status == "rollback_failed") and (.steps | has("switch"))' "$file" >/dev/null; then
     log_fail "upgrade ${run} reached the switch: opskit upgrade ${id} --rollback instead"
     return 1
   fi
@@ -174,7 +178,8 @@ upgrade_steps() {
     fi
     upgrade_step_mark "$file" "$step" failed
     if jq -e '.steps | has("switch")' "$file" >/dev/null; then
-      log_fail "upgrade of ${id} failed at ${step}: $(upgrade_next_action "$id" "$file")"
+      log_fail "upgrade of ${id} failed at ${step}: rolling back"
+      upgrade_rollback "$id" "$file" "${step} failed" || true
       return 1
     fi
     upgrade_state_set "$file" '.status = "failed" | .ended = $at | .failed_step = $step' --arg step "$step"
@@ -184,6 +189,7 @@ upgrade_steps() {
   done
   upgrade_state_set "$file" '.status = "done" | .ended = $at'
   upgrade_lock_release "$host" "$id" "$(jq -r '.run' "$file")"
+  upgrade_prune_dumps "$host" "$id"
   log_ok "${id} upgraded to $(jq -r '.to' "$file")"
 }
 

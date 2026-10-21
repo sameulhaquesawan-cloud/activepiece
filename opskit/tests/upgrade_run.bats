@@ -183,3 +183,34 @@ fake_run() {
   [[ "$output" == *"[ok] confirmed: upgrade acme to 0.92.3"* ]]
   [ -f "$FAKE_DOCKER_LOG" ]
 }
+
+@test "a failed rollback keeps the lock: the plan says so and --unlock refuses" {
+  fake_run 20261022T100000Z '{"pull": {"status": "done"}, "stage": {"status": "done"}, "switch": {"status": "done"}, "verify": {"status": "failed"}}'
+  jq '.status = "rollback_failed"' "${REG}/clients/acme/upgrades/20261022T100000Z/state.json" > "${STUB}/s" \
+    && mv "${STUB}/s" "${REG}/clients/acme/upgrades/20261022T100000Z/state.json"
+  run "$OPSKIT" upgrade acme --to 0.92.3 --plan
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"the rollback of upgrade 20261022T100000Z of acme failed: opskit upgrade acme --rollback --yes"* ]]
+  run "$OPSKIT" upgrade acme --unlock
+  [ "$status" -eq 1 ]
+  [ -d "$LOCK" ]
+}
+
+@test "--rollback by hand: nothing to roll back, outside the 7-day window, or without --yes is refused" {
+  run "$OPSKIT" upgrade acme --rollback --yes < /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no upgrade of acme to roll back"* ]]
+  mkdir -p "${REG}/clients/acme/upgrades/20261001T100000Z"
+  jq -n '{client: "acme", run: "20261001T100000Z", from: "0.91.4", to: "0.92.3", status: "done",
+    ended: "2020-01-01T00:00:00Z", switched_at: "2020-01-01T00:00:00Z", steps: {switch: {status: "done"}}}' \
+    > "${REG}/clients/acme/upgrades/20261001T100000Z/state.json"
+  run "$OPSKIT" upgrade acme --rollback --yes < /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"rollback only within 7 days): restore a backup instead"* ]]
+  jq --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.ended = $t' "${REG}/clients/acme/upgrades/20261001T100000Z/state.json" > "${STUB}/s" \
+    && mv "${STUB}/s" "${REG}/clients/acme/upgrades/20261001T100000Z/state.json"
+  run "$OPSKIT" upgrade acme --rollback < /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"is destructive: re-run with --yes"* ]]
+  [ ! -e "$LOCK" ]
+}

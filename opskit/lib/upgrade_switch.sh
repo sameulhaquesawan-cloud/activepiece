@@ -49,9 +49,14 @@ upgrade_host_dir() {
   printf '%s/clients/%s/upgrades/%s' "$(host_root "$1")" "$2" "$3"
 }
 
-# upgrade_pre_switch_dump <host> <id> <run>: pg_dump (app stopped), integrity-checked, encrypted to the owner key
+# upgrade_pre_switch_dump <host> <id> <run>: pg_dump (app stopped), integrity-checked, encrypted to the owner key.
+# OPSKIT_UPGRADE_FAIL=pre-switch-dump makes it fail on purpose (tests of the rollback "restart" path).
 upgrade_pre_switch_dump() {
   local host="$1" id="$2" run="$3" pg dir
+  if [ "${OPSKIT_UPGRADE_FAIL:-}" = "pre-switch-dump" ]; then
+    log_fail "pre-switch dump: injected failure (OPSKIT_UPGRADE_FAIL)"
+    return 1
+  fi
   pg="$(stack_service_container "$host" "$id" postgres)"
   [ -n "$pg" ] || { log_fail "postgres of ${id} is not running"; return 1; }
   dir="$(upgrade_host_dir "$host" "$id" "$run")"
@@ -96,5 +101,5 @@ upgrade_do_switch() {
 upgrade_do_verify() {
   local id="$1" file="$2" host
   host="$(yaml_get "$(client_file "$id")" .host.name)"
-  smoke_production "$host" "$id" "$(jq -c '.switch_baseline' "$file")" "$(jq -r '.switched_at' "$file")"
+  SMOKE_SCOPE=production smoke_production "$host" "$id" "$(jq -c '.switch_baseline' "$file")" "$(jq -r '.switched_at' "$file")"
 }

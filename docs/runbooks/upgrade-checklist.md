@@ -34,5 +34,6 @@ most 12 h).
 
 ## If it rolled back
 The tool restores the database copy taken right before the switch and starts the old version. The
-alert says what failed. Do not retry the same day: read the logs in
+alert (owner only) says what failed. Changed your mind within 7 days of a finished upgrade?
+`opskit upgrade <id> --rollback --yes` does the same by hand (everything since the switch is lost). Do not retry the same day: read the logs in
 `opskit/clients/<id>/upgrades/<time>/`, fix or wait for a newer release, then plan again.
