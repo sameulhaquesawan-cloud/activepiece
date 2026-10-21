@@ -1,0 +1,123 @@
+{
+  "name": "Lead-ad alert",
+  "description": "Facebook/Instagram lead ad form → contact in HubSpot → email to the sales person within a minute.",
+  "tags": [
+    "opskit",
+    "leads",
+    "ads"
+  ],
+  "pieces": [
+    "@activepieces/piece-facebook-leads",
+    "@activepieces/piece-hubspot",
+    "@activepieces/piece-gmail"
+  ],
+  "flows": [
+    {
+      "displayName": "Lead-ad alert",
+      "schemaVersion": "27",
+      "notes": [],
+      "trigger": {
+        "name": "trigger",
+        "displayName": "New Facebook lead",
+        "type": "PIECE_TRIGGER",
+        "valid": true,
+        "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+        "settings": {
+          "pieceName": "@activepieces/piece-facebook-leads",
+          "pieceVersion": "0.5.1",
+          "triggerName": "new_lead",
+          "propertySettings": {},
+          "input": {}
+        },
+        "nextAction": {
+          "name": "step_1",
+          "displayName": "Read lead",
+          "type": "CODE",
+          "valid": true,
+          "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+          "settings": {
+            "sourceCode": {
+              "code": "export const code = async (inputs) => {\n  const lead = inputs.lead || {};\n  const data = lead.data || {};\n  const pick = (...keys) => {\n    for (const key of keys) {\n      const value = data[key];\n      const text = Array.isArray(value) ? value.join(', ') : String(value ?? '').trim();\n      if (text !== '') {\n        return text.slice(0, 200);\n      }\n    }\n    return '';\n  };\n  const email = pick('email', 'work_email').toLowerCase();\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new Error('Lead ' + String(lead.lead_id ?? '?') + ' has no valid email - add an email question to the form or handle it by hand');\n  }\n  const fullName = pick('full_name');\n  const parts = fullName.split(/\\s+/).filter(Boolean);\n  const firstName = pick('first_name') || parts[0] || '';\n  const lastName = pick('last_name') || parts.slice(1).join(' ');\n  const known = ['email', 'work_email', 'full_name', 'first_name', 'last_name', 'phone_number'];\n  const answers = Object.keys(data).filter((key) => !known.includes(key))\n    .map((key) => key + ': ' + pick(key)).join('\\n');\n  return {\n    email,\n    firstName,\n    lastName,\n    name: [firstName, lastName].filter(Boolean).join(' ') || email,\n    phone: pick('phone_number', 'phone'),\n    campaign: String(lead.campaign_name ?? ''),\n    ad: String(lead.ad_name ?? ''),\n    submittedAt: String(lead.created_time ?? ''),\n    answers,\n  };\n};",
+              "packageJson": "{}"
+            },
+            "input": {
+              "lead": "{{trigger['output']}}"
+            },
+            "errorHandlingOptions": {
+              "continueOnFailure": {
+                "value": false
+              },
+              "retryOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "displayName": "Add or update contact in HubSpot",
+            "type": "PIECE",
+            "valid": true,
+            "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+            "settings": {
+              "pieceName": "@activepieces/piece-hubspot",
+              "pieceVersion": "0.13.1",
+              "actionName": "create-or-update-contact",
+              "propertySettings": {},
+              "input": {
+                "email": "{{step_1['output']['email']}}",
+                "objectProperties": {
+                  "firstname": "{{step_1['output']['firstName']}}",
+                  "lastname": "{{step_1['output']['lastName']}}",
+                  "phone": "{{step_1['output']['phone']}}",
+                  "lifecyclestage": "lead"
+                }
+              },
+              "errorHandlingOptions": {
+                "continueOnFailure": {
+                  "value": false
+                },
+                "retryOnFailure": {
+                  "value": true
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "displayName": "Email the sales person",
+              "type": "PIECE",
+              "valid": true,
+              "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
+              "settings": {
+                "pieceName": "@activepieces/piece-gmail",
+                "pieceVersion": "0.18.1",
+                "actionName": "send_email",
+                "propertySettings": {},
+                "input": {
+                  "receiver": [
+                    "{{OPSKIT:SALES_EMAIL}}"
+                  ],
+                  "subject": "New Facebook lead: {{step_1['output']['name']}}",
+                  "body_type": "plain_text",
+                  "body": "New lead from the ad \"{{step_1['output']['ad']}}\" (campaign {{step_1['output']['campaign']}}) at {{step_1['output']['submittedAt']}}.\n\nName: {{step_1['output']['name']}}\nEmail: {{step_1['output']['email']}}\nPhone: {{step_1['output']['phone']}}\n\n{{step_1['output']['answers']}}\n\nThe contact is in HubSpot. Call or write back soon - fast replies win the lead.",
+                  "reply_to": [
+                    "{{step_1['output']['email']}}"
+                  ],
+                  "sender_name": "{{OPSKIT:BUSINESS_NAME}} leads",
+                  "draft": false
+                },
+                "errorHandlingOptions": {
+                  "continueOnFailure": {
+                    "value": false
+                  },
+                  "retryOnFailure": {
+                    "value": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

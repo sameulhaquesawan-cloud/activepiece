@@ -26,6 +26,22 @@ channel_secret() {
   sed -n "s/^${name}=//p" "$file" | tail -n 1
 }
 
+# stack_app_webhook_secrets <id>: AP_APP_WEBHOOK_SECRETS JSON from client.yaml app_webhooks + channels.env
+stack_app_webhook_secrets() {
+  local id="$1" name value
+  name="$(yaml_get "$(client_file "$id")" .app_webhooks.facebook_leads.secret)"
+  if [ -z "$name" ]; then
+    printf '{}'
+    return 0
+  fi
+  value="$(channel_secret "$id" "$name")"
+  if ! [[ "$value" =~ ^[A-Za-z0-9]{16,128}$ ]]; then
+    log_fail "render ${id}: ${name} is missing or not a Meta app secret in $(client_dir "$id")/channels.env"
+    return 1
+  fi
+  jq -nc --arg v "$value" '{"@activepieces/piece-facebook-leads": {webhookSecret: $v}}'
+}
+
 # stack_render_backup <id>: backup.conf + client alerts.conf (both 600) for the host agent
 stack_render_backup() {
   local id="$1" cfile out channels slack_secret
@@ -106,6 +122,8 @@ stack_render() {
     export BACKUP_SCHEDULE
     HOST_OPSKIT_ROOT="$(yaml_get "$hfile" .opskit_root /opt/opskit)"
     export HOST_OPSKIT_ROOT
+    AP_APP_WEBHOOK_SECRETS="$(stack_app_webhook_secrets "$id")"
+    export AP_APP_WEBHOOK_SECRETS
     if [ "$tls" = "internal" ]; then
       export CADDY_TLS="tls internal"
     else

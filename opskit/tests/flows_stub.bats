@@ -92,3 +92,9 @@ steps() {
   [[ "$(jq -r '[.. | objects | select(.name? == "step_2")][0].settings.sourceCode.code' "${WORK}/request.json")" == *'\"category\": \"urgent\"'* ]]
   [ "$(steps | jq -c '[.[] | select(.[1] == "PIECE")]')" = "[]" ]
 }
+
+@test "lead-ad alert: the Facebook trigger becomes a webhook; HubSpot and Gmail are stubbed" {
+  stubbed lead-ad-alert 0
+  [ "$(steps)" = '[["trigger","PIECE_TRIGGER"],["step_1","CODE"],["step_2","CODE"],["step_3","CODE"]]' ]
+  [ "$(jq -r '.request.trigger.nextAction.settings.input.lead' "${WORK}/request.json")" = "{{trigger['output']['body']}}" ]
+}

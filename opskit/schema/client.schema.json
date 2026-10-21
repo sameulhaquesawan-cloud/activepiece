@@ -347,6 +347,27 @@
           }
         }
       }
+    },
+    "app_webhooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "secrets for app-level webhook triggers (AP_APP_WEBHOOK_SECRETS); values are names in clients/<id>/channels.env",
+      "properties": {
+        "facebook_leads": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "secret"
+          ],
+          "properties": {
+            "secret": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+              "description": "name of the channels.env entry holding the Meta app secret"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {

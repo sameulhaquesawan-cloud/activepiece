@@ -130,3 +130,17 @@ sorter_mail() {
   [ "$status" -eq 3 ]
   [[ "$output" == "THROWN: The AI answered an unknown category"* ]]
 }
+
+@test "lead-ad alert: answers are read, the name is split and other answers are listed" {
+  run run_code lead-ad-alert step_1 "$(jq -c '{lead: .}' "${OPSKIT_ROOT}/flows/lead-ad-alert/test/lead.json")"
+  [ "$status" -eq 0 ]
+  [ "$(jq -c '{email, firstName, lastName, name, phone, campaign, answers}' <<< "$output")" = '{"email":"jane@example.com","firstName":"Jane","lastName":"Ann Example","name":"Jane Ann Example","phone":"+44 20 7946 0000","campaign":"Spring 2026","answers":"preferred_time: mornings"}' ]
+  run run_code lead-ad-alert step_1 '{"lead": {"data": {"first_name": "Al", "last_name": "Ex", "work_email": "al@example.com", "topics": ["a", "b"]}}}'
+  [ "$(jq -c '{email, name, answers}' <<< "$output")" = '{"email":"al@example.com","name":"Al Ex","answers":"topics: a, b"}' ]
+}
+
+@test "lead-ad alert: a lead without email fails naming only the lead id" {
+  run run_code lead-ad-alert step_1 "$(jq -c '{lead: .}' "${OPSKIT_ROOT}/flows/lead-ad-alert/test/lead-no-email.json")"
+  [ "$status" -eq 3 ]
+  [ "$output" = "THROWN: Lead lead-example-2 has no valid email - add an email question to the form or handle it by hand" ]
+}

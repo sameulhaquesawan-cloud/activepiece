@@ -57,7 +57,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 ### [x] 5.8 — Template 2: AI email sorter
 - **Goal:** new Gmail email → AI classifies (Q2, client's own key) → Gmail label + Slack message for urgent ones; never sends email content anywhere else.
 
-### [ ] 5.9 — Template 5: lead-ad alert
+### [x] 5.9 — Template 5: lead-ad alert
 - **Goal:** Facebook Lead Ads (Q4) → HubSpot contact → email to the client's sales person; test via webhook variant. Optional `client.yaml` field naming a host secret renders `AP_APP_WEBHOOK_SECRETS` for the Facebook Lead Ads piece (ASSUMPTIONS #18); CHECKLIST covers the Meta app (webhook URL `https://<domain>/api/v1/app-events/facebook-leads`, verify token `activepieces`).
 
 ### ~~5.10 — Template 6~~ dropped by the owner (Elmo, SPEC App. C P2)

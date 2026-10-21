@@ -84,6 +84,25 @@ compose_get() {
   [[ "$output" != *"$key"* ]]
 }
 
+@test "app webhook secrets are empty by default" {
+  render
+  grep -qx "AP_APP_WEBHOOK_SECRETS='{}'" "${OUT}/.env"
+}
+
+@test "the Facebook Lead Ads app secret comes from channels.env, never from client.yaml" {
+  yq -i '.app_webhooks.facebook_leads.secret = "META_APP_SECRET"' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"META_APP_SECRET is missing or not a Meta app secret"* ]]
+  local secret
+  secret="$(openssl rand -hex 16)"
+  printf 'META_APP_SECRET=%s\n' "$secret" > "${REG}/clients/demo/channels.env"
+  render
+  grep -qxF "AP_APP_WEBHOOK_SECRETS='{\"@activepieces/piece-facebook-leads\":{\"webhookSecret\":\"${secret}\"}}'" "${OUT}/.env"
+  ! grep -q "$secret" "${OUT}/compose.yml" "${REG}/clients/demo/client.yaml"
+  [[ "$output" != *"$secret"* ]]
+}
+
 @test "re-render keeps the same secrets" {
   render
   local before
@@ -117,6 +136,16 @@ compose_get() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"workers.replicas: must be >= 1"* ]]
   [ ! -e "${OUT}/compose.yml" ]
+}
+
+# bats test_tags=docker
+@test "docker compose reads the app webhook secrets JSON intact" {
+  yq -i '.app_webhooks.facebook_leads.secret = "META_APP_SECRET"' "${REG}/clients/demo/client.yaml"
+  printf 'META_APP_SECRET=%s\n' "0123456789abcdef0123456789abcdef" > "${REG}/clients/demo/channels.env"
+  render
+  run docker compose -p demo --project-directory "$OUT" -f "${OUT}/compose.yml" config --format json
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.services.app.environment.AP_APP_WEBHOOK_SECRETS | fromjson | .["@activepieces/piece-facebook-leads"].webhookSecret' <<< "$output")" = "0123456789abcdef0123456789abcdef" ]
 }
 
 @test "rendered compose is valid for docker compose" {

@@ -9,9 +9,9 @@ starts switched off; the client connects their own accounts, we test it, then sw
 | `invoice-reminder/` | weekday mornings: overdue unpaid invoices in a sheet → reminder email, row marked | Google Sheets, Gmail |
 | `review-request/` | paid order webhook → wait 7 days → review request email, once per order | SMTP |
 | `ai-email-sorter/` | new Gmail email → client's own AI model → label; urgent → Slack | Gmail, OpenAI Compatible (BYOK), Slack |
+| `lead-ad-alert/` | Facebook/Instagram lead ad → HubSpot contact → email to sales (needs a Meta app per client) | Facebook Lead Ads, HubSpot, Gmail |
 | `example/` | test template (webhook → greeting); not for clients | none |
 
-Still to come (Phase 5): lead-ad alert (5.9).
 
 ## One folder per template
 | File | Purpose |

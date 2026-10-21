@@ -1,0 +1,14 @@
+{
+  "lead_id": "lead-example-1",
+  "form_id": "form-example",
+  "platform": "ig",
+  "ad_name": "Spring check-up",
+  "campaign_name": "Spring 2026",
+  "created_time": "2026-03-02T10:30:00+0000",
+  "data": {
+    "full_name": "Jane Ann Example",
+    "email": "Jane@Example.com",
+    "phone_number": "+44 20 7946 0000",
+    "preferred_time": "mornings"
+  }
+}
