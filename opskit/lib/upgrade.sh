@@ -116,6 +116,7 @@ upgrade_preflight() {
       log_ok "last restore test passed (${last_at%%T*}, ${last_days} days ago)"
     fi
   fi
+  upgrade_lock_check "$id" || failed=1
   free="$(host_run "$host" df -Pm "$(host_root "$host")" 2>/dev/null | awk 'NR == 2 { print $4 }')"
   if [ -z "$free" ] || [ "$free" -lt "$UPGRADE_HOST_MIN_FREE_MB" ]; then
     log_fail "${host}: ${free:-?} MB free disk (need ${UPGRADE_HOST_MIN_FREE_MB} MB for the new image and the pre-switch dump)"

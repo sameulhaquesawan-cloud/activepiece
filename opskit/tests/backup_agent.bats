@@ -98,6 +98,22 @@ backups() {
   [ "$(backups)" = "0" ]
 }
 
+@test "a running upgrade makes the nightly backup skip; the upgrade's own backup and a stale lock do not" {
+  mkdir -p "${ROOT}/state/acme/upgrade.lock"
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"an upgrade of acme is running; backup skipped"* ]]
+  [ "$(backups)" = "0" ]
+  run "$AGENT" acme --root "$ROOT" --during-upgrade
+  [ "$status" -eq 2 ]
+  [ "$(backups)" = "1" ]
+  touch -d '13 hours ago' "${ROOT}/state/acme/upgrade.lock"
+  sleep 1
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 2 ]
+  [ "$(backups)" = "2" ]
+}
+
 @test "bad arguments are refused" {
   run "$AGENT" "Bad Id" --root "$ROOT"
   [ "$status" -eq 1 ]

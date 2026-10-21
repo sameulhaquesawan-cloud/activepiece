@@ -24,6 +24,12 @@ Print it with `opskit upgrade <id> --to <x.y.z> --plan`; tick it in your notes.
 - [ ] Watch the failed-run alerts for the next day.
 - [ ] Tell the client it is done (and what changed for them, if anything).
 
+## If it was interrupted (laptop closed, connection lost)
+Run `opskit upgrade <id> --to <x.y.z> --plan`: it names the next safe action. Before the switch:
+`opskit upgrade <id> --resume` (or `--unlock` to give up; nothing changed on the client). After the
+switch started: `opskit upgrade <id> --rollback`. Nightly backups skip while an upgrade is running (at
+most 12 h).
+
 ## If it rolled back
 The tool restores the database copy taken right before the switch and starts the old version. The
 alert says what failed. Do not retry the same day: read the logs in

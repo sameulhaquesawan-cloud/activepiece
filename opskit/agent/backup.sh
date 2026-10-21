@@ -7,7 +7,7 @@ IFS=$'\n\t'
 
 usage() {
   cat <<'EOF'
-Usage: backup.sh <client id> [--root <opskit root>]
+Usage: backup.sh <client id> [--root <opskit root>] [--during-upgrade]
 
 Dumps the client's Postgres (pg_dump custom format, integrity-checked), encrypts the
 client's .env with the owner's age public key (<root>/agent/owner.age.pub), snapshots
@@ -18,6 +18,8 @@ backup.conf keys: BACKUP_REMOTE (rclone remote:path), KEEP_LOCAL_DAYS (14), KEEP
 HEARTBEAT_URL (Uptime Kuma push URL), HEARTBEAT_CACERT (practice hosts: Caddy's local root CA).
 Alerts: alert.sh next to this script.
 rclone credentials: <root>/agent/rclone.conf (600). Exit: 0 complete, 1 failed, 2 local only.
+While an upgrade holds <root>/state/<id>/upgrade.lock (less than 12 h old) the backup is skipped;
+the upgrade itself passes --during-upgrade.
 EOF
 }
 
@@ -27,11 +29,13 @@ fail() { printf '[fail] %s\n' "$*" >&2; }
 
 ROOT="/opt/opskit"
 CLIENT=""
+DURING_UPGRADE=0
 
 parse_args() {
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --root) ROOT="$2"; shift 2 ;;
+      --during-upgrade) DURING_UPGRADE=1; shift ;;
       -h|--help) usage; exit 0 ;;
       -*) usage >&2; exit 1 ;;
       *) CLIENT="$1"; shift ;;
@@ -166,6 +170,11 @@ finish() {
   exit "$code"
 }
 
+upgrade_running() {
+  local lock="${ROOT}/state/${CLIENT}/upgrade.lock"
+  [ "$DURING_UPGRADE" = "0" ] && [ -d "$lock" ] && [ -n "$(find "$lock" -maxdepth 0 -mmin -720)" ]
+}
+
 postgres_container() {
   docker ps -q --filter "label=com.docker.compose.project=${CLIENT}" --filter "label=com.docker.compose.service=postgres" | head -n 1
 }
@@ -233,6 +242,7 @@ main() {
   mkdir -p "${ROOT}/backups/${CLIENT}"
   exec 9> "${ROOT}/backups/${CLIENT}/.lock"
   flock -n 9 || { warn "another backup of ${CLIENT} is running; skipped"; exit 0; }
+  upgrade_running && { warn "an upgrade of ${CLIENT} is running; backup skipped"; exit 0; }
   find "${ROOT}/backups/${CLIENT}" -maxdepth 1 -name '*.partial' -type d -exec rm -rf {} +
   if ! run_backup; then
     fail "backup of ${CLIENT} failed"
