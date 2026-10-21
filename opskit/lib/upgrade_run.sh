@@ -195,6 +195,7 @@ upgrade_steps() {
   upgrade_lock_release "$host" "$id" "$(jq -r '.run' "$file")"
   upgrade_prune_dumps "$host" "$id"
   log_ok "${id} upgraded to $(jq -r '.to' "$file")"
+  upgrade_after "$id" "$(jq -r '.to' "$file")"
 }
 
 # upgrade_start <id> <to>: gates, lock, wait for a running backup, state, steps

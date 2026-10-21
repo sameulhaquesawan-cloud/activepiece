@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: upgrade a client to a newer Activepieces release (plan, pre-pull, lock; staging, switch and rollback follow)
 
-for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch upgrade_rollback monitor monitor_sync; do
+for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch upgrade_rollback upgrade_after monitor monitor_sync flows; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -9,7 +9,7 @@ done
 upgrade_usage() {
   cat <<'USAGE'
 Usage: opskit upgrade <client id> --to <x.y.z> [--plan | --yes [--now]]
-       opskit upgrade <client id> --resume --yes [--now] | --rollback --yes | --unlock
+       opskit upgrade <client id> --resume --yes [--now] | --rollback --yes | --unlock | --after
 
 --plan      read-only: checks the target release exists and is newer, lists the breaking changes
             Activepieces documents between the two versions, the database changes (when both
@@ -29,6 +29,8 @@ Usage: opskit upgrade <client id> --to <x.y.z> [--plan | --yes [--now]]
 --rollback  puts the client back on the version before its last upgrade (interrupted, or
             finished less than 7 days ago): data since the switch is lost; needs --yes + typed id
 --unlock    gives up an interrupted upgrade that had not reached the switch (releases its lock)
+--after     the follow-ups printed at the end of an upgrade, again (read-only): our custom piece
+            and every template's pinned pieces against the client's piece catalog, then the list
 State of every run: opskit/clients/<id>/upgrades/<time>/state.json. Checklist:
 docs/runbooks/upgrade-checklist.md
 USAGE
@@ -43,7 +45,7 @@ cmd_main() {
       --to) to="${2:-}"; shift 2 || { upgrade_usage >&2; return 1; } ;;
       --yes) UPGRADE_YES=true; shift ;;
       --now) UPGRADE_NOW=true; shift ;;
-      --plan|--resume|--rollback|--unlock)
+      --plan|--resume|--rollback|--unlock|--after)
         [ -z "$mode" ] || { upgrade_usage >&2; return 1; }
         mode="${1#--}"
         shift
@@ -64,6 +66,7 @@ cmd_main() {
     resume) upgrade_resume "$id" ;;
     unlock) upgrade_unlock "$id" ;;
     rollback) upgrade_rollback_manual "$id" ;;
+    after) upgrade_after "$id" "$(yaml_get "$(client_file "$id")" .image.tag)" ;;
     *) upgrade_start "$id" "$to" ;;
   esac
 }

@@ -22,7 +22,8 @@ Print it with `opskit upgrade <id> --to <x.y.z> --plan`; tick it in your notes.
 - [ ] The upgrade output ends with `[ok]` for every production smoke check.
 - [ ] Open the builder: log in, open two flows, look at the last runs.
 - [ ] Test what the breaking-change notes touched (your list from "Before").
-- [ ] `opskit flows check-pieces` if templates are in use; re-pin templates if the catalog changed.
+- [ ] Work through the "Follow-ups" list at the end of the upgrade output (again any time:
+      `opskit upgrade <id> --after`): re-install our piece or re-pin templates when it says so.
 - [ ] Watch the failed-run alerts for the next day.
 - [ ] Tell the client it is done (and what changed for them, if anything).
 
