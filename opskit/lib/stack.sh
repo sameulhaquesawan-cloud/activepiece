@@ -48,6 +48,11 @@ stack_render_backup() {
       printf 'APP_URL=%s\n' "$(stack_frontend_url "$(yaml_get "$cfile" .domain)" \
         "$(yaml_get "$(host_file "$(yaml_get "$cfile" .host.name)")" .edge.https_port 443)")"
       printf 'TLS_MODE=%s\n' "$(yaml_get "$(host_file "$(yaml_get "$cfile" .host.name)")" .edge.tls acme)"
+      if [ "$(yq -r '.alerts.include_error_excerpt' "$cfile")" = "false" ]; then
+        printf 'ERROR_EXCERPTS=false\n'
+      else
+        printf 'ERROR_EXCERPTS=true\n'
+      fi
       printf 'TIMEZONE=%s\n' "$(yaml_get "$cfile" .timezone UTC)"
       printf 'QUIET_FROM=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.from)"
       printf 'QUIET_TO=%s\n' "$(yaml_get "$cfile" .alerts.quiet_hours.to)"

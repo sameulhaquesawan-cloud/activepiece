@@ -12,7 +12,8 @@ Usage: detect-failed-runs.sh <client id> [--root <dir>] [--window <minutes>]
 Looks at PRODUCTION runs that finished since the last check with status FAILED, INTERNAL_ERROR,
 TIMEOUT, MEMORY_LIMIT_EXCEEDED, QUOTA_EXCEEDED or LOG_SIZE_EXCEEDED. The first run only records
 the starting point (no alerts for old history). State: <root>/state/<id>/detector.since.
-Run links use APP_URL from <root>/clients/<id>/alerts.conf.
+Run links use APP_URL from <root>/clients/<id>/alerts.conf; ERROR_EXCERPTS=false there leaves the
+error text out of alerts (client setting alerts.include_error_excerpt).
 EOF
 }
 
@@ -74,12 +75,14 @@ failed_runs() {
 
 # alert_flow <runs json array of one flow>: one alert for the newest run, counting the others
 alert_flow() {
-  local runs="$1" app_url count latest what link
+  local runs="$1" app_url count latest what link excerpts
   app_url="$(conf_value "${ROOT}/clients/${CLIENT}/alerts.conf" APP_URL)"
+  excerpts="$(conf_value "${ROOT}/clients/${CLIENT}/alerts.conf" ERROR_EXCERPTS)"
   count="$(jq 'length' <<< "$runs")"
   latest="$(jq -c '.[-1]' <<< "$runs")"
-  what="$(jq -r --argjson count "$count" '
-    (.message | (try (fromjson | .message // tostring) catch .) | tostring | gsub("[\r\n\t]+"; " ") | .[0:160]) as $excerpt
+  what="$(jq -r --argjson count "$count" --arg excerpts "${excerpts:-true}" '
+    (if $excerpts == "false" then "" else
+      (.message | (try (fromjson | .message // tostring) catch .) | tostring | gsub("[\r\n\t]+"; " ") | .[0:160]) end) as $excerpt
     | (if $count > 1 then "\($count) runs of flow \"\(.flow)\" failed" else "Flow \"\(.flow)\" failed" end)
       + " (\(.status)" + (if .step != "" then " at step \"\(.step)\"" else "" end) + ")"
       + (if $excerpt != "" then ": \($excerpt)" else "" end)

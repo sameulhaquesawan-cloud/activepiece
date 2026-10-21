@@ -16,7 +16,9 @@ Commands run on your machine (Codespace, WSL, cloud AI session). Design and reas
 
 Every alert names the client, the severity (`info`, `warn`, `critical`), what happened and the first
 thing to do. You always get Telegram. Clients get their own channels from `client.yaml`
-(`alerts.channels`: telegram, email, slack). During a client's quiet hours (`alerts.quiet_hours`, their
+(`alerts.channels`: telegram, email, slack). EU clients: set `alerts.include_error_excerpt: false` so
+failed-run alerts carry no error text (it can contain bits of client data) — flow, step and run link only.
+During a client's quiet hours (`alerts.quiet_hours`, their
 time zone) only `critical` reaches them; the rest is in their next daily summary.
 
 ## One-time setup for you

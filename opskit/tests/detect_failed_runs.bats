@@ -129,6 +129,20 @@ https://auto.acme.com/projects/p1/runs/r1" ]
 }
 
 # bats test_tags=docker
+@test "with error excerpts switched off the alert has flow, step, status and link but no error text" {
+  printf 'APP_URL=https://auto.acme.com\nERROR_EXCERPTS=false\n' > "${ROOT}/clients/acme/alerts.conf"
+  "$DETECT" acme --root "$ROOT" >/dev/null
+  run_row r1 f1 PRODUCTION FAILED "jsonb_build_object('name','s','displayName','Check email','message','invalid address jane@example.com')"
+  "$DETECT" acme --root "$ROOT" >/dev/null
+  local text
+  text="$(texts)"
+  [[ "$text" == *'Flow "Lead capture" failed (FAILED at step "Check email") — run r1'* ]]
+  [[ "$text" == *"https://auto.acme.com/projects/p1/runs/r1"* ]]
+  [[ "$text" != *"jane@example.com"* ]]
+  [[ "$text" != *"invalid address"* ]]
+}
+
+# bats test_tags=docker
 @test "long or multi-line error messages are cut and flattened" {
   "$DETECT" acme --root "$ROOT" >/dev/null
   local long

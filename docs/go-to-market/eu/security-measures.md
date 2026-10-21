@@ -43,7 +43,9 @@ names where it is implemented so it can be checked. No certifications (ISO 27001
 ## Data minimisation in alerts
 - Alerts contain the client name, the flow name, the failing step and an error excerpt of at most 300
   characters. The excerpt comes from the error message and may in rare cases contain a fragment of the data
-  being processed (for example an invalid email address).
+  being processed (for example an invalid email address). For clients who prefer it (default for EU
+  clients), the excerpt is switched off: alerts then carry only the flow, the step, the status and a link
+  (`alerts.include_error_excerpt: false`).
 
 ## Deletion
 - At the end of the contract the server and its backups are deleted after a 30-day grace period

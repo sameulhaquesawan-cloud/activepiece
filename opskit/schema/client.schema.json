@@ -211,6 +211,11 @@
               "$ref": "#/$defs/hhmm"
             }
           }
+        },
+        "include_error_excerpt": {
+          "type": "boolean",
+          "default": true,
+          "description": "false = failed-run alerts carry no error text (only flow, step, status, run link); for clients whose errors may contain personal data (EU)"
         }
       }
     },
