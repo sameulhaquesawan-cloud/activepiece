@@ -44,7 +44,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** opens from the file system; passes an HTML validator; readable at phone width; no external scripts or trackers.
 - **Manual verification:** owner opens it in a browser (and on the phone).
 
-### [ ] 4b.5 — 3-minute demo script + demo setup
+### [x] 4b.5 — 3-minute demo script + demo setup
 - **Goal:** a timed script (what to say, what to click) showing: a working flow, a deliberate failure arriving on Telegram with the run link, the daily summary, a backup and a restore check, and the care report "coming soon"; plus a checklist to prepare the demo on a Codespace or practice stack (`opskit selftest --keep`, the e2e failing flow, a real Telegram bot).
 - **Spec refs:** 4b, 9, 10
 - **Files likely touched:** `docs/go-to-market/demo-script.md`

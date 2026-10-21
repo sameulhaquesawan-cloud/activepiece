@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.5 (see `docs/tasks/phase-4b.md`)
+- **Current task:** 4b.6 (see `docs/tasks/phase-4b.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4b.5 demo script (`docs/go-to-market/demo-script.md`), then 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
+1. Agent: 4b.6 outreach kit (`outreach.md`, `proposal-template.md`, `zapier-migration-checklist.md`), then 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
 3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 4b.5 draft done.** `docs/go-to-market/demo-script.md`: timed 3-minute script (own builder → deliberate failure → Telegram alert with run link → backups + monthly restore-test result → daily summary → price), fallbacks per step, prospect Q&A. Preparation: option A real demo server `demo.yourbrand.com` (≈ €20/month, recommended — also rehearses the first install); option B Codespace (explore stack for the builder, kept practice stack for alerts/backups; practice stacks only answer on `*.localhost`). Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.4 draft done.** `docs/go-to-market/site/index.html`: one static page (no scripts, no external fonts, no cookies), light/dark, sections hero + facts, problem, how it works, what's included (+ "coming soon"), pricing with a CSS-only EUR/USD switch, FAQ, contact (mailto), footer links to privacy/legal notice pages (4b.7). Checks: html-validate 9.4.0 clean; Playwright at 390 px and 1280 px: no horizontal scroll, currency switch works. Verify: open the file in a browser.
 - **2026-10-21 — 4b.3 draft done.** `pricing-calculator.csv` (inputs as whole numbers — minutes and percent — and plain formulas without functions, so it imports into any spreadsheet locale; results re-computed by script: Care €159.29/$178.57, Care Plus €316.43/$350, setup €695.75/$759) and `pricing.md`: setup €690/$749, Care €159/$179, Care Plus €319/$349, extra hour €55/$60, flows €120–290/$140–330, migration €90/$100 per Zap, 3-month minimum, yearly = 10 months, pilot 50 % off setup; cost breakdown and comparison with Zapier/Make/Activepieces Cloud/freelancers. Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.2 draft done.** `docs/go-to-market/offer.md`: one-line pitch; setup (own server EU/US, HTTPS, nightly encrypted off-server backups, monthly restore test, monitoring + alerts, up to 3 flows, handover call) mapped to opskit commands; Care / Care Plus (1 h / 3 h, 12 h / 4 h response, version updates quarterly/monthly), add-ons, client responsibilities, exclusions (incl. CE paid-only features, one admin login), no-lock-in exit (30-day retention then purge), privacy paragraph, guard-rails. Items from Phases 5–7 marked *coming*. Awaiting owner sign-off (4b.8).
