@@ -87,7 +87,7 @@ SPEC: Section 12 (`opskit upgrade <id> --to <tag>`), 9 (backups/restore, reused)
 - **Tests required:** bats with mocks; CI covers the real catalog.
 - **Result (22 Oct 2026):** `opskit/lib/upgrade_after.sh`, run at the end of every successful upgrade and by `opskit upgrade <id> --after`: reads the client's own `piece_metadata` (read-only SQL; official pieces are synced from the Activepieces cloud at start and hourly, source `piece-sync-service.ts`), warns per template whose pinned piece version is missing or outside its `minimum/maximumSupportedRelease`, checks our custom piece's installed version and range, and ends with a numbered follow-up list (builder check, breaking-change items, re-install via `opskit flows import <template> <id>` which skips an installed version and leaves existing flows alone, re-pin list, watch alerts + tell the client). No login, no flow changes, never fails the upgrade. Tests: `upgrade_after.bats` (6, stubbed catalog over the real library). Real catalog: CI round (6.10); empty here (pieces offline) → "look again in an hour".
 
-### [ ] 6.10 — `opskit upgrade` end to end in selftest and CI
+### [x] 6.10 — `opskit upgrade` end to end in selftest and CI
 - **Goal:** `opskit selftest` gains an upgrade round: deploy the demo client on the previous tag (Q5), seed data, upgrade to the pinned tag (plan → stage → promote → smoke), then a second round with an injected smoke failure that must roll back; verify data and tag after each. Mandatory in CI.
 - **Spec refs:** 17 Phase 6 accept
 - **Files likely touched:** `opskit/lib/commands/selftest.sh`, `opskit/lib/roundtrip.sh`, `opskit/tests/selftest.bats`, CI timeout
@@ -95,13 +95,14 @@ SPEC: Section 12 (`opskit upgrade <id> --to <tag>`), 9 (backups/restore, reused)
 - **Tests required:** selftest + bats; CI timeout raised if needed (currently 40 min).
 - **Result (22 Oct 2026, local):** `opskit/lib/e2e_upgrade.sh`, last selftest step: client `<id>-up` on 0.92.2 → pinned (staging pass, follow-ups, image + client.yaml on the pin, history `upgraded`, round-trip data), then `<id>-rb` on 0.91.4 → pinned with `OPSKIT_SMOKE_FAIL=production:counts` (exit 1, path restore, schema check after rollback, image + client.yaml back on 0.91.4, history `upgrade_failed` + `rolled_back`, round-trip data, exactly 1 owner Telegram alert on the mock). The `-rt` copy and each round's client are removed as soon as they are done (memory on the CI runner); the cleanup trap covers all of them. CI timeout 40 → 60 min. Local selftest (pieces offline) green; CI: see PROGRESS. Interpretation: the failure round does switch production (that is what the rollback must undo); a staging failure never touching production is covered by 6.5 and `upgrade_run.bats`.
 
-### [ ] 6.11 — Fork sync rehearsal
+### [x] 6.11 — Fork sync rehearsal
 - **Goal:** rehearse `docs/UPSTREAM_SYNC.md` on a branch against the next real upstream tag (or a recent one if none is newer): merge, re-apply the patch ledger, delete upstream workflows, `check`, `selftest`, `upgrade` of the demo client; record every undocumented step and fix the procedure/scripts (e.g. a `opskit/bin/sync-check` that automates the verification list in step 7). The merge is not pushed to `main`.
 - **Spec refs:** 12 (last paragraph), UPSTREAM_SYNC
 - **Files likely touched:** `docs/UPSTREAM_SYNC.md`, `docs/UPSTREAM_CHANGES.md`, maybe `opskit/bin/sync-check`
 - **Acceptance checks:** rehearsal log in PROGRESS lists the commands and timings; procedure has no step that needed guessing.
 - **Tests required:** `fork.bats` still green; sync-check tested if added.
 - **Needs the owner:** approval to fetch from `upstream` (fetch-only).
+- **Result (22 Oct 2026):** no upstream tag newer than 0.92.3, so the tag merge is a no-op; rehearsed instead by merging `upstream/main` (512 commits) in a throwaway worktree (never pushed, removed). Found: release tags are not on `main` (merge base 24 Sep), 22 conflicts = 14 deleted workflows + 1 upstream-deleted file (`git rm`) + 6 version/doc files (`--theirs`), none in our paths; all resolved by rule in 1 s. New `opskit sync-check [--tree] [--image]` automates step 7 (17 source facts + 3 image facts; all hold on 0.92.3 and on upstream `main`). `docs/UPSTREAM_SYNC.md` steps 2, 4, 7, 8, 9 rewritten so nothing needs guessing. Tests: `sync_check.bats` (4), `fork.bats` green. Rehearsal log in PROGRESS.
 
 ### [ ] 6.12 — Runbook, ADR-018 and phase close
 - **Goal:** `docs/runbooks/upgrade-checklist.md` + `docs/runbooks/upgrade.md` (when to upgrade, plan → stage → promote, reading the output, what to tell the client, rollback, what to do if the alert says rollback happened), ADR-018, PROGRESS + phase verification report, go-to-market text (upgrades "staged with automatic rollback" is real only when 6.10 is green in CI).
