@@ -15,6 +15,8 @@ Print it with `opskit upgrade <id> --to <x.y.z> --plan`; tick it in your notes.
 - [ ] Choose a time in the client's quiet hours; tell the client the 1–3 minutes downtime if they have
       webhooks from outside (forms, shops).
 - [ ] No big import or migration running in the client's builder right now.
+- [ ] Run it: `opskit upgrade <id> --to <x.y.z> --yes` and type the client id. Outside the client's
+      quiet hours (`alerts.quiet_hours`, client time zone) it refuses unless you add `--now`.
 
 ## After
 - [ ] The upgrade output ends with `[ok]` for every production smoke check.

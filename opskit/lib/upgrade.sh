@@ -123,6 +123,10 @@ upgrade_preflight() {
     log_fail "owner age key not readable at $(owner_age_identity): set OPSKIT_OWNER_AGE_KEY (staging must decrypt the backup)"
     failed=1
   fi
+  if [ ! -s "$(owner_age_pubkey)" ]; then
+    log_fail "owner public key missing at $(owner_age_pubkey): the upgrade's deploy would drop ${id}'s nightly backup"
+    failed=1
+  fi
   free="$(host_run "$host" df -Pm "$(host_root "$host")" 2>/dev/null | awk 'NR == 2 { print $4 }')"
   if [ -z "$free" ] || [ "$free" -lt "$UPGRADE_HOST_MIN_FREE_MB" ]; then
     log_fail "${host}: ${free:-?} MB free disk (need ${UPGRADE_HOST_MIN_FREE_MB} MB for the new image and the pre-switch dump)"

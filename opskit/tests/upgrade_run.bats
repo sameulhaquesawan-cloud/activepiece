@@ -33,6 +33,11 @@ teardown() {
   rm -rf "$STUB"
 }
 
+# go <args>: runs opskit upgrade acme <args> with "acme" typed at the confirmation prompt
+go() {
+  run bash -c 'printf "acme\n" | "$0" upgrade acme "$@"' "$OPSKIT" "$@"
+}
+
 state() {
   cat "${REG}"/clients/acme/upgrades/*/state.json
 }
@@ -47,7 +52,7 @@ fake_run() {
 }
 
 @test "an upgrade pulls the image here and on the host, records the digest and releases the lock when a later step stops it" {
-  run "$OPSKIT" upgrade acme --to 0.92.3
+  go --to 0.92.3 --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"[ok] no other upgrade of acme is running"* ]]
   [[ "$output" == *"[ok] ghcr.io/activepieces/activepieces:0.92.3 pulled here and on local-practice (sha256:aaa)"* ]]
@@ -60,13 +65,13 @@ fake_run() {
 }
 
 @test "a different digest on the host or a failed pull stops the upgrade before the client is touched" {
-  FAKE_HOST_DIGEST=sha256:bbb run "$OPSKIT" upgrade acme --to 0.92.3
+  FAKE_HOST_DIGEST=sha256:bbb go --to 0.92.3 --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"differs between here (sha256:aaa) and local-practice (sha256:bbb)"* ]]
   [ "$(state | jq -r '.failed_step')" = "pull" ]
   [ ! -e "$LOCK" ]
   rm -rf "${REG}/clients/acme/upgrades"
-  FAKE_PULL_RC=1 run "$OPSKIT" upgrade acme --to 0.92.3
+  FAKE_PULL_RC=1 go --to 0.92.3 --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"could not pull ghcr.io/activepieces/activepieces:0.92.3 here"* ]]
   [ ! -e "$LOCK" ]
@@ -79,7 +84,7 @@ fake_run() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"from another machine) holds the lock of acme: if no upgrade is running, opskit upgrade acme --unlock"* ]]
   [[ "$output" != *"looks stale"* ]]
-  run "$OPSKIT" upgrade acme --to 0.92.3
+  go --to 0.92.3 --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"a gate failed: nothing was changed"* ]]
   [ ! -f "$FAKE_DOCKER_LOG" ]
@@ -94,14 +99,14 @@ fake_run() {
   run "$OPSKIT" upgrade acme --to 0.92.3 --plan
   [ "$status" -eq 1 ]
   [[ "$output" == *"upgrade 20261022T100000Z of acme to 0.92.3 was interrupted at step stage: nothing changed on the client yet: opskit upgrade acme --resume"* ]]
-  run "$OPSKIT" upgrade acme --resume
+  go --resume --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"Resuming upgrade 20261022T100000Z of acme to 0.92.3 at step stage"* ]]
   [[ "$output" == *"staging: could not read acme's counts"* ]]
   [ ! -f "$FAKE_DOCKER_LOG" ]
   [ "$(state | jq -r '.status')" = "failed" ]
   [ ! -e "$LOCK" ]
-  run "$OPSKIT" upgrade acme --resume
+  go --resume --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"no unfinished upgrade of acme to resume"* ]]
 }
@@ -111,7 +116,7 @@ fake_run() {
   run "$OPSKIT" upgrade acme --to 0.92.3 --plan
   [ "$status" -eq 1 ]
   [[ "$output" == *"interrupted at step switch: the client may already run the new version: opskit upgrade acme --rollback"* ]]
-  run "$OPSKIT" upgrade acme --resume
+  go --resume --yes --now
   [ "$status" -eq 1 ]
   [[ "$output" == *"reached the switch: opskit upgrade acme --rollback"* ]]
   run "$OPSKIT" upgrade acme --unlock
@@ -149,11 +154,32 @@ fake_run() {
   flock "${HOSTROOT}/backups/acme/.lock" sleep 5 3>&- &
   holder=$!
   sleep 0.5
-  OPSKIT_UPGRADE_BACKUP_WAIT_S=1 run "$OPSKIT" upgrade acme --to 0.92.3
+  OPSKIT_UPGRADE_BACKUP_WAIT_S=1 go --to 0.92.3 --yes --now
   kill "$holder" 2>/dev/null || true
   [ "$status" -eq 1 ]
   [[ "$output" == *"a backup of acme is still running after 1 s: try again later"* ]]
   [ ! -e "$LOCK" ]
   [ ! -d "${REG}/clients/acme/upgrades" ]
   [ ! -f "$FAKE_DOCKER_LOG" ]
+}
+
+@test "the upgrade needs --yes, the typed client id and the client's quiet hours (or --now)" {
+  run "$OPSKIT" upgrade acme --to 0.92.3 --now < /dev/null
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"is destructive: re-run with --yes"* ]]
+  run bash -c 'printf "other\n" | "$0" upgrade acme --to 0.92.3 --yes --now' "$OPSKIT"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"typed id does not match acme; nothing was changed"* ]]
+  go --to 0.92.3 --yes
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"acme has no quiet hours (alerts.quiet_hours): agree a time with the client and add --now"* ]]
+  yq -i '.timezone = "Europe/Berlin" | .alerts.quiet_hours = {"from": "22:00", "to": "06:00"}' "${REG}/clients/acme/client.yaml"
+  OPSKIT_UPGRADE_CLOCK="$(date -d '2026-10-22T12:00:00Z' +%s)" go --to 0.92.3 --yes
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"outside acme's quiet hours (22:00–06:00 Europe/Berlin): run then, or add --now"* ]]
+  [ ! -f "$FAKE_DOCKER_LOG" ]
+  [ ! -e "$LOCK" ]
+  OPSKIT_UPGRADE_CLOCK="$(date -d '2026-10-22T23:30:00Z' +%s)" go --to 0.92.3 --yes
+  [[ "$output" == *"[ok] confirmed: upgrade acme to 0.92.3"* ]]
+  [ -f "$FAKE_DOCKER_LOG" ]
 }

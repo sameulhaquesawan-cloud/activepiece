@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # summary: upgrade a client to a newer Activepieces release (plan, pre-pull, lock; staging, switch and rollback follow)
 
-for lib in validate schema registry ssh host stack deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage; do
+for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
 
 upgrade_usage() {
   cat <<'USAGE'
-Usage: opskit upgrade <client id> --to <x.y.z> [--plan]
-       opskit upgrade <client id> --resume | --rollback | --unlock
+Usage: opskit upgrade <client id> --to <x.y.z> [--plan | --yes [--now]]
+       opskit upgrade <client id> --resume --yes [--now] | --rollback | --unlock
 
 --plan      read-only: checks the target release exists and is newer, lists the breaking changes
             Activepieces documents between the two versions, the database changes (when both
@@ -19,8 +19,11 @@ Usage: opskit upgrade <client id> --to <x.y.z> [--plan]
 (no option) runs the upgrade: gates, lock, waits for a running backup, pulls the image here and on
             the host (same digest), stages it (fresh backup restored into a temporary stack on
             this machine on the new version, checks incl. a webhook and a schedule flow; needs the
-            owner key and internet for pieces), then switch → checks (automatic rollback).
-            Switch and rollback are being built (Phase 6, tasks 6.6–6.7).
+            owner key and internet for pieces), then the switch: app stopped, encrypted pre-switch
+            dump on the host, new version deployed, production checks against the counts taken
+            with the app stopped. Needs --yes and the typed client id; only inside the client's
+            quiet hours (alerts.quiet_hours, client time zone) unless --now. Automatic rollback:
+            task 6.7.
 --resume    continues an interrupted upgrade that had not reached the switch
 --rollback  puts an interrupted upgrade back on the previous version (task 6.7)
 --unlock    gives up an interrupted upgrade that had not reached the switch (releases its lock)
@@ -31,10 +34,13 @@ USAGE
 
 cmd_main() {
   local id="" to="" mode=""
+  # shellcheck disable=SC2034 # UPGRADE_YES / UPGRADE_NOW are read by upgrade_switch.sh
   while [ "$#" -gt 0 ]; do
     case "$1" in
       -h|--help) upgrade_usage; return 0 ;;
       --to) to="${2:-}"; shift 2 || { upgrade_usage >&2; return 1; } ;;
+      --yes) UPGRADE_YES=true; shift ;;
+      --now) UPGRADE_NOW=true; shift ;;
       --plan|--resume|--rollback|--unlock)
         [ -z "$mode" ] || { upgrade_usage >&2; return 1; }
         mode="${1#--}"

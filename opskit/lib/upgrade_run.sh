@@ -161,16 +161,6 @@ upgrade_do_pull() {
   log_ok "${repo}:${to} pulled here and on ${host} (${here})"
 }
 
-upgrade_do_switch() {
-  log_fail "the switch is not available yet (Phase 6, task 6.6)"
-  return 1
-}
-
-upgrade_do_verify() {
-  log_fail "production checks are not available yet (Phase 6, task 6.6)"
-  return 1
-}
-
 # upgrade_steps <id> <state file>: runs every step not yet done; on failure before the switch the lock goes
 upgrade_steps() {
   local id="$1" file="$2" host step
@@ -201,6 +191,7 @@ upgrade_steps() {
 upgrade_start() {
   local id="$1" to="$2" cfile host run
   upgrade_plan "$id" "$to" || { log_fail "a gate failed: nothing was changed"; return 1; }
+  upgrade_confirm "$id" "$to" || return 1
   cfile="$(client_file "$id")"
   host="$(yaml_get "$cfile" .host.name)"
   run="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -225,6 +216,7 @@ upgrade_resume() {
     log_fail "upgrade $(jq -r '.run' "$file") reached the switch: opskit upgrade ${id} --rollback"
     return 1
   fi
+  upgrade_confirm "$id" "$(jq -r '.to' "$file")" || return 1
   host="$(yaml_get "$(client_file "$id")" .host.name)"
   run="$(jq -r '.run' "$file")"
   if [ "$(upgrade_lock_owner "$host" "$id")" != "$run" ] && ! upgrade_lock_take "$host" "$id" "$run"; then

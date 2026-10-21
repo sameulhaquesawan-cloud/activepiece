@@ -106,10 +106,13 @@ plan() {
   [[ "$output" == *"MB memory available (need 999999999 MB"* ]]
 }
 
-@test "no owner key on this machine stops the upgrade (staging must decrypt the backup)" {
+@test "no owner key pair on this machine stops the upgrade" {
   OPSKIT_OWNER_AGE_KEY="${REG}/missing.key" plan
   [ "$status" -eq 1 ]
   [[ "$output" == *"owner age key not readable at ${REG}/missing.key"* ]]
+  OPSKIT_OWNER_AGE_PUB="${REG}/missing.pub" plan
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"owner public key missing at ${REG}/missing.pub: the upgrade's deploy would drop acme's nightly backup"* ]]
 }
 
 @test "an image repo other than the official ones is refused" {

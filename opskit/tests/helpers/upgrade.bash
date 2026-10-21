@@ -37,6 +37,8 @@ upgrade_setup() {
   export OPSKIT_UPGRADE_HOST_MIN_FREE_MB=1 OPSKIT_UPGRADE_LOCAL_MIN_FREE_MB=1
   export OPSKIT_OWNER_AGE_KEY="${REG}/owner.key"
   touch "$OPSKIT_OWNER_AGE_KEY"
+  export OPSKIT_OWNER_AGE_PUB="${REG}/owner.age.pub"
+  echo "age1testpublickey" > "$OPSKIT_OWNER_AGE_PUB"
   export MOCK_RESPONSES="${REG}/responses.json"
   responses '.'
   start_mock_http
