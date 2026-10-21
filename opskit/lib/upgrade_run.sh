@@ -183,11 +183,15 @@ upgrade_steps() {
       return 1
     fi
     upgrade_state_set "$file" '.status = "failed" | .ended = $at | .failed_step = $step' --arg step "$step"
+    client_history_add "$id" upgrade_failed "$(jq -r '.to' "$file")" "${step} failed; nothing changed on the client"
     upgrade_lock_release "$host" "$id" "$(jq -r '.run' "$file")"
     log_fail "upgrade of ${id} stopped at ${step}; nothing changed on the client (log: $(dirname "$file"))"
     return 1
   done
   upgrade_state_set "$file" '.status = "done" | .ended = $at'
+  upgrade_monitor "$id" "$file" resume
+  client_history_add "$id" upgraded "$(jq -r '.to' "$file")" \
+    "from $(jq -r '.from' "$file") in $(upgrade_seconds_since "$(jq -r '.started' "$file")") s; app down $(jq -r '(.app_started_at | fromdate) - (.app_stopped_at | fromdate)' "$file") s"
   upgrade_lock_release "$host" "$id" "$(jq -r '.run' "$file")"
   upgrade_prune_dumps "$host" "$id"
   log_ok "${id} upgraded to $(jq -r '.to' "$file")"

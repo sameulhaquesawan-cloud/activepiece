@@ -108,3 +108,19 @@ monitor_remove() {
     || { log_fail "could not remove monitors of ${id}: ${result:0:200}"; return 1; }
   log_ok "monitors removed for ${id}: $(jq -r '.removed | join(", ") | if . == "" then "none" else . end' <<< "$result")"
 }
+
+# monitor_set_active <id> <pause|resume>: the client's uptime monitor (planned downtime, e.g. an upgrade)
+monitor_set_active() {
+  local id="$1" action="$2" mhost input result
+  mhost="$(monitor_host_for)" || return 1
+  monitor_require "$mhost" || return 1
+  input="$(jq -nc --argjson admin "$(monitor_admin_json "$mhost")" --arg action "$action" --arg id "$id" \
+    '{admin: $admin, action: $action, names: ["\($id) uptime"]}')"
+  result="$(monitor_node_retry "$mhost" "${OPSKIT_ROOT}/templates/monitor/sync.js" "$input")" \
+    || { log_fail "could not ${action} the uptime monitor of ${id}: ${result:0:200}"; return 1; }
+  if [ "$(jq -r '.changed | length' <<< "$result")" = "0" ]; then
+    log_warn "no uptime monitor for ${id} in Uptime Kuma (opskit monitor sync ${id})"
+    return 0
+  fi
+  log_ok "uptime monitor of ${id} $([ "$action" = pause ] && echo paused || echo resumed) in Uptime Kuma"
+}

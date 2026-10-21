@@ -66,6 +66,9 @@ upgrade_rollback() {
     baseline="$(jq -c '.switch_baseline // .baseline // {flows: 0, connections: 0, runs: 0, enabled: 0}' "$file")"
     SMOKE_SCOPE=rollback smoke_production "$host" "$id" "$baseline" "$since" || failed=1
   fi
+  upgrade_monitor "$id" "$file" resume
+  client_history_add "$id" upgrade_failed "$to" "${why}$([ "$failed" -eq 0 ] || printf '; rollback failed')"
+  [ "$failed" -ne 0 ] || client_history_add "$id" rolled_back "$from" "after the failed upgrade to ${to}; path ${path}, $(upgrade_seconds_since "$since") s"
   upgrade_state_set "$file" '.rollback += {path: $p, result: $r, ended: $at} | .status = $s | .ended = $at' \
     --arg p "$path" --arg r "$([ "$failed" -eq 0 ] && echo pass || echo fail)" \
     --arg s "$([ "$failed" -eq 0 ] && echo rolled_back || echo rollback_failed)"

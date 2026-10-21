@@ -335,7 +335,10 @@
               "resumed",
               "offboarded",
               "purged",
-              "restored"
+              "restored",
+              "upgraded",
+              "upgrade_failed",
+              "rolled_back"
             ]
           },
           "tag": {

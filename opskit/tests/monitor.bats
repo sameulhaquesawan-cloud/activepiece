@@ -97,6 +97,26 @@ wait_for_message() {
 }
 
 # bats test_tags=docker
+@test "a paused uptime monitor stays silent while the app is down; resume brings it back" {
+  for lib in log validate schema registry render secrets stack ssh host deploy monitor monitor_sync; do source "${OPSKIT_ROOT}/lib/${lib}.sh"; done
+  OPSKIT_MONITOR_INTERVAL=20 "$OPSKIT" monitor sync acme >/dev/null
+  run monitor_set_active acme pause
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] uptime monitor of acme paused in Uptime Kuma"* ]]
+  local before
+  before="$(mock_requests | jq -s length)"
+  docker stop "$MON_APP" >/dev/null
+  sleep 50
+  [ "$(mock_requests | jq -s length)" = "$before" ]
+  docker start "$MON_APP" >/dev/null
+  run monitor_set_active acme resume
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] uptime monitor of acme resumed in Uptime Kuma"* ]]
+  run monitor_set_active nobody pause
+  [[ "$output" == *"[warn] no uptime monitor for nobody"* ]]
+}
+
+# bats test_tags=docker
 @test "monitor remove deletes the client's monitors and is safe to repeat" {
   "$OPSKIT" monitor sync acme >/dev/null
   run "$OPSKIT" monitor remove acme

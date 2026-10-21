@@ -32,6 +32,15 @@ expect_client_error() {
   [ "$status" -eq 0 ]
 }
 
+@test "upgrade history events are valid; an unknown event is not" {
+  broken_client '.history += [{"at": "2026-10-22T10:00:00Z", "event": "upgraded", "tag": "0.92.3", "note": "from 0.92.2 in 65 s; app down 15 s"},
+    {"at": "2026-10-22T11:00:00Z", "event": "upgrade_failed", "tag": "0.93.0", "note": "verify failed"},
+    {"at": "2026-10-22T11:01:00Z", "event": "rolled_back", "tag": "0.92.3", "note": "path restore"}]'
+  run "$OPSKIT" validate "${WORK}/client.yaml"
+  [ "$status" -eq 0 ]
+  expect_client_error '.history += [{"at": "2026-10-22T10:00:00Z", "event": "downgraded"}]' "history.0.event: must be one of"
+}
+
 @test "missing required field" {
   expect_client_error 'del(.domain)' "domain: is required"
 }

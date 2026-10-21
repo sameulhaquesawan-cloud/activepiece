@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: upgrade a client to a newer Activepieces release (plan, pre-pull, lock; staging, switch and rollback follow)
 
-for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch upgrade_rollback; do
+for lib in validate schema registry render secrets confirm stack ssh host deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage upgrade_switch upgrade_rollback monitor monitor_sync; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done

@@ -62,6 +62,8 @@ fake_run() {
   [ "$(state | jq -r '.status, .failed_step, .digest, .steps.pull.status, .steps.stage.status' | paste -sd' ')" = "failed stage sha256:aaa done failed" ]
   [ "$(state | jq -r '.from, .to')" = $'0.91.4\n0.92.3' ]
   [ ! -e "$LOCK" ]
+  [ "$(yq -o=json '.history[-1]' "${REG}/clients/acme/client.yaml" | jq -c '{event, tag, note}')" = '{"event":"upgrade_failed","tag":"0.92.3","note":"stage failed; nothing changed on the client"}' ]
+  [ "$(yq -r '.image.tag' "${REG}/clients/acme/client.yaml")" = "0.91.4" ]
 }
 
 @test "a different digest on the host or a failed pull stops the upgrade before the client is touched" {

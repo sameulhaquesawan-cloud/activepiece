@@ -74,6 +74,28 @@ upgrade_pre_switch_dump() {
   log_ok "pre-switch dump of ${id} taken with the app stopped (encrypted, ${dir}/pre-switch.dump.age)"
 }
 
+# upgrade_monitor <id> <state file> <pause|resume>: planned downtime in Uptime Kuma; never blocks the upgrade
+upgrade_monitor() {
+  local id="$1" file="$2" action="$3"
+  if [ "$action" = "resume" ] && ! jq -e '.monitor_paused == true' "$file" >/dev/null; then
+    return 0
+  fi
+  if ! monitor_host_for >/dev/null 2>&1; then
+    [ "$action" = "resume" ] || log_info "No Uptime Kuma host: no monitor to pause"
+    return 0
+  fi
+  if monitor_set_active "$id" "$action"; then
+    upgrade_state_set "$file" '.monitor_paused = $p' --argjson p "$([ "$action" = pause ] && echo true || echo false)"
+  else
+    log_warn "Uptime Kuma could not ${action} ${id}'s monitor: $([ "$action" = pause ] && echo 'expect a Down/Up alert pair' || echo "resume it by hand in Uptime Kuma")"
+  fi
+}
+
+# upgrade_seconds_since <ISO time>
+upgrade_seconds_since() {
+  printf '%s' "$(( $(date +%s) - $(date -u -d "$1" +%s) ))"
+}
+
 upgrade_set_version() {
   yaml_set "$(client_file "$1")" ".image.tag = \"$2\" | .ap_version = \"$2\""
 }
@@ -84,6 +106,7 @@ upgrade_do_switch() {
   host="$(yaml_get "$(client_file "$id")" .host.name)"
   run="$(jq -r '.run' "$file")"
   to="$(jq -r '.to' "$file")"
+  upgrade_monitor "$id" "$file" pause
   stack_compose "$host" "$id" stop app worker >/dev/null 2>&1 || { log_fail "could not stop app and worker of ${id}"; return 1; }
   upgrade_state_set "$file" '.app_stopped_at = $at'
   log_ok "app and worker of ${id} stopped (downtime starts)"
@@ -94,6 +117,7 @@ upgrade_do_switch() {
   upgrade_set_version "$id" "$to"
   upgrade_state_set "$file" '.switched_at = $at'
   deploy_client "$id" || { log_fail "deploy of ${id} on ${to} failed"; return 1; }
+  upgrade_state_set "$file" '.app_started_at = $at'
   log_ok "${id} runs ${to} (downtime ends)"
 }
 
