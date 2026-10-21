@@ -109,3 +109,16 @@ steps() {
   [ "$(jq -r '[.. | objects | select(.name? == "step_5")][0].settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-tables" ]
   [ "$(jq -r '[.. | objects | select(.name? == "step_4")][0].type' "${WORK}/request.json")" = "CODE" ]
 }
+
+@test "ran / not_ran expectations of a sample run are really checked against the run's steps" {
+  local dir="${OPSKIT_ROOT}/flows/ai-email-sorter"
+  run e2e_flow_check_steps "$dir" 0 '{"steps": {"trigger": {}, "step_5": {}, "step_9": {}}}'
+  [ "$status" -eq 0 ]
+  run e2e_flow_check_steps "$dir" 0 '{"steps": {"trigger": {}, "step_5": {}, "step_6": {}}}'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"step_9 did not run"* ]]
+  [[ "$output" == *"step_6 ran but should not"* ]]
+  [[ "$output" != *"Error:"* ]]
+  run e2e_flow_check_steps "${OPSKIT_ROOT}/flows/example" 0 '{"steps": {}}'
+  [ "$status" -eq 0 ]
+}

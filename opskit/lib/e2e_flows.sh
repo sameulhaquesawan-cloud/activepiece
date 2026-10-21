@@ -95,10 +95,10 @@ e2e_flow_stubbed() {
 # e2e_flow_check_steps <template dir> <run index> <run json>: ran / not_ran expectations
 e2e_flow_check_steps() {
   local dir="$1" index="$2" run="$3" missing
-  missing="$(I="$index" yq -o=json '.test.runs[env(I)] | {ran: (.ran // []), not_ran: (.not_ran // [])}' "${dir}/template.yaml" \
+  missing="$(I="$index" yq -o=json '.test.runs[env(I)]' "${dir}/template.yaml" \
     | jq -r --argjson run "$run" '($run.steps // {} | keys) as $done
-      | (.ran[] | select(. as $s | $done | index($s) | not) | "\(.) did not run"),
-        (.not_ran[] | select(. as $s | $done | index($s)) | "\(.) ran but should not")')"
+      | ((.ran // [])[] | select(. as $s | $done | index($s) | not) | "\(.) did not run"),
+        ((.not_ran // [])[] | select(. as $s | $done | index($s)) | "\(.) ran but should not")')" || return 1
   [ -z "$missing" ] || { printf '%s' "$(paste -sd ';' <<< "$missing")"; return 1; }
 }
 

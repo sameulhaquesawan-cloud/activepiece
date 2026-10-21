@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Selftest for the upgrade smoke checks (task 6.4): every check passes on the throwaway stack, then each
+# Selftest for the upgrade smoke checks (task 6.4): the worker is restarted first (after the template runs
+# it may be busy and its earlier poll lines rotated away), every check passes on the throwaway stack, then each
 # fails with its own message when its condition is broken (lowered baseline, stopped worker, a connection
 # stored with another key, a migration the image does not know), and the stack is put back each time.
 # The flow checks (webhook, schedule) need piece metadata: skipped offline unless OPSKIT_REQUIRE_PIECES=1.
@@ -25,7 +26,8 @@ e2e_smoke_wrong_key_connection() {
 # e2e_smoke <host> <id> <domain> <https port>: needs RT_EMAIL/RT_PASSWORD from rt_seed
 e2e_smoke() {
   local host="$1" id="$2" domain="$3" port="$4" baseline since lowered auth token project
-  since="$(date -u -d '-10 min' +%Y-%m-%dT%H:%M:%SZ)"
+  stack_compose "$host" "$id" restart worker >/dev/null 2>&1 || { log_fail "smoke e2e: could not restart the worker"; return 1; }
+  since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   baseline="$(smoke_baseline "$host" "$id")" || { log_fail "smoke e2e: no baseline"; return 1; }
   smoke_production "$host" "$id" "$baseline" "$since" >/dev/null || { smoke_production "$host" "$id" "$baseline" "$since" | grep -F '[fail]'; log_fail "smoke e2e: checks fail on a healthy stack"; return 1; }
   log_ok "smoke e2e: all production checks pass on ${id}"
