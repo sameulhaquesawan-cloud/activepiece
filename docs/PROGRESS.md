@@ -2,12 +2,12 @@
 
 ## Current status
 - **Current phase:** Phase 5 — Flow template library
-- **Current task:** 5.1 (see `docs/tasks/phase-5.md`)
-- **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
+- **Current task:** 5.2 (see `docs/tasks/phase-5.md`)
+- **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 5.1 (verify import/export, OAuth on self-hosted CE, piece versions — needs internet for pieces: Codespace or CI), 5.2 onwards in order.
-2. Owner (not blocking): business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
+1. Agent: 5.2 (`opskit/flows/README.md`, `CONVENTIONS.md`, `opskit/schema/template.schema.json`, `example/` template, schema tests), then 5.3 onwards in order. Facts to build on: `docs/EXPLORATION_REPORT.md` §8.
+2. Owner (not blocking): a Meta developer app per client who wants the lead-ad template (5.9); business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 5.1 template facts verified (no code).** Export/import format (UI and API use the same `{name, flows[]}` JSON; create + `IMPORT_FLOW`; imported flows unpublished), exact piece versions for 0.92.3 (import fails on unknown versions), connections on CE ("OAuth2 (Recommended)" via `secrets.activepieces.com` for Gmail/Sheets/Slack/HubSpot; own-credential options; Facebook Lead Ads needs own Meta app + `AP_APP_WEBHOOK_SECRETS`), custom piece archive install. Files: `docs/EXPLORATION_REPORT.md` §8, `docs/ASSUMPTIONS.md` #16–18, `docs/go-to-market/eu/subprocessors.md` (Activepieces row), `docs/tasks/phase-5.md`. Verify: open §8; each row names its source file or URL.
 - **2026-10-21 — Phase 5 scope.** Owner dropped template 6 (Elmo) and everything related; other Phase 5 defaults accepted. Recorded in SPEC 11 / 17 and Appendix C P2 (owner decision); task 5.10 removed.
 - **2026-10-21 — Phase 5 planned.** Owner said "go Phase 5". `docs/tasks/phase-5.md`: 12 tasks (verify facts, format/manifest/conventions, `flows list/validate`, `flows import`, six templates, CI import acceptance, docs), questions Q1 (Elmo report → generic monthly report), Q2 (AI via our openai-compatible piece), Q3 (order webhook), Q4 (Lead Ads → HubSpot → email), Q5 (import signs in with the admin password typed at the prompt, nothing stored), Q6 (real-account runs as manual checklists).
 - **2026-10-21 — Error-excerpt setting (owner approved).** `client.yaml` `alerts.include_error_excerpt` (default true; schema) → rendered `ERROR_EXCERPTS` in client `alerts.conf` → `detect-failed-runs.sh` leaves the error text out (flow, step, status, run id and link stay). Recommended `false` for EU clients (monitoring runbook, EU security measures, sub-processors updated). Tests: detector (docker, email in the error never reaches the alert) + render.

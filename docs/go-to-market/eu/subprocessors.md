@@ -11,6 +11,7 @@ sub-processor is added or changed (DPA §5). Check each provider's own DPA and d
 | Telegram (Telegram FZ-LLC) | alert messages to the provider (and the client, if chosen) | client name, flow name, failing step, error excerpt ≤ 300 characters | outside the EU *(verify)* | error excerpts are switched off for EU clients (`alerts.include_error_excerpt: false`), so alerts carry no processed data |
 | Slack (Salesforce) | alert messages, only if the client chooses Slack | as above | per the client's own Slack workspace | client's own account |
 | [Email provider, e.g. Brevo (Sendinblue SAS, France)] | alert emails, only if email alerts are used | as above + recipient addresses | EU | |
+| Activepieces Inc. (US) | sign-in helper for app connections, only if the client picks "OAuth2 (Recommended)" for Gmail, Google Sheets, Slack or HubSpot | the OAuth tokens of those connections (`secrets.activepieces.com`) | US *(verify)* | default for EU clients: own credentials instead (service account, bot token, private-app token, own OAuth app), then not a sub-processor. The piece catalog it serves contains no client data |
 | UptimeRobot | checks that the provider's monitoring server is up | no client data (only the monitoring server's address) | — | |
 
 Not sub-processors (run by the provider itself, no third party): Uptime Kuma monitoring server

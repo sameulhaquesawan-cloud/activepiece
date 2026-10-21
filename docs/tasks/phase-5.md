@@ -20,11 +20,12 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 
 ## Tasks
 
-### [ ] 5.1 — Verify template facts (no code)
+### [x] 5.1 — Verify template facts (no code)
 - **Goal:** on 0.92.3 with pieces (Codespace or CI): exact export format (`GET /api/v1/flows/<id>/template`) and that the UI import accepts it; how to import via API (create flow + `IMPORT_FLOW`) and what happens to piece versions that differ; how Google/Gmail/Slack/HubSpot/Facebook connections work on self-hosted CE (own OAuth app needed or not); piece names + versions for Google Sheets, Gmail, Slack, HubSpot, Facebook Lead Ads, Delay, Schedule, Webhook, SMTP; installing our `openai-compatible` piece by archive.
 - **Spec refs:** 11 (*verify* import/export), 0 (never invent APIs)
 - **Files likely touched:** `docs/ASSUMPTIONS.md`, `docs/EXPLORATION_REPORT.md` (addendum)
 - **Acceptance checks:** each fact has a source/test reference; blockers (e.g. OAuth apps needed) listed for the owner.
+- **Result (21 Oct 2026):** `docs/EXPLORATION_REPORT.md` §8, ASSUMPTIONS #16–18. No blocker for 5.2–5.8. Template 5 needs a Meta app per client + `AP_APP_WEBHOOK_SECRETS` (added to 5.9).
 
 ### [ ] 5.2 — Template format, manifest schema and conventions
 - **Goal:** `opskit/flows/README.md` (how the library works), `opskit/flows/CONVENTIONS.md` (placeholders, naming, failure convention, client-owned credentials, flows start off), `opskit/schema/template.schema.json` for `template.yaml`, one tiny `example/` template used by tests.
@@ -57,7 +58,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 - **Goal:** new Gmail email → AI classifies (Q2, client's own key) → Gmail label + Slack message for urgent ones; never sends email content anywhere else.
 
 ### [ ] 5.9 — Template 5: lead-ad alert
-- **Goal:** Facebook Lead Ads (Q4) → HubSpot contact → email to the client's sales person; test via webhook variant.
+- **Goal:** Facebook Lead Ads (Q4) → HubSpot contact → email to the client's sales person; test via webhook variant. Optional `client.yaml` field naming a host secret renders `AP_APP_WEBHOOK_SECRETS` for the Facebook Lead Ads piece (ASSUMPTIONS #18); CHECKLIST covers the Meta app (webhook URL `https://<domain>/api/v1/app-events/facebook-leads`, verify token `activepieces`).
 
 ### ~~5.10 — Template 6~~ dropped by the owner (Elmo, SPEC App. C P2)
 

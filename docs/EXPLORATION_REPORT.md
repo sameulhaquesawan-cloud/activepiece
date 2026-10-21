@@ -69,3 +69,39 @@ Client-ready: the builder shows flows built by API exactly like hand-built ones 
 1. ~~Network allow-list~~ — done by owner 20 Oct 2026.
 2. ~~Containers have no internet in the Claude cloud session~~ — solved by moving piece-dependent work to a GitHub Codespace (owner, 20 Oct 2026).
 3. For the AI step: a free Gemini API key (aistudio.google.com) — optional; Phase 0 can close without it.
+
+## 8. Addendum — Phase 5 template facts (task 5.1, 21 Oct 2026)
+Sources: pinned 0.92.3 source (paths below), the live piece API `https://cloud.activepieces.com/api/v1/pieces/<name>?release=0.92.3`, `https://secrets.activepieces.com/apps?edition=ce`, and the Phase 0 runs (section 2).
+
+**Export / import format**
+- Export: `GET /api/v1/flows/<id>/template` → `{name, description, flows:[{displayName, trigger, schemaVersion, notes}], pieces, …}`, no flow/project ids (Phase 0, section 2).
+- UI import (`features/flows/utils/template-parser.ts`) accepts `{name, flows:[…]}` (or legacy `{name, template}`); for each flow it calls create flow, then `IMPORT_FLOW` (`flow-hooks.tsx importFlowsFromTemplates`). Same file works in the UI and in `opskit flows import`.
+- API import = `POST /api/v1/flows {displayName, projectId}` then `POST /api/v1/flows/<id> {type: IMPORT_FLOW, request:{displayName, trigger, schemaVersion, notes}}`. The server migrates old `schemaVersion`s (`flow.controller.ts` preValidation) and clears sample data. The flow is a draft and is not published → it starts switched off.
+- Sign-in: `POST /api/v1/authentication/sign-in {email,password}` → `token`, `projectId` (used since Phase 3). CE has no API keys.
+
+**Piece versions** (`piece-metadata-service.ts findExactVersion`)
+- A step's `pieceVersion` is exact (`^`/`~` stripped on add). Import looks it up among catalog versions allowed for the running release; a version the stack does not know → `404 piece_metadata_not_found` and the import fails (no silent upgrade).
+- So templates pin the versions the 0.92.3 catalog serves, and `flows validate` checks them; re-pin after an Activepieces upgrade.
+
+| Piece | Version (0.92.3) | Used for | Auth on CE |
+|---|---|---|---|
+| `@activepieces/piece-webhook` | 0.1.42 | `catch_webhook` | none / basic / header |
+| `@activepieces/piece-schedule` | 0.1.22 | `every_day` … `cron_expression` | — |
+| `@activepieces/piece-delay` | 0.4.0 | `delayFor` (`delayFor` + `unit`) | — |
+| `@activepieces/piece-smtp` | 0.5.0 | `send-email` | host/port/email/password/TLS |
+| `@activepieces/piece-http` | 0.13.0 | `send_request` | — |
+| `@activepieces/piece-google-sheets` | 0.18.2 | `insert_row`, `find_rows`, `update_row` | OAuth2 (preconfigured app) or service account |
+| `@activepieces/piece-gmail` | 0.18.1 | `gmail_new_email_received` (polling), `gmail_add_label_to_email`, `send_email` | OAuth2 (preconfigured app) or service account (Workspace only) |
+| `@activepieces/piece-slack` | 0.23.1 | `send_channel_message` | OAuth2 (preconfigured app) or bot token |
+| `@activepieces/piece-hubspot` | 0.13.1 | `create-or-update-contact` | OAuth2 (preconfigured app) or private-app token |
+| `@activepieces/piece-facebook-leads` | 0.5.1 | `new_lead` (APP_WEBHOOK) | OAuth2, own Meta app only |
+| `@activepieces/piece-openai` | 0.13.2 | fallback for template 2 | API key |
+| `@opskit/piece-openai-compatible` | 0.1.0 (ours) | `ask_model` | base URL + key |
+
+**Connections on self-hosted CE** (`oauth-apps-hooks.ts`, `multi-auth-list.tsx`, `cloud-oauth2-service.ts`)
+- CE has no platform OAuth apps, but `platform.cloudAuthEnabled` defaults to true, so pieces listed by `secrets.activepieces.com/apps?edition=ce` offer **"OAuth2 (Recommended)"**: Gmail, Google Sheets, Slack, HubSpot (and Facebook Pages) — not Facebook Lead Ads. The code exchange and every token refresh go through `secrets.activepieces.com` (Activepieces Inc.), which therefore sees the OAuth tokens.
+- Every OAuth2 piece also offers **"Custom OAuth2 App (Advanced)"**: the client's own client id/secret, redirect URL `https://<domain>/redirect`; tokens stay on the client's server.
+- Token-based options with no third party: Google service account (Sheets: share the sheet with its email; Gmail: Workspace with domain-wide delegation only), Slack bot token, HubSpot private-app token.
+- **Facebook Lead Ads** (`new_lead` is an `APP_WEBHOOK` trigger; `app-event-routing.module.ts`, `execute-webhook.ts`, upstream `docs/install/configure-operate/setup-app-webhooks.mdx`): needs the client's (or our) own Meta app, its webhook pointed at `https://<domain>/api/v1/app-events/facebook-leads` with verify token `activepieces`, and `AP_APP_WEBHOOK_SECRETS={"@activepieces/piece-facebook-leads":{"webhookSecret":"<Meta app secret>"}}` on the app container (read by the app, passed to workers). One Meta app per stack (one webhook URL per app). Meta app review may be needed for `leads_retrieval` outside development mode.
+
+**Custom piece install** (`community-piece-module.ts`, `AddPieceRequestBody`): `POST /api/v1/pieces` multipart, platform admin, `packageType=ARCHIVE scope=PLATFORM pieceName pieceVersion pieceArchive` — done live in Phase 1 (piece README). The archive (`dist/*.tgz`, 96 KB, git-ignored) is built with the upstream CLI; CI does not build it yet.
