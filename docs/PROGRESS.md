@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 5 — Flow template library
-- **Current task:** 5.3 (see `docs/tasks/phase-5.md`)
+- **Current task:** 5.4 (see `docs/tasks/phase-5.md`)
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 5.3 (`opskit flows list` / `flows validate`: JSON format, manifest, placeholders declared/used, pieces match manifest, no real-looking secrets/emails/URLs, files present; tests with fixtures), then 5.4 onwards in order. Facts to build on: `docs/EXPLORATION_REPORT.md` §8.
+1. Agent: 5.4 (`opskit flows import <template> <client> [--set K=V]`: validate → fill placeholders → admin sign-in at the prompt (nothing stored) → install custom pieces by archive → create flow + `IMPORT_FLOW` (stays off) → print connections/next steps; `--print-steps`; mock-API tests; docker import of `example/` on the selftest stack), then 5.5 onwards. Facts to build on: `docs/EXPLORATION_REPORT.md` §8.
 2. Owner (not blocking): a Meta developer app per client who wants the lead-ad template (5.9); business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 5.3 `opskit flows list` / `flows validate`.** `opskit/lib/flows.sh` (export-format, placeholder, piece-pin, fail-run, leak — emails/URLs/keys/private links/connection refs/ids — and test-payload checks), `opskit/lib/commands/flows.sh`, `OPSKIT_FLOWS_DIR` override for tests. Tests: `flows_validate.bats` (24). Verify: `opskit/bin/opskit flows list`; `opskit/bin/opskit flows validate` → `[ok] example: valid`.
 - **2026-10-21 — 5.2 template format.** `opskit/flows/README.md` (library), `CONVENTIONS.md` (names, `{{OPSKIT:KEY}}` placeholders, pinned pieces, client-owned connections incl. the no-third-party option, failure modes `fail-run`/`notify-and-fail`, flows start off), `opskit/schema/template.schema.json`, `opskit/flows/example/` (webhook → code greeting; missing name fails), `opskit validate` detects `template_id`. Tests: `validate.bats` +11 (good/bad manifests, every library manifest valid). Verify: `opskit/bin/opskit validate opskit/flows/example/template.yaml` → `[ok]`.
 - **2026-10-21 — 5.1 template facts verified (no code).** Export/import format (UI and API use the same `{name, flows[]}` JSON; create + `IMPORT_FLOW`; imported flows unpublished), exact piece versions for 0.92.3 (import fails on unknown versions), connections on CE ("OAuth2 (Recommended)" via `secrets.activepieces.com` for Gmail/Sheets/Slack/HubSpot; own-credential options; Facebook Lead Ads needs own Meta app + `AP_APP_WEBHOOK_SECRETS`), custom piece archive install. Files: `docs/EXPLORATION_REPORT.md` §8, `docs/ASSUMPTIONS.md` #16–18, `docs/go-to-market/eu/subprocessors.md` (Activepieces row), `docs/tasks/phase-5.md`. Verify: open §8; each row names its source file or URL.
 - **2026-10-21 — Phase 5 scope.** Owner dropped template 6 (Elmo) and everything related; other Phase 5 defaults accepted. Recorded in SPEC 11 / 17 and Appendix C P2 (owner decision); task 5.10 removed.

@@ -32,7 +32,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 - **Spec refs:** 11, 10, 15
 - **Tests required:** schema validation of good/bad manifests.
 
-### [ ] 5.3 — `opskit flows list` and `opskit flows validate`
+### [x] 5.3 — `opskit flows list` and `opskit flows validate`
 - **Goal:** `list` shows every template with description and required connections; `validate [<template>]` checks: valid JSON in the export format, manifest valid, every `{{OPSKIT:…}}` used is declared and every declared one is used, pieces in `flow.json` match the manifest, no real-looking secrets/emails/URLs/IDs, README/CHECKLIST/test present.
 - **Spec refs:** 17 Phase 5 accept ("validate catches malformed JSON and missing placeholders")
 - **Files likely touched:** `opskit/lib/commands/flows.sh`, `opskit/lib/flows.sh`, `opskit/tests/flows_validate.bats`, `opskit/tests/fixtures/flows/*`

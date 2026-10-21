@@ -20,9 +20,9 @@ alert) are added in Phase 5 tasks 5.5–5.9.
 | `test/` | sample webhook payloads named in `template.yaml` `test.runs` |
 
 ## Commands
-- `opskit validate opskit/flows/<template>/template.yaml` — manifest against the schema.
-- `opskit flows list` / `opskit flows validate [<template>]` / `opskit flows import <template> <client>` —
-  tasks 5.3–5.4.
+- `opskit flows list` — templates, descriptions, connections the client creates.
+- `opskit flows validate [<template>]` — everything below plus the manifest schema; runs in `opskit/bin/check`.
+- `opskit flows import <template> <client>` — task 5.4.
 
 Rules for writing a template: [`CONVENTIONS.md`](CONVENTIONS.md). Facts behind them:
 `docs/EXPLORATION_REPORT.md` §8.
