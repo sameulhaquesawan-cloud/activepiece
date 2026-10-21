@@ -23,18 +23,19 @@ SPEC: Section 12 (`opskit upgrade <id> --to <tag>`), 9 (backups/restore, reused)
 - **Tests required:** none (facts).
 - **Result (22 Oct 2026):** EXPLORATION_REPORT §9, ASSUMPTIONS #24–26. Upstream undo is unreliable (stopped half way) → 6.7 restores the pre-switch dump instead; smoke checks the schema against the image manifest; demo 0.92.2 → 0.92.3, rollback round 0.91.4 → 0.92.3.
 
-### [ ] 6.2 — Upgrade plan and gates (`opskit upgrade <id> --to <tag> --plan`)
+### [x] 6.2 — Upgrade plan and gates (`opskit upgrade <id> --to <tag> --plan`)
 - **Goal:** read-only: validates the target tag (exists as an image, newer than current, only official repos), prints current → target, the upstream breaking-change entries between them (parsed from `docs/install/reference/breaking-changes.mdx` of the target tag, link otherwise), flags non-reversible migrations, shows the expected downtime, the pre-flight (latest backup younger than 26 h, off-server copy present, restore-test result of the last 35 days passed, disk and memory headroom, no upgrade lock) and prints the manual checklist `docs/runbooks/upgrade-checklist.md`. Changes nothing.
 - **Spec refs:** 12.1
 - **Files likely touched:** `opskit/lib/commands/upgrade.sh`, `opskit/lib/upgrade.sh`, `opskit/lib/upgrade_notes.sh`, `docs/runbooks/upgrade-checklist.md`, tests, fixtures (sample breaking-changes text)
 - **Acceptance checks:** unknown/older/same tag, repo not official, missing backup, failed last restore-test each stop with a clear `[fail]`; a plan for a valid tag lists the breaking changes between the versions.
 - **Tests required:** bats with fixture release notes and a mock registry check; no docker needed.
+- **Result (22 Oct 2026):** `opskit/lib/upgrade.sh`, `commands/upgrade.sh`, `docs/runbooks/upgrade-checklist.md`, `upgrade_plan.bats` (11, one docker-tagged). Tag check via the registry API (ghcr / Docker Hub, no download); official repo enforced by the client schema; new migrations and the ones marked `breaking = true` are listed when both images are local (live: 0.91.4 → 0.92.3 = 11, `NullOrphanFolderReferences1846000000000`), otherwise counted at staging. The "no upgrade lock" gate is added with the lock in 6.3.
 
 ### [ ] 6.3 — Image pre-check and upgrade lock/state
 - **Goal:** `docker pull` of the target image on the **operator machine** and on the host (so the downtime is not spent downloading), checked by digest; a per-client lock (`<root>/state/<id>/upgrade.lock`, stale-lock rules) so two upgrades or an upgrade during a backup cannot overlap; `clients/<id>/upgrades/<ts>/state.json` records every step so an interrupted upgrade can be resumed or rolled back (`opskit upgrade <id> --resume|--rollback`).
 - **Spec refs:** 12, 3 (idempotent scripts)
 - **Files likely touched:** `opskit/lib/upgrade.sh`, `opskit/lib/commands/upgrade.sh`, tests
-- **Acceptance checks:** second concurrent upgrade refused; killed upgrade leaves a state file that names the next safe action; lock released on success/rollback.
+- **Acceptance checks:** `--plan` also fails when a lock is held; second concurrent upgrade refused; killed upgrade leaves a state file that names the next safe action; lock released on success/rollback.
 - **Tests required:** bats with a fake host root (local transport).
 
 ### [ ] 6.4 — Smoke-test library (`opskit/lib/smoke.sh`)

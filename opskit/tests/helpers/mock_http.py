@@ -16,7 +16,8 @@ def reply_for(method, path):
         table = json.load(handle)
     for pattern, answer in table.items():
         if fnmatch.fnmatchcase(method + " " + path, pattern):
-            return answer.get("status", 200), json.dumps(answer.get("body", {}))
+            body = answer.get("body", {})
+            return answer.get("status", 200), body if isinstance(body, str) else json.dumps(body)
     return 404, '{"message":"not mocked"}'
 
 
