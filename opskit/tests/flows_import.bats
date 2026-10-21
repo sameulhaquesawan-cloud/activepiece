@@ -254,6 +254,17 @@ fake_release() {
   [ "$(mock_requests | wc -l)" = "0" ]
 }
 
+@test "without a client id --url imports into any builder (practice Codespace)" {
+  PW="$PASSWORD" run bash -c 'printf "%s\n" "$PW" | "$@"' _ "$OPSKIT" flows import example --url "$MOCK_URL" --email admin@example.com
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] imported \"opskit example — webhook greeting\" (switched off): ${MOCK_URL}/flows/flow1"* ]]
+  run "$OPSKIT" flows import example
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Usage"* ]]
+  run "$OPSKIT" flows import example --url "$MOCK_URL" --print-steps
+  [ "$status" -eq 1 ]
+}
+
 @test "unknown client" {
   PW="$PASSWORD" import example nobody
   [ "$status" -eq 1 ]

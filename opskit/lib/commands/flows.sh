@@ -12,6 +12,7 @@ Usage: opskit flows list
        opskit flows validate [<template>]
        opskit flows import <template> <client id> [--set KEY=value]... [--email <admin email>]
                            [--again] [--print-steps] [--url <https://…>]
+       opskit flows import <template> --url <builder address> [--set KEY=value]... [--email …]
 
 list                 every template in opskit/flows with its description and the connections
                      the client creates in their own builder.
@@ -27,7 +28,9 @@ import               validate, fill the {{OPSKIT:KEY}} placeholders (--set, else
                      Already imported (same flow name) → nothing changes unless --again.
                      --print-steps: no sign-in; writes the filled flow to clients/<id>/flows/ and
                      prints click-by-click import steps for the builder.
-                     --url: builder address when it is not https://<domain> (tests, tunnels).
+                     --url: builder address when it is not https://<domain> (tests, tunnels);
+                     without a client id it imports into any builder, e.g. a practice Codespace
+                     (http://localhost:8080).
 USAGE
 }
 
@@ -77,13 +80,15 @@ flows_import() {
       *) if [ -z "$template" ]; then template="$1"; elif [ -z "$id" ]; then id="$1"; else flows_usage >&2; return 1; fi; shift ;;
     esac
   done
-  if [ -z "$template" ] || [ -z "$id" ]; then
+  if [ -z "$template" ] || { [ -z "$id" ] && [ -z "$url" ]; } || { [ -z "$id" ] && [ "$print_steps" = "1" ]; }; then
     flows_usage >&2
     return 1
   fi
   dir="$(flows_template_dir "$template")"
   flows_validate_one "$template" || return 1
-  require_client "$id" || return 1
+  if [ -n "$id" ]; then
+    require_client "$id" || return 1
+  fi
   flows_target "$id" "$url"
   values="$(flows_values "$dir" "${sets[@]}")" || return 1
   FLOWS_TMP="$(mktemp -d)"
