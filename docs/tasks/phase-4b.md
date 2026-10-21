@@ -5,6 +5,7 @@ SPEC: Section 17 Phase 4b, Section 1 (buyers, positioning), Section 2 (scope, V2
 Phases 1–4 are the minimum sellable service. The agent drafts; the owner decides and signs off. Phases 5–7 continue after this phase while the owner looks for clients.
 
 ## Open questions for the owner (recommended defaults in brackets — "ok" accepts them)
+**Answered 21 Oct 2026: owner accepted all defaults (Q1–Q5) and added Europe as a target market** — prices shown in USD and EUR, client servers in the EU for EU clients (Hetzner Germany/Finland), GDPR material in task 4b.7. Legal documents are templates for a lawyer or accountant to review, not legal advice.
 - **Q1 — Business name and domain** (App. B #1). [Drafts use the placeholder "YourBrand" / `yourbrand.com`; replace any time.]
 - **Q2 — Who and where:** country and currency for prices, page language, and the first niche to target. [USD, English, first niche = small agencies and e-commerce stores that already pay for Zapier/Make; others later.]
 - **Q3 — Response-time promise** for care clients (App. B #4). [12 hours on business days for normal issues, 4 hours for "everything is down"; best effort at weekends.]
@@ -56,7 +57,14 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** templates contain no claims beyond the offer; the migration checklist flags what CE cannot do (paid-only features).
 - **Manual verification:** owner adapts one template and sends it to a friendly contact.
 
-### [ ] 4b.7 — Owner sign-off and phase close
+### [ ] 4b.7 — Europe readiness (GDPR basics)
+- **Goal:** what an EU client will ask for before buying: data-processing agreement template (Art. 28), sub-processor list (server provider, backup storage, email/Telegram for alerts), where data lives (EU servers for EU clients, owner never sees flow data except while fixing), retention and deletion (offboard → purge after the retention period), security measures summary (from SPEC 15 and the kit), breach-notice steps; site needs: privacy notice, no cookies/trackers, imprint (legal notice) placeholder for German-speaking clients; EUR prices; VAT notes flagged for the owner's accountant.
+- **Spec refs:** 15 (security), 9 (backups/retention), App. C A4 (data and privacy note)
+- **Files likely touched:** `docs/go-to-market/eu/{dpa-template.md,subprocessors.md,security-measures.md,privacy-notice.md}`, site footer
+- **Acceptance checks:** every security claim maps to something the kit does (with the command or file); clearly marked "template — have it reviewed"; no claim of certifications we do not have.
+- **Manual verification:** owner reads the sub-processor list and fills in their business details.
+
+### [ ] 4b.8 — Owner sign-off and phase close
 - **Goal:** owner reviews 4b.2–4b.6, requests changes, signs off; record the sign-off and final numbers in PROGRESS; next phase (5) starts.
 - **Files likely touched:** `docs/PROGRESS.md`, `docs/go-to-market/README.md` (index + status of each document)
 - **Acceptance checks:** SPEC 4b accept: offer, pricing sheet, page draft, demo script signed off by the owner.

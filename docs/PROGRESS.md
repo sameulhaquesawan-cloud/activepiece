@@ -2,12 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.1 after owner review of `docs/tasks/phase-4b.md` (Q1–Q5)
+- **Current task:** 4b.1 (see `docs/tasks/phase-4b.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner:** review `docs/tasks/phase-4b.md` and answer Q1–Q5 (or "ok" to the recommended defaults).
-2. Agent: then 4b.1 (fresh market and cost facts with sources) and on through 4b.6; drafts go to `docs/go-to-market/`; the owner signs off in 4b.7.
+1. Agent: 4b.1 fresh market and cost facts (USD + EUR, US + EU providers) with sources and dates → `docs/go-to-market/research.md`, then 4b.2–4b.7 in order; owner signs off in 4b.8.
 3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
 
 ## Phases
@@ -18,7 +17,7 @@
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
-| 4b | Go to market (owner-led) | Planned — task file awaiting owner review | — |
+| 4b | Go to market (owner-led) | In progress (owner accepted Q1–Q5, added Europe, 21 Oct 2026) | — |
 | 5 | Flow template library | Not started | — |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
