@@ -51,7 +51,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** every step uses something that exists today; each step has a fallback if the network is slow.
 - **Manual verification:** owner rehearses once with a timer.
 
-### [ ] 4b.6 — Outreach kit
+### [x] 4b.6 — Outreach kit
 - **Goal:** ideal-client profile per niche, where to find the first 20 prospects, three short message templates (cold email, LinkedIn/DM, referral ask), discovery-call questions, a one-page proposal template, and the Zapier/Make → Activepieces migration checklist (A5) used in sales calls.
 - **Spec refs:** 1 (buyers), App. C A5
 - **Files likely touched:** `docs/go-to-market/outreach.md`, `docs/go-to-market/proposal-template.md`, `docs/go-to-market/zapier-migration-checklist.md`
