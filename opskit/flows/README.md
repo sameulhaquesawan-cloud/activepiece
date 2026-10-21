@@ -10,8 +10,17 @@ starts switched off; the client connects their own accounts, we test it, then sw
 | `review-request/` | paid order webhook → wait 7 days → review request email, once per order | SMTP |
 | `ai-email-sorter/` | new Gmail email → client's own AI model → label; urgent → Slack | Gmail, OpenAI Compatible (BYOK), Slack |
 | `lead-ad-alert/` | Facebook/Instagram lead ad → HubSpot contact → email to sales (needs a Meta app per client) | Facebook Lead Ads, HubSpot, Gmail |
+| `lead-capture-tables/` | same, but leads go into a built-in Activepieces table and mail goes through SMTP — no Google | SMTP |
+| `invoice-reminder-tables/` | same, invoices live in a built-in table — no Google | SMTP |
 | `example/` | test template (webhook → greeting); not for clients | none |
 
+
+## Where the client's data lives
+| Option | Templates | Needs | Pick it when |
+|---|---|---|---|
+| **Built-in Tables** (default) | `*-tables` | nothing but a mail account (SMTP) | no Google account, EU / own-server data, simplest setup; the rows are in the client's own database and backups |
+| **Google Sheets** | `lead-capture`, `invoice-reminder` | Google account **with 2-step verification** + Google Cloud service account (`CONNECTIONS.md`) | the client already works in Sheets and wants to see/edit rows there |
+| Other clouds (Airtable, Microsoft Excel 365, Notion) | not built | Airtable: a free personal access token; Excel 365: Microsoft sign-in; Notion: integration token | on request: copy a `*-tables` template and swap the storage steps (the pieces exist in the catalog; about half a day each, plus a real-account test) |
 
 ## One folder per template
 | File | Purpose |

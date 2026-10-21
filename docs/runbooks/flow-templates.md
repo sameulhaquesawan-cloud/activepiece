@@ -9,11 +9,19 @@ opskit/bin/opskit flows list
 ```
 | Template | Good for | Client needs |
 |---|---|---|
-| `lead-capture` | website contact/quote form | Google account (Sheets + Gmail) |
-| `invoice-reminder` | chasing overdue invoices | invoices in a Google Sheet, Gmail |
+| `lead-capture` / `lead-capture-tables` | website contact/quote form | Google (Sheets + Gmail) / only a mail account (SMTP) |
+| `invoice-reminder` / `invoice-reminder-tables` | chasing overdue invoices | invoices in a Google Sheet + Gmail / in a built-in table + SMTP |
 | `review-request` | shops asking for reviews | shop webhook, any mail account (SMTP) |
 | `ai-email-sorter` | busy shared inbox | Gmail, an AI key (or local model), Slack |
 | `lead-ad-alert` | Facebook/Instagram lead ads | Meta app (one-time setup), HubSpot, Gmail |
+
+## Which storage? (ask this first)
+`lead-capture` and `invoice-reminder` keep rows in **Google Sheets** (the client needs Google with
+2-step verification and a Cloud service account, `opskit/flows/CONNECTIONS.md`). The `*-tables`
+versions keep them in a **built-in Activepieces table** and send mail by SMTP: no Google at all, data
+in the client's own backup. Default to the `*-tables` versions for EU clients and anyone without
+Google; use Sheets when the client wants to live in Sheets. Other clouds (Airtable, Excel 365, Notion)
+are a half-day add-on per template, see `opskit/flows/README.md`.
 
 ## Import for a client (5 minutes per template)
 1. Read the template's README with the client: placeholders, what they must prepare (sheet headers,

@@ -70,6 +70,7 @@ flows_problems() {
   flows_piece_problems "$dir"
   flows_custom_piece_problems "$dir"
   flows_connection_step_problems "$dir"
+  flows_table_problems "$dir"
   flows_failure_problems "$dir"
   flows_leak_problems "$dir"
   flows_test_problems "$dir"
@@ -150,6 +151,42 @@ flows_connection_step_problems() {
   jq -r --argjson pieces "$(yq -o=json -I=0 '[.connections[]?.piece]' "${dir}/template.yaml")" '
     [.. | objects | select(has("settings") and .valid == true and (.settings.pieceName as $p | $pieces | index($p))) | .name]
     | if length > 0 then "steps that need the client'"'"'s connection must be \"valid\": false: \(join(", "))" else empty end' "${dir}/flow.json"
+}
+
+# flows_table_problems <template dir>: tables used by the flow are declared; columns written exist
+# (the Tables piece silently drops unknown columns, which would save empty rows)
+flows_table_problems() {
+  local dir="$1"
+  jq -r --argjson m "$(yq -o=json -I=0 '.' "${dir}/template.yaml")" '
+    ($m.tables // []) as $tables
+    | [.. | objects | select(.settings.pieceName? == "@activepieces/piece-tables") | .settings] as $steps
+    | ($steps | map(.input.table_id) | map(select(. != null)) | unique) as $used
+    | def table($id): ($tables | map(select(.id == $id)) | first);
+    (
+      ($used[] | select(. as $u | $tables | map(.id) | index($u) | not)
+        | "table \(.) is used by a step but not declared in template.yaml tables"),
+      ($tables[] | select(.id as $i | $used | index($i) | not)
+        | "table \(.id) is declared in template.yaml but no step uses it"),
+      ($steps[] | select(.actionName == "tables-create-records") | . as $st | table($st.input.table_id) as $t
+        | select($t != null)
+        | (($st.input.records // [])[]? | keys[])
+        | select(. as $k | $t.fields | map(.name) | index($k) | not)
+        | "tables-create-records writes column \"\(.)\" which table \($t.id) does not have (it would be dropped silently)"),
+      ($steps[] | select(.actionName == "tables-update-record") | . as $st | table($st.input.table_id) as $t
+        | select($t != null)
+        | (($st.input.values // {}) | keys[])
+        | select(. as $k | $t.fields | map(.id) | index($k) | not)
+        | "tables-update-record sets field id \"\(.)\" which table \($t.id) does not have"),
+      (($m.test.runs // [])[] | ((.rows // {}) + (.seed // {}) + (.filled // {})) | keys[]
+        | select(. as $k | $tables | map(.id) | index($k) | not)
+        | "test run refers to table \(.) which template.yaml does not declare"),
+      (($m.test.runs // [])[] | ((.filled // {}) | to_entries[]) | . as $e | table($e.key) as $t | select($t != null)
+        | ($e.value | keys[]) | select(. as $k | $t.fields | map(.id) | index($k) | not)
+        | "test run \"filled\" names field \(.) which table \($e.key) does not have"),
+      (($m.test.runs // [])[] | ((.seed // {}) | to_entries[]) | . as $e | table($e.key) as $t | select($t != null)
+        | ($e.value[] | keys[]) | select(. as $k | $t.fields | map(.id) | index($k) | not)
+        | "test seed row for table \($e.key) has field \(.) which the table does not have")
+    )' "${dir}/flow.json" | sort -u
 }
 
 flows_failure_problems() {

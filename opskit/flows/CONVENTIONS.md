@@ -16,6 +16,20 @@
   allowed values (e.g. a dropdown's units).
 - No real ids, emails, URLs, sheet links or keys in a template. Examples use `example.com`.
 
+## Built-in tables
+- A template that stores data in an Activepieces table declares it in `template.yaml` `tables`
+  (`id` = the table's fixed external id used as `table_id` in the steps, `name`, `fields` with a short
+  `id`, a `name` and a type; all `TEXT` unless needed). `opskit flows import` creates the table with
+  exactly these columns if it is missing (and refuses an existing one that lacks a column), so the flow
+  needs no setup and no connection.
+- Write records by column **name** (`tables-create-records` with `records`, an array of objects); the
+  piece drops unknown names silently, so `flows validate` checks every name against the declared
+  columns. Update by **field id** (`tables-update-record`, `values: {reminded_at: …}`). Records come back
+  with `cells` keyed by an internal id and carrying `fieldName`: read them by column name, never by key.
+- Sample runs can `seed` rows into a table, and check `rows` (row count) and `filled` (rows with a
+  non-empty cell per field) after the run; the Tables steps run for real in the selftest, only the
+  steps that need the client's account (SMTP, …) are stubbed.
+
 ## Step references
 - Templates are written in flow schema 27 (`"schemaVersion": "27"`, Activepieces 0.92.3). Since schema
   22 every reference goes through the step's output: `{{trigger['output']['body']['email']}}`,

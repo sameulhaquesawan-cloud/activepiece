@@ -54,6 +54,12 @@ down exactly what you see. At the end, produce the report described in "Final re
    Continue and/or open it in a fresh tab.
    If the codespace stops while you work (idle timeout), reopen it and run `opskit/bin/explore-stack up`
    again; the builder keeps its data.
+   If Chrome keeps showing "HTTP ERROR 404" for the builder URL although the terminal gets 200: open the
+   URL in a private (incognito) window, or clear site data for app.github.dev (Settings → Privacy →
+   Site settings → View permissions and data → app.github.dev → Delete). After every codespace restart,
+   port 8080 is Private again.
+   Prerequisite for T1 step 4 / T2: the test Google account must have 2-step verification on (Google
+   Cloud blocks accounts without it).
 3. Open BUILDER_URL in a new tab. If it shows a sign-up page, sign up with MY_EMAIL (first name
    "Opskit", last name "Test"); **ask me to type the password**. If it shows sign-in, ask me to sign
    in (the account may already exist from an earlier test; then I tell you its email). You should see

@@ -2,13 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 5 — Flow template library
-- **Current task:** Phase 5 signed off (owner, 21 Oct 2026); real-account browser test pending; next Phase 6 (see `docs/SPEC.md` Section 17)
+- **Current task:** Phase 6 planned (`docs/tasks/phase-6.md`); waiting for the owner's answers to its 6 questions. Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Owner: create `main` on GitHub (branch dropdown → "main" → create from `claude/funny-keller-x6sgy1`; Settings → Default branch → main). The agent may not push `main`.
-2. Owner: run `docs/testing/phase5-browser-test.md` **version 2** (T1 + T2 again; Sheets via service account) with Claude in Chrome and paste the report back.
-3. Agent: act on that report (shape of Sheets `get-many-rows` output, whether choosing a sheet clears mappings), then `/opskit-start-phase` for Phase 6.
+1. Owner: read `docs/tasks/phase-6.md`, answer its 6 questions (or say "ok" to accept the defaults) → agent starts 6.1.
+2. Owner: create `main` on GitHub (branch dropdown → "main" → create from `claude/funny-keller-x6sgy1`; Settings → Default branch → main). The agent may not push `main`.
+3. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
@@ -21,13 +21,16 @@
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
-| 6 | Safe upgrades | Not started | — |
+| 6 | Safe upgrades | Planned — task file `docs/tasks/phase-6.md` (12 tasks, 6 questions) waiting for the owner's approval | — |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — Phase 6 planned (no code).** `docs/tasks/phase-6.md`: 12 tasks — verify facts (image tags, upstream `npm run rollback`), `upgrade --plan` with breaking-change notes and pre-flight gates, image pre-pull + lock/state, smoke-test library, staging on the operator machine, production switch, automatic rollback (migration rollback first, backup restore as fallback), history + monitoring hooks, post-upgrade pieces/templates check, selftest/CI round with an injected failure, fork-sync rehearsal, runbook + ADR-018. Six owner questions with recommended defaults.
+- **2026-10-22 — Built-in Tables variants (owner request: no Google needed, Google/other clouds as alternatives).** `opskit/flows/lead-capture-tables/` and `invoice-reminder-tables/`: data in an Activepieces table, mail by SMTP, no Google and no sign-in service. Template manifests gained `tables` (id/name/columns) and sample runs gained `seed`/`rows`/`filled`; `flows import` creates missing tables (fixed ids, refuses an existing one lacking a column); `flows validate` checks table use and written column names (the piece drops unknown names silently); selftest seeds rows and checks them with the Tables steps running for real. Verified on a real local stack: table/field/record API calls, record shape (cells by internal id + `fieldName`), the new check functions and `flows_ensure_tables`. Tests: +10 bats (code steps, validate, import, stub). Docs: README "Where the client's data lives" (Tables default; Sheets; Airtable/Excel 365/Notion as half-day add-ons, not built), CONVENTIONS, CONNECTIONS, runbook, ASSUMPTIONS #23. CI run 38 green (real imports, rows written/checked, sample runs). Pending: real SMTP test.
+- **2026-10-22 — Browser test 2 (owner, Claude in Chrome).** Confirmed live: fresh import lists the 3 step names; both Gmail send steps are valid as soon as the Gmail connection is picked (no "Incomplete"); the auto-reply greets "Hi Jane,"; bad email fails at "Check lead" with `Invalid email in field "email" - lead not saved`; owner and auto-reply emails were sent (step outputs; mailbox not opened). Not tested: Sheets (Google Cloud needs 2-step verification on the test account since 25 Jul 2026 → no service account), so the full T1 run, T2 and the Sheets read shape are still open (shape read from the piece code: ASSUMPTIONS #22). T3–T5 skipped. Environment: Codespace port 8080 resets to Private on every restart, and Chrome kept a 404 until its site data for app.github.dev was cleared (tip added to the test plan).
 - **2026-10-21 — Browser test 1 (owner, Claude in Chrome) and fixes.** Results: T0 pass (port 8080 had to be Public); T1 import + "Check lead" failure path + both Gmail sends pass; Sheets via "Connect" failed `403 insufficient authentication scopes`; T2 blocked by that; T3–T5 skipped. Fixes: Gmail send steps now carry `cc`/`bcc`/`attachments` `[]` (they imported "Incomplete"); new `opskit flows check-pieces` compares every step with the catalog (`flows_pieces.bats`, live test in check/CI); steps needing the client's account are `valid: false` and listed by name at import (validate rule + test); auto-reply greets by first name; `opskit/flows/CONNECTIONS.md` (service account for Sheets by default, exact builder labels "Connect"/"Try another method"); READMEs, runbook, CONVENTIONS, ASSUMPTIONS #20–21; browser test plan version 2.
 - **2026-10-21 — Phase 5 signed off; browser test plan.** Owner signed off and asked to merge; creating `main` was blocked by the session's permission check (owner does it, see Next steps). `opskit flows import <template> --url <builder>` now works without a client id (practice Codespace); test in `flows_import.bats`. `docs/testing/phase5-browser-test.md`: step-by-step real-account test for Claude in Chrome (T1–T4, T5 skipped without a Meta app), secrets always typed by the owner, fixed report format.
 - **2026-10-21 — 5.11–5.12 acceptance and phase close.** CI run 33 green with real imports and stub runs of every template; `docs/runbooks/flow-templates.md` (owner: import for a client, connect, test, switch on, pause), ADR-017, go-to-market updated (offer, site, demo script: ready-made flows no longer "coming"). Verification report below. Verify: read the runbook; `opskit/bin/opskit flows list`.
