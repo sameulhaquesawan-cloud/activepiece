@@ -152,7 +152,7 @@ Phase 0 records real RAM use, startup time, worker behavior, and CE feature avai
 
 ## 11. Flow template library (Improvement 4)
 Templates in `opskit/flows/<template>/`: `flow.json` (exported from Activepieces), `README.md` (what it does, trigger, steps, connections needed, how to pause, test data), `test/` (sample payloads), `CHECKLIST.md` (roadmap testing checklist: 5+ runs, failure cases, error notifications to owner, client-owned credentials).
-Starter set (roadmap): 1 lead capture (webhook form → sheet → owner email → auto-reply), 2 AI email sorter (Gmail → AI classify → label + Slack), 3 review request (order → wait 7 days → email), 4 invoice reminder (schedule → unpaid rows → reminder), 5 social lead alert (lead ads → CRM → WhatsApp/email), 6 Elmo monthly report (schedule → Elmo API → email summary).
+Starter set (roadmap): 1 lead capture (webhook form → sheet → owner email → auto-reply), 2 AI email sorter (Gmail → AI classify → label + Slack), 3 review request (order → wait 7 days → email), 4 invoice reminder (schedule → unpaid rows → reminder), 5 social lead alert (lead ads → CRM → WhatsApp/email). (Template 6 "Elmo monthly report" dropped by the owner, 21 Oct 2026 — Appendix C P2.)
 Every template includes an **error branch or failure notification** convention consistent with Section 10. Import/export method uses what CE supports *(verify: UI import/export vs API — Phase 0 blocked on piece catalog, re-check)*; templates from the cloud gallery need `cloud.activepieces.com`; if only UI, `opskit flows import` prints step-by-step instructions and validates the JSON.
 
 ## 12. Safe upgrades (Improvement 5)
@@ -210,7 +210,7 @@ Phases 1–4 = minimum sellable service. Offer and pricing (from Section 18), a 
 **Accept:** owner signs off offer, pricing sheet, page draft and demo script in `docs/go-to-market/`.
 
 ### Phase 5 — Flow template library (Improvement 4)
-Six templates with `flow.json`, README, test payloads, checklist, error-notification convention; `opskit flows list/validate/import` (per CE capability).
+Five templates (owner dropped template 6, P2) with `flow.json`, README, test payloads, checklist, error-notification convention; `opskit flows list/validate/import` (per CE capability).
 **Accept:** each template imports into a fresh local stack and passes its sample-run instructions (using free/test accounts; where a paid third-party account is required, documented as manual test); `flows validate` catches malformed JSON and missing placeholders.
 
 ### Phase 6 — Safe upgrades (Improvement 5)
@@ -269,3 +269,4 @@ Practice production run on a real VPS (Oracle Always Free if capacity allows, el
 | A4 | Data & privacy note in handover docs |
 | A5 | Zapier → Activepieces migration checklist |
 | P1 | Owner request: OpenAI-compatible BYOK piece (live model list, reasoning default high) built in Phase 1, shipped by CE archive install (ADR-013) |
+| P2 | Owner, 21 Oct 2026: template 6 "Elmo monthly report" and everything related to it dropped; the starter library has five templates. Phase 5 defaults accepted: AI sorter uses our openai-compatible piece; review request uses a generic order webhook; lead alert = Facebook Lead Ads → HubSpot → email; `flows import` signs in with the admin password typed at the prompt (nothing stored); real-account runs are manual checklists |

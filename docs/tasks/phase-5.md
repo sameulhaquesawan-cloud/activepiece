@@ -4,6 +4,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 **Accept (SPEC 17):** each template imports into a fresh local stack and passes its sample-run instructions (free/test accounts; where a paid third-party account is required, documented as a manual test); `flows validate` catches malformed JSON and missing placeholders.
 
 ## Open questions for the owner (recommended defaults in brackets — "ok" accepts them)
+**Answered 21 Oct 2026:** owner dropped template 6 (Elmo) and everything related to it (SPEC App. C P2) → five templates, task 5.10 removed; Q2–Q6 defaults accepted.
 - **Q1 — Template 6 "Elmo monthly report"** (SPEC 11): Elmo is a paid HR/payroll product with no Activepieces piece and needs a client's Elmo account. [Replace with a generic **monthly summary report** (schedule → rows from Google Sheets or any API via HTTP → summary email); add an Elmo variant when a client needs it.]
 - **Q2 — AI provider in template 2** (AI email sorter): [Our own `openai-compatible` piece (ADR-013, any provider, client's own key, reasoning default high) — `flows import` installs it on the client stack; the official OpenAI piece is the fallback.]
 - **Q3 — Shop in template 3** (review request): [A generic "order paid" **webhook** (works with Shopify, WooCommerce and Stripe webhooks) so it is testable without a shop; a Shopify-trigger variant later.]
@@ -58,8 +59,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 ### [ ] 5.9 — Template 5: lead-ad alert
 - **Goal:** Facebook Lead Ads (Q4) → HubSpot contact → email to the client's sales person; test via webhook variant.
 
-### [ ] 5.10 — Template 6: monthly summary report
-- **Goal:** per Q1 — schedule (1st of month) → rows from Google Sheets / HTTP → summary → email.
+### ~~5.10 — Template 6~~ dropped by the owner (Elmo, SPEC App. C P2)
 
 ### [ ] 5.11 — Import acceptance test for all templates
 - **Goal:** CI (pieces required): every template validates, imports into a fresh selftest stack, and its webhook/mock sample run behaves as its README says; manual real-account checklist results recorded per template (Q6).
