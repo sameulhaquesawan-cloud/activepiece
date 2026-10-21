@@ -24,7 +24,7 @@ the kit does today (Phases 1â€“4); items marked *coming* are planned (Phases 5â€
 | Tested restores | a backup is restored into a test copy every month to prove it works | `opskit restore-test` (Phase 3) |
 | Monitoring and alerts | site checked every minute; failed runs reported within 5 minutes with a link; daily summary | Uptime Kuma + `agent/detect-failed-runs.sh`, `health.sh`, `digest.sh` (Phase 4) |
 | Your alert channels | Telegram, Slack and/or email, with quiet hours | `alerts` in `client.yaml` |
-| First flows | up to **3 flows** built for you or moved from Zapier/Make | by hand today; template library *coming* (Phase 5) |
+| First flows | up to **3 flows** built for you, moved from Zapier/Make, or started from our ready-made flows: website lead capture, invoice reminders, review requests, AI email sorting, lead-ad alerts | `opskit flows import` (Phase 5); each one is tested with your own accounts during onboarding |
 | Handover call | 45 minutes: how to log in, read runs, pause a flow, who to call | owner; written handover pack *coming* (Phase 7) |
 
 ### 2. Monthly hosting + care

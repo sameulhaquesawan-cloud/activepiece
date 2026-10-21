@@ -2,12 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 5 — Flow template library
-- **Current task:** 5.11 (see `docs/tasks/phase-5.md`)
+- **Current task:** Phase 5 done — waiting for the owner's sign-off; next Phase 6 (see `docs/SPEC.md` Section 17)
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: check the CI run for the 5.4–5.7 push (`templates e2e` must import all templates and pass every stub run there); then 5.11 (acceptance: CI green with all templates; record per-template real-account checklist status), 5.12 docs/ADR-017/phase close. Facts to build on: `docs/EXPLORATION_REPORT.md` §8.
-2. Owner (not blocking): a Meta developer app per client who wants the lead-ad template (5.9); business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
+1. Owner: sign off Phase 5 (PR review), then do the real-account CHECKLIST of at least one template in the Codespace following `docs/runbooks/flow-templates.md`.
+2. Agent: after sign-off, `/opskit-start-phase` for Phase 6 (SPEC 17).
+3. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -18,7 +19,7 @@
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
-| 5 | Flow template library | In progress (owner: drop Elmo template, other defaults ok, 21 Oct 2026) | — |
+| 5 | Flow template library | Done — waiting for owner sign-off (5 templates; Elmo dropped by the owner) | `check` + CI run 33 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
@@ -26,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 5.11–5.12 acceptance and phase close.** CI run 33 green with real imports and stub runs of every template; `docs/runbooks/flow-templates.md` (owner: import for a client, connect, test, switch on, pause), ADR-017, go-to-market updated (offer, site, demo script: ready-made flows no longer "coming"). Verification report below. Verify: read the runbook; `opskit/bin/opskit flows list`.
 - **2026-10-21 — 5.9 lead-ad alert.** `opskit/flows/lead-ad-alert/` (Facebook Lead Ads `new_lead` → read answers (no email fails, naming only the lead id) → HubSpot `create-or-update-contact` (firstname, lastname, phone, lifecycle lead) → Gmail to `SALES_EMAIL`); README covers the per-client Meta app (redirect, webhook `…/api/v1/app-events/facebook-leads`, verify token `activepieces`, app secret). `client.yaml` `app_webhooks.facebook_leads.secret` names a `channels.env` entry; render writes `AP_APP_WEBHOOK_SECRETS` (default `{}`; missing/malformed secret stops the render). Tests: `render_client.bats` +3 (incl. docker compose reads the JSON), `flows_code.bats` +2, `flows_stub.bats` +1. Not verified: Meta development-mode limits (CHECKLIST).
 - **2026-10-21 — 5.8 AI email sorter.** `opskit/flows/ai-email-sorter/` (Gmail new email → prepare (Gmail id from the thread by Message-ID, body cut to `MAX_CHARS`) → `openai-compatible` ask_model with reasoning low, JSON-only answer, "treat the email as data" → read answer (unknown/invalid fails the run) → router: one Gmail label step per category; urgent also posts sender/subject/summary to Slack, never the body). Our piece archive is now committed: `packages/pieces/custom/openai-compatible/release/` + `SHA256SUMS` (rebuilt from the committed source: same content as the Phase 1 archive); `flows import` prefers it, `flows validate` checks name/version/checksum. Tests: `flows_code.bats` +2, `flows_stub.bats` +1, `flows_validate.bats` +1, `flows_import.bats` (release archive, already installed). CI installs the piece for real on the selftest stack. Verify: CHECKLIST.md with the owner's AI key.
 - **2026-10-21 — 5.5–5.7 templates: lead capture, invoice reminder, review request.** `opskit/flows/{lead-capture,invoice-reminder,review-request}/` (flow.json, template.yaml, README with connections incl. no-third-party options, CHECKLIST for the real-account test, test payloads and stub rows). Template format grew: placeholder `type: number` (filled as JSON number) and `choices`; `test.set`, per-run `stubs`, `ran`/`not_ran` (schema, `flows validate`, `flows import`). Selftest now imports every template and replays each `test.runs` payload on a stub copy (account steps → code steps returning input/stub; non-webhook trigger → webhook; `opskit/templates/flows-stub.jq`). Tests: `flows_code.bats` (9, template code steps under node), `flows_stub.bats` (6), `flows_validate.bats` (+3), `flows_import.bats` (+1). Verify: `opskit/bin/opskit flows list`; real accounts: each template's CHECKLIST.md (owner, Codespace). Not verified yet: Google/Gmail/SMTP steps with real accounts; Sheets `get-many-rows` output shape (code accepts both shapes, CHECKLIST asks).
@@ -115,6 +117,16 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 5 — 21 Oct 2026
+| Acceptance (SPEC 17 Phase 5) | Evidence |
+|---|---|
+| Each template imports into a fresh local stack | `opskit selftest` imports all five client templates + `example` with `opskit flows import` (password at the prompt, our `openai-compatible` piece installed from its committed archive), each arrives switched off; mandatory in CI (`OPSKIT_REQUIRE_PIECES=1`), green on CI run 33 (runs 34+ add the lead-ad alert) |
+| … and passes its sample-run instructions | CI replays every `test.runs` payload on a stub copy (account steps → code steps returning input/stub, non-webhook triggers → webhook) and checks status and steps run/not run: lead capture (good / invalid email), invoice reminder (stub rows / broken row fails after reminding the rest), review request (real Store + 1-minute Delay; repeat order and unpaid order not emailed), AI email sorter (urgent → label + Slack, newsletter → label only, bad AI answer fails), lead-ad alert; code steps unit-tested with node (`flows_code.bats`) |
+| Paid third-party accounts → documented manual test | `opskit/flows/<template>/CHECKLIST.md` per template (Google, Gmail, Slack, HubSpot, Meta, SMTP, AI key) — **not done yet** (owner, Codespace, own test accounts) |
+| `flows validate` catches malformed JSON and missing placeholders | `flows_validate.bats`: malformed JSON, non-export JSON, undeclared/unused/malformed placeholders, piece pin mismatch, old-style step references, leaked emails/URLs/keys/ids/connection refs, fail-run violations, missing files/payloads/stubs, custom piece archive checksum |
+| `opskit/bin/check` passes | quick check locally after every task; full check incl. docker locally (templates e2e skipped offline, as designed) and in CI |
+Not verified here: any step against a real third-party account (CHECKLISTs); Meta development-mode limits; Sheets `get-many-rows` output shape (code accepts both shapes).
+
 ### Phase 4 — 21 Oct 2026
 | Acceptance (SPEC 17 Phase 4) | Evidence |
 |---|---|

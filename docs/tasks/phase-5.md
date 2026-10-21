@@ -62,10 +62,10 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 
 ### ~~5.10 — Template 6~~ dropped by the owner (Elmo, SPEC App. C P2)
 
-### [ ] 5.11 — Import acceptance test for all templates
+### [x] 5.11 — Import acceptance test for all templates
 - **Goal:** CI (pieces required): every template validates, imports into a fresh selftest stack, and its webhook/mock sample run behaves as its README says; manual real-account checklist results recorded per template (Q6).
 - **Tests required:** docker-tagged, mandatory in CI (`OPSKIT_REQUIRE_PIECES=1`), skipped with a warning offline.
 
-### [ ] 5.12 — Docs and phase close
+### [x] 5.12 — Docs and phase close
 - **Goal:** `docs/runbooks/flow-templates.md` (import for a client, connect accounts, test, switch on, pause), update `docs/go-to-market/` (offer: template library no longer "coming"; demo script), ADR-017, PROGRESS + phase verification report.
 - **Manual verification:** owner imports one template into the Codespace stack following the runbook.
