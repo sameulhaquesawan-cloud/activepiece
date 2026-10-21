@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: the owner's Uptime Kuma: deploy it on a host, sync or remove a client's monitors
 
-for lib in validate schema registry render secrets stack ssh host monitor monitor_sync; do
+for lib in validate schema registry render secrets stack ssh host deploy monitor monitor_sync; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done

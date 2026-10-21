@@ -144,5 +144,6 @@ monitor_deploy() {
   host_put "$host" "${dir}/${MONITOR_PROJECT}.caddy" "$(host_root "$host")/caddy/etc/sites/${MONITOR_PROJECT}.caddy" 644 || return 1
   host_run "$host" docker exec "$edge" caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 \
     || { log_fail "caddy reload failed on ${host}"; return 1; }
+  deploy_export_local_ca "$host"
   monitor_check_https "$host"
 }

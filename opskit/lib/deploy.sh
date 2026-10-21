@@ -64,6 +64,18 @@ deploy_wait_worker() {
   return 1
 }
 
+# deploy_export_local_ca <host>: internal-TLS (practice) hosts keep a readable copy of Caddy's public
+# local root certificate at <root>/caddy/local-root.crt for heartbeats (the original is root-only)
+deploy_export_local_ca() {
+  local host="$1" edge
+  [ "$(yaml_get "$(host_file "$host")" .edge.tls acme)" = "internal" ] || return 0
+  edge="$(yaml_get "$(host_file "$host")" .edge.container opskit-caddy)"
+  # shellcheck disable=SC2016
+  host_run "$host" sh -c 'docker exec "$1" cat /data/caddy/pki/authorities/local/root.crt > "$2.tmp" && mv "$2.tmp" "$2" && chmod 644 "$2"' \
+    _ "$edge" "$(host_root "$host")/caddy/local-root.crt" \
+    || log_warn "could not export Caddy's local root certificate on ${host} (practice heartbeats will fail TLS)"
+}
+
 deploy_publish_site() {
   local host="$1" id="$2" edge root
   edge="$(yaml_get "$(host_file "$host")" .edge.container opskit-caddy)"
@@ -73,6 +85,7 @@ deploy_publish_site() {
   host_put "$host" "$(rendered_dir "$id")/${id}.caddy" "${root}/caddy/etc/sites/${id}.caddy" 644 || return 1
   host_run "$host" docker exec "$edge" caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 \
     || { log_fail "caddy reload failed on ${host}"; return 1; }
+  deploy_export_local_ca "$host"
   log_ok "HTTPS site published via ${edge}"
 }
 

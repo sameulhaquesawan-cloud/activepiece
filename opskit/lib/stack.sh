@@ -40,7 +40,7 @@ stack_render_backup() {
       printf 'KEEP_REMOTE_DAYS=%s\n' "$(yaml_get "$cfile" .backup.retention_days.remote 30)"
       printf 'HEARTBEAT_URL=%s\n' "$(yaml_get "$cfile" .backup.heartbeat_url)"
       if [ "$(yaml_get "$(host_file "$(yaml_get "$cfile" .host.name)")" .edge.tls acme)" = "internal" ]; then
-        printf 'HEARTBEAT_CACERT=%s/caddy/data/caddy/pki/authorities/local/root.crt\n' \
+        printf 'HEARTBEAT_CACERT=%s/caddy/local-root.crt\n' \
           "$(yaml_get "$(host_file "$(yaml_get "$cfile" .host.name)")" .opskit_root /opt/opskit)"
       fi
     } > "${out}/backup.conf"

@@ -135,7 +135,7 @@ teardown() {
 @test "practice clients get Caddy's local CA for the backup heartbeat" {
   new_demo_client demo
   "$OPSKIT" render demo >/dev/null
-  grep -qx "HEARTBEAT_CACERT=$(yq -r '.opskit_root // "/opt/opskit"' "${REG}/hosts/local-practice.yaml")/caddy/data/caddy/pki/authorities/local/root.crt" \
+  grep -qx "HEARTBEAT_CACERT=$(yq -r '.opskit_root // "/opt/opskit"' "${REG}/hosts/local-practice.yaml")/caddy/local-root.crt" \
     "${REG}/clients/demo/rendered/backup.conf"
   yq -i '.edge.tls = "acme"' "${REG}/hosts/local-practice.yaml"
   "$OPSKIT" render demo >/dev/null

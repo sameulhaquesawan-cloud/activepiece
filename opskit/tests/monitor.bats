@@ -90,7 +90,7 @@ wait_for_message() {
 # bats test_tags=docker
 @test "a missed backup heartbeat triggers the watchdog (time-shifted: 20 s window)" {
   OPSKIT_MONITOR_INTERVAL=20 OPSKIT_MONITOR_PUSH_INTERVAL=20 "$OPSKIT" monitor sync acme >/dev/null
-  curl -fsS --cacert "${MON_ROOT}/caddy/data/caddy/pki/authorities/local/root.crt" \
+  curl -fsS --cacert "${MON_ROOT}/caddy/local-root.crt" \
     "$(yq -r .backup.heartbeat_url "${MON_DIR}/clients/acme/client.yaml")?status=up&msg=test" | grep -q '"ok":true'
   wait_for_message "[acme backup] [🔴 Down] No heartbeat in the time window"
   OPSKIT_MONITOR_INTERVAL=60 "$OPSKIT" monitor sync acme | grep -q "backup watchdog window 26 h"
