@@ -161,11 +161,6 @@ upgrade_do_pull() {
   log_ok "${repo}:${to} pulled here and on ${host} (${here})"
 }
 
-upgrade_do_stage() {
-  log_fail "staging is not available yet (Phase 6, task 6.5)"
-  return 1
-}
-
 upgrade_do_switch() {
   log_fail "the switch is not available yet (Phase 6, task 6.6)"
   return 1

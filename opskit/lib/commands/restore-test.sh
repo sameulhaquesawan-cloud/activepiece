@@ -32,47 +32,25 @@ restore_test_record() {
 }
 
 restore_test_one() {
-  local id="$1" from="$2" real host work root edge target start log rc=0 reason=""
+  local id="$1" from="$2" host start rc=0
   require_client "$id" || return 1
-  real="$(registry_root)"
   host="$(yaml_get "$(client_file "$id")" .host.name)"
   require_host "$host" || return 1
-  work="$(mktemp -d)"
-  root="${work}/host-root"
-  target="restoretest-$(openssl rand -hex 3)"
-  edge="opskit-caddy-${target}"
-  log="${work}/restore.log"
   start="$(date +%s)"
   RT_BACKUP=""
   RT_COUNTS=()
-  mkdir -p "${work}/clients/${id}" "${work}/hosts"
-  cp "$(client_file "$id")" "${work}/clients/${id}/client.yaml"
-  cp "$(host_file "$host")" "${work}/hosts/"
-  if [ -f "${real}/owner/rclone.conf" ]; then
-    mkdir -p "${work}/owner"
-    install -m 600 "${real}/owner/rclone.conf" "${work}/owner/rclone.conf"
-  fi
-  log_info "restore test of ${id}: temporary stack ${target} on this machine"
-  if ! practice_host_write "$work" restore-test "$root" "$edge" >/dev/null; then
-    rc=1
-    reason="no free local ports"
-  elif ! OPSKIT_REGISTRY="$work" "${OPSKIT_ROOT}/bin/opskit" host bootstrap restore-test > "$log" 2>&1; then
-    rc=1
-    reason="local edge (Caddy) did not start"
-  elif ! OPSKIT_REGISTRY="$work" "${OPSKIT_ROOT}/bin/opskit" restore "$id" --from "$from" --target "$target" --host restore-test >> "$log" 2>&1; then
-    rc=1
-    reason="$(grep -F '[fail]' "$log" | head -n 1 | sed 's/^\[fail\] //')"
-  fi
-  grep -E '^\[(ok|fail)\] ' "$log" | grep -vE '^\[ok\] (rendered|files copied|edge|deployed|HTTPS site)' || true
-  RT_BACKUP="$(sed -n "s|^\[ok\] restore of ${id}/\([0-9TZ]*\) into .*|\1|p" "$log" | head -n 1)"
-  read -r -a RT_COUNTS <<< "$(sed -n 's/^\[ok\] restored data: \([0-9]*\) flows, \([0-9]*\) connections, \([0-9]*\) runs$/\1 \2 \3/p' "$log" | head -n 1)"
-  practice_teardown "$root" "$edge" "$target"
-  practice_remove_tree "$work"
+  log_info "restore test of ${id}: temporary stack on this machine"
+  temp_stack_restore "$id" "$from" restore-test || rc=1
+  grep -E '^\[(ok|fail)\] ' "$TEMP_LOG" 2>/dev/null | grep -vE '^\[ok\] (rendered|files copied|edge|deployed|HTTPS site)' || true
+  RT_BACKUP="$(sed -n "s|^\[ok\] restore of ${id}/\([0-9TZ]*\) into .*|\1|p" "$TEMP_LOG" 2>/dev/null | head -n 1)"
+  read -r -a RT_COUNTS <<< "$(sed -n 's/^\[ok\] restored data: \([0-9]*\) flows, \([0-9]*\) connections, \([0-9]*\) runs$/\1 \2 \3/p' "$TEMP_LOG" 2>/dev/null | head -n 1)"
+  local reason="$TEMP_REASON"
+  temp_stack_remove
   if [ "$rc" -eq 0 ]; then
-    OPSKIT_REGISTRY="$real" restore_test_record "$id" pass "$(( $(date +%s) - start ))"
+    restore_test_record "$id" pass "$(( $(date +%s) - start ))"
     log_ok "restore test of ${id} passed (${RT_BACKUP}, $(( $(date +%s) - start ))s); temporary stack removed"
   else
-    OPSKIT_REGISTRY="$real" restore_test_record "$id" fail "$(( $(date +%s) - start ))" "${reason:-see output above}"
+    restore_test_record "$id" fail "$(( $(date +%s) - start ))" "${reason:-see output above}"
     log_fail "restore test of ${id} FAILED: ${reason:-see output above}; temporary stack removed"
   fi
   return "$rc"

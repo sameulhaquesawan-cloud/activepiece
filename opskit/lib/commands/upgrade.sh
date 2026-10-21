@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: upgrade a client to a newer Activepieces release (plan, pre-pull, lock; staging, switch and rollback follow)
 
-for lib in validate schema registry ssh host upgrade upgrade_run; do
+for lib in validate schema registry ssh host stack deploy verify restore roundtrip e2e practice smoke smoke_flows upgrade upgrade_run upgrade_stage; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -17,8 +17,10 @@ Usage: opskit upgrade <client id> --to <x.y.z> [--plan]
             off-server copy, a passed restore test from the last 35 days, free disk and memory on
             the host, free disk here, no other upgrade running. Exit 1 when a gate fails.
 (no option) runs the upgrade: gates, lock, waits for a running backup, pulls the image here and on
-            the host (same digest), then staging copy → switch → checks (automatic rollback).
-            Staging, switch and rollback are being built (Phase 6, tasks 6.5–6.7).
+            the host (same digest), stages it (fresh backup restored into a temporary stack on
+            this machine on the new version, checks incl. a webhook and a schedule flow; needs the
+            owner key and internet for pieces), then switch → checks (automatic rollback).
+            Switch and rollback are being built (Phase 6, tasks 6.6–6.7).
 --resume    continues an interrupted upgrade that had not reached the switch
 --rollback  puts an interrupted upgrade back on the previous version (task 6.7)
 --unlock    gives up an interrupted upgrade that had not reached the switch (releases its lock)

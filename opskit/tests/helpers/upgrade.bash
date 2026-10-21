@@ -35,6 +35,8 @@ upgrade_setup() {
   HOSTROOT="$(mktemp -d)"
   yq -i ".opskit_root = \"${HOSTROOT}\"" "${REG}/hosts/local-practice.yaml"
   export OPSKIT_UPGRADE_HOST_MIN_FREE_MB=1 OPSKIT_UPGRADE_LOCAL_MIN_FREE_MB=1
+  export OPSKIT_OWNER_AGE_KEY="${REG}/owner.key"
+  touch "$OPSKIT_OWNER_AGE_KEY"
   export MOCK_RESPONSES="${REG}/responses.json"
   responses '.'
   start_mock_http

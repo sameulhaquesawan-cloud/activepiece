@@ -106,6 +106,12 @@ plan() {
   [[ "$output" == *"MB memory available (need 999999999 MB"* ]]
 }
 
+@test "no owner key on this machine stops the upgrade (staging must decrypt the backup)" {
+  OPSKIT_OWNER_AGE_KEY="${REG}/missing.key" plan
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"owner age key not readable at ${REG}/missing.key"* ]]
+}
+
 @test "an image repo other than the official ones is refused" {
   yq -i '.image.repo = "example.com/activepieces"' "${REG}/clients/acme/client.yaml"
   plan

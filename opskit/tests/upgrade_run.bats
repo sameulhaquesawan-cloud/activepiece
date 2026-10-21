@@ -51,7 +51,7 @@ fake_run() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"[ok] no other upgrade of acme is running"* ]]
   [[ "$output" == *"[ok] ghcr.io/activepieces/activepieces:0.92.3 pulled here and on local-practice (sha256:aaa)"* ]]
-  [[ "$output" == *"staging is not available yet"* ]]
+  [[ "$output" == *"staging: could not read acme's counts"* ]]
   [[ "$output" == *"stopped at stage; nothing changed on the client"* ]]
   [ "$(grep -c 'pull ghcr.io/activepieces/activepieces:0.92.3' "$FAKE_DOCKER_LOG")" = "2" ]
   [ "$(state | jq -r '.status, .failed_step, .digest, .steps.pull.status, .steps.stage.status' | paste -sd' ')" = "failed stage sha256:aaa done failed" ]
@@ -97,7 +97,7 @@ fake_run() {
   run "$OPSKIT" upgrade acme --resume
   [ "$status" -eq 1 ]
   [[ "$output" == *"Resuming upgrade 20261022T100000Z of acme to 0.92.3 at step stage"* ]]
-  [[ "$output" == *"staging is not available yet"* ]]
+  [[ "$output" == *"staging: could not read acme's counts"* ]]
   [ ! -f "$FAKE_DOCKER_LOG" ]
   [ "$(state | jq -r '.status')" = "failed" ]
   [ ! -e "$LOCK" ]

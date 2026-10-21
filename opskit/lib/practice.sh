@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Throwaway practice hosts on this machine (local transport, Caddy internal TLS on free ports),
-# used by selftest and restore-test. Only ever removes what it created.
+# used by selftest, restore-test and upgrade staging. Only ever removes what it created.
 
 port_free() {
   ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
@@ -65,4 +65,47 @@ practice_remove_tree() {
       -c 'rm -rf /caddy/data /caddy/config' >/dev/null 2>&1 || true
   done
   rm -rf "$dir" 2>/dev/null || log_warn "could not fully remove ${dir}"
+}
+
+# temp_stack_restore <client id> <backup name|latest> <host label> [image tag]: restores the client's
+# backup into a throwaway stack on this machine (optionally on another image tag), in a temp registry.
+# Sets TEMP_WORK (registry), TEMP_ROOT, TEMP_EDGE, TEMP_HOST, TEMP_ID, TEMP_PORT, TEMP_LOG, TEMP_REASON.
+# Always call temp_stack_remove afterwards. Needs the owner's age private key.
+temp_stack_restore() {
+  local id="$1" from="$2" label="$3" tag="${4:-}" real host
+  real="$(registry_root)"
+  host="$(yaml_get "$(client_file "$id")" .host.name)"
+  TEMP_WORK="$(mktemp -d)"
+  TEMP_ROOT="${TEMP_WORK}/host-root"
+  # shellcheck disable=SC2034 # TEMP_HOST and TEMP_PORT are read by callers
+  TEMP_HOST="$label"
+  TEMP_ID="${label//-/}-$(openssl rand -hex 3)"
+  TEMP_EDGE="opskit-caddy-${TEMP_ID}"
+  TEMP_LOG="${TEMP_WORK}/restore.log"
+  TEMP_REASON=""
+  mkdir -p "${TEMP_WORK}/clients/${id}" "${TEMP_WORK}/hosts"
+  cp "$(client_file "$id")" "${TEMP_WORK}/clients/${id}/client.yaml"
+  [ -z "$tag" ] || yq -i ".image.tag = \"${tag}\"" "${TEMP_WORK}/clients/${id}/client.yaml"
+  cp "$(host_file "$host")" "${TEMP_WORK}/hosts/"
+  if [ -f "${real}/owner/rclone.conf" ]; then
+    mkdir -p "${TEMP_WORK}/owner"
+    install -m 600 "${real}/owner/rclone.conf" "${TEMP_WORK}/owner/rclone.conf"
+  fi
+  # shellcheck disable=SC2034
+  if ! TEMP_PORT="$(practice_host_write "$TEMP_WORK" "$label" "$TEMP_ROOT" "$TEMP_EDGE")"; then
+    TEMP_REASON="no free local ports"
+  elif ! OPSKIT_REGISTRY="$TEMP_WORK" "${OPSKIT_ROOT}/bin/opskit" host bootstrap "$label" > "$TEMP_LOG" 2>&1; then
+    TEMP_REASON="local edge (Caddy) did not start"
+  elif ! OPSKIT_REGISTRY="$TEMP_WORK" "${OPSKIT_ROOT}/bin/opskit" restore "$id" --from "$from" --target "$TEMP_ID" --host "$label" >> "$TEMP_LOG" 2>&1; then
+    TEMP_REASON="$(grep -F '[fail]' "$TEMP_LOG" | head -n 1 | sed 's/^\[fail\] //')"
+    TEMP_REASON="${TEMP_REASON:-restore failed}"
+  fi
+  [ -z "$TEMP_REASON" ]
+}
+
+temp_stack_remove() {
+  [ -n "${TEMP_WORK:-}" ] || return 0
+  practice_teardown "$TEMP_ROOT" "$TEMP_EDGE" "$TEMP_ID"
+  practice_remove_tree "$TEMP_WORK"
+  TEMP_WORK=""
 }
