@@ -7,6 +7,11 @@ use "Try another method" (`docs/go-to-market/eu/subprocessors.md`). The client t
 key and token themselves; they never go into chat, email or files.
 
 ## Google Sheets — service account (our default)
+**Prerequisite (since 25 Jul 2026):** Google Cloud only opens for accounts with **2-step verification**
+on ("Google Cloud access blocked … enforce 2-step verification", seen in the Phase 5 test). The client
+turns it on once at myaccount.google.com/security → 2-Step Verification (phone prompt or authenticator;
+free, 2 minutes). Without it neither a service account nor an own OAuth app can be created; the only
+Sheets route left is **Connect** (see below).
 Seen in the Phase 5 test: **Connect** saved a connection, but every Sheets call failed with
 `403 PERMISSION_DENIED … insufficient authentication scopes` (even after signing in again). Until that
 is understood, use a service account (also no third party):
@@ -27,7 +32,8 @@ but fails with "insufficient authentication scopes"; delete it and connect again
 
 ## Gmail
 - **Connect** worked in the Phase 5 test (sending). Tick every box on Google's consent screen.
-- No third party: Try another method → **Custom OAuth2 App (Advanced)**: a Google Cloud OAuth client of
+- No third party: Try another method → **Custom OAuth2 App (Advanced)** (needs Google Cloud, so 2-step
+  verification on the account, see Google Sheets above): a Google Cloud OAuth client of
   the client's own (type Web application, redirect URI `https://<domain>/redirect`, Gmail API enabled);
   paste its client ID and secret. Google limits unverified apps (100 users, consent screen warning);
   fine for one business. Workspace accounts can also use a service account with domain-wide delegation.

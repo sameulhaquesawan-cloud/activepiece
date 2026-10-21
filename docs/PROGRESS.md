@@ -7,8 +7,8 @@
 
 ## Next steps
 1. Owner: create `main` on GitHub (branch dropdown → "main" → create from `claude/funny-keller-x6sgy1`; Settings → Default branch → main). The agent may not push `main`.
-2. Owner: run `docs/testing/phase5-browser-test.md` **version 2** (T1 + T2 again; Sheets via service account) with Claude in Chrome and paste the report back.
-3. Agent: act on that report (shape of Sheets `get-many-rows` output, whether choosing a sheet clears mappings), then `/opskit-start-phase` for Phase 6.
+2. Owner: turn on 2-step verification on the Google test account, then re-run only T1 (steps 4–9) and T2 of `docs/testing/phase5-browser-test.md` (short prompt in chat). Paste the report back.
+3. Agent: act on that report, then `/opskit-start-phase` for Phase 6. Decision for the owner: a Tables-based lead-capture variant (no Google at all)?
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — Browser test 2 (owner, Claude in Chrome).** Confirmed live: fresh import lists the 3 step names; both Gmail send steps are valid as soon as the Gmail connection is picked (no "Incomplete"); the auto-reply greets "Hi Jane,"; bad email fails at "Check lead" with `Invalid email in field "email" - lead not saved`; owner and auto-reply emails were sent (step outputs; mailbox not opened). Not tested: Sheets (Google Cloud needs 2-step verification on the test account since 25 Jul 2026 → no service account), so the full T1 run, T2 and the Sheets read shape are still open (shape read from the piece code: ASSUMPTIONS #22). T3–T5 skipped. Environment: Codespace port 8080 resets to Private on every restart, and Chrome kept a 404 until its site data for app.github.dev was cleared (tip added to the test plan).
 - **2026-10-21 — Browser test 1 (owner, Claude in Chrome) and fixes.** Results: T0 pass (port 8080 had to be Public); T1 import + "Check lead" failure path + both Gmail sends pass; Sheets via "Connect" failed `403 insufficient authentication scopes`; T2 blocked by that; T3–T5 skipped. Fixes: Gmail send steps now carry `cc`/`bcc`/`attachments` `[]` (they imported "Incomplete"); new `opskit flows check-pieces` compares every step with the catalog (`flows_pieces.bats`, live test in check/CI); steps needing the client's account are `valid: false` and listed by name at import (validate rule + test); auto-reply greets by first name; `opskit/flows/CONNECTIONS.md` (service account for Sheets by default, exact builder labels "Connect"/"Try another method"); READMEs, runbook, CONVENTIONS, ASSUMPTIONS #20–21; browser test plan version 2.
 - **2026-10-21 — Phase 5 signed off; browser test plan.** Owner signed off and asked to merge; creating `main` was blocked by the session's permission check (owner does it, see Next steps). `opskit flows import <template> --url <builder>` now works without a client id (practice Codespace); test in `flows_import.bats`. `docs/testing/phase5-browser-test.md`: step-by-step real-account test for Claude in Chrome (T1–T4, T5 skipped without a Meta app), secrets always typed by the owner, fixed report format.
 - **2026-10-21 — 5.11–5.12 acceptance and phase close.** CI run 33 green with real imports and stub runs of every template; `docs/runbooks/flow-templates.md` (owner: import for a client, connect, test, switch on, pause), ADR-017, go-to-market updated (offer, site, demo script: ready-made flows no longer "coming"). Verification report below. Verify: read the runbook; `opskit/bin/opskit flows list`.
