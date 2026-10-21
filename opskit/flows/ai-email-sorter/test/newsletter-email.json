@@ -1,0 +1,45 @@
+{
+  "message": {
+    "subject": "Our October offers",
+    "from": {
+      "text": "Shop News <news@example.com>",
+      "value": [
+        {
+          "address": "news@example.com",
+          "name": "Shop News"
+        }
+      ]
+    },
+    "text": "Big savings this month...",
+    "messageId": "<new-2@example.com>"
+  },
+  "thread": {
+    "data": {
+      "id": "thread-example-1",
+      "messages": [
+        {
+          "id": "msg-older",
+          "payload": {
+            "headers": [
+              {
+                "name": "Message-ID",
+                "value": "<older@example.com>"
+              }
+            ]
+          }
+        },
+        {
+          "id": "msg-new",
+          "payload": {
+            "headers": [
+              {
+                "name": "Message-ID",
+                "value": "<new-2@example.com>"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

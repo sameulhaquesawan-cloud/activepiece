@@ -118,9 +118,16 @@ flows_sign_in() {
   log_ok "signed in to ${FLOWS_BASE_URL} as ${email}"
 }
 
+# flows_custom_archive <custom dir> <name> <version>: the committed release/ archive, else a local dist/ build
 flows_custom_archive() {
-  local custom="$1" name="$2" version="$3"
-  printf '%s/%s/dist/%s-%s.tgz' "${OPSKIT_REPO_ROOT:-$(cd "${OPSKIT_ROOT}/.." && pwd)}" "$custom" "$(sed -E 's#^@##; s#/#-#' <<< "$name")" "$version"
+  local custom="$1" name="$2" version="$3" base file
+  base="${OPSKIT_REPO_ROOT:-$(cd "${OPSKIT_ROOT}/.." && pwd)}/${custom}"
+  file="$(sed -E 's#^@##; s#/#-#' <<< "$name")-${version}.tgz"
+  if [ -f "${base}/release/${file}" ] || [ ! -f "${base}/dist/${file}" ]; then
+    printf '%s/release/%s' "$base" "$file"
+  else
+    printf '%s/dist/%s' "$base" "$file"
+  fi
 }
 
 # flows_ensure_pieces <template dir>: install our custom pieces, check every pinned version is known

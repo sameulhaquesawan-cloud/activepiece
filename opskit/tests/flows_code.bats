@@ -96,3 +96,37 @@ review_order() {
   run run_code review-request step_3 '{"seen": "", "paid": false}'
   [ "$(jq -r .send <<< "$output")" = "false" ]
 }
+
+sorter_mail() {
+  jq -c '{messageId: .message.messageId, from: .message.from.text, subject: .message.subject, text: .message.text,
+    threadMessages: .thread.data.messages, maxChars: 20}' "${OPSKIT_ROOT}/flows/ai-email-sorter/test/$1"
+}
+
+@test "ai email sorter: the new email's Gmail id is found by Message-ID and the text is cut" {
+  run run_code ai-email-sorter step_1 "$(sorter_mail urgent-email.json)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r .gmailId <<< "$output")" = "msg-new" ]
+  [ "$(jq -r .from <<< "$output")" = "Jane Example <jane@example.com>" ]
+  [ "$(jq -r '.text | length' <<< "$output")" = "20" ]
+  [ "$(jq -r .truncated <<< "$output")" = "true" ]
+  run run_code ai-email-sorter step_1 '{"messageId": "<unknown@example.com>", "threadMessages": [{"id": "a"}, {"id": "b"}], "text": "hi"}'
+  [ "$(jq -r .gmailId <<< "$output")" = "b" ]
+  run run_code ai-email-sorter step_1 '{"messageId": "<x@example.com>", "threadMessages": []}'
+  [ "$status" -eq 3 ]
+  [ "$output" = "THROWN: Could not find the Gmail id of the new email in its thread" ]
+}
+
+@test "ai email sorter: plain or fenced JSON answers are read; anything else fails" {
+  run run_code ai-email-sorter step_3 "$(jq -c '{answer: .text}' "${OPSKIT_ROOT}/flows/ai-email-sorter/test/ai-urgent.json")"
+  [ "$(jq -r .category <<< "$output")" = "urgent" ]
+  run run_code ai-email-sorter step_3 "$(jq -c '{answer: .text}' "${OPSKIT_ROOT}/flows/ai-email-sorter/test/ai-newsletter.json")"
+  [ "$(jq -c . <<< "$output")" = '{"category":"newsletter","summary":"Monthly offers."}' ]
+  run run_code ai-email-sorter step_3 '{"answer": "{\"category\": \"URGENT \", \"summary\": \"a\\nb\"}"}'
+  [ "$(jq -c . <<< "$output")" = '{"category":"urgent","summary":"a b"}' ]
+  run run_code ai-email-sorter step_3 "$(jq -c '{answer: .text}' "${OPSKIT_ROOT}/flows/ai-email-sorter/test/ai-garbage.json")"
+  [ "$status" -eq 3 ]
+  [ "$output" = "THROWN: The AI answer was not the expected JSON - check the model and the AI step" ]
+  run run_code ai-email-sorter step_3 '{"answer": "{\"category\": \"spam\"}"}'
+  [ "$status" -eq 3 ]
+  [[ "$output" == "THROWN: The AI answered an unknown category"* ]]
+}

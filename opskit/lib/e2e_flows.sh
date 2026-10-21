@@ -86,7 +86,7 @@ e2e_flow_runs() {
     run="$(rt_api "$domain" "$port" GET "/v1/flow-runs/${run_id}" "$token")"
     got="$(jq -r '.status // "?"' <<< "$run")"
     if [ "$got" != "$expect" ]; then
-      log_fail "templates e2e: ${template}: run $((index + 1)) (${payload}) ended ${got}, expected ${expect}"
+      log_fail "templates e2e: ${template}: run $((index + 1)) (${payload}) ended ${got}, expected ${expect}: $(jq -r '(.failedStep.displayName // "-") + ": " + ((.failedStep.message // "") | tostring | .[:300])' <<< "$run")"
       return 1
     fi
     if ! problem="$(e2e_flow_check_steps "$dir" "$index" "$run")"; then

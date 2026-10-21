@@ -8,9 +8,10 @@ starts switched off; the client connects their own accounts, we test it, then sw
 | `lead-capture/` | website form → Google Sheet row → owner email → auto-reply | Google Sheets, Gmail |
 | `invoice-reminder/` | weekday mornings: overdue unpaid invoices in a sheet → reminder email, row marked | Google Sheets, Gmail |
 | `review-request/` | paid order webhook → wait 7 days → review request email, once per order | SMTP |
+| `ai-email-sorter/` | new Gmail email → client's own AI model → label; urgent → Slack | Gmail, OpenAI Compatible (BYOK), Slack |
 | `example/` | test template (webhook → greeting); not for clients | none |
 
-Still to come (Phase 5): AI email sorter (5.8), lead-ad alert (5.9).
+Still to come (Phase 5): lead-ad alert (5.9).
 
 ## One folder per template
 | File | Purpose |

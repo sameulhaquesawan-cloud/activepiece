@@ -66,7 +66,9 @@ flows_problems() {
   [ "$(yq -r '.template_id // ""' "${dir}/template.yaml")" = "$id" ] \
     || printf 'template.yaml: template_id must be the folder name (%s)\n' "$id"
   flows_placeholder_problems "$dir"
+  flows_reference_problems "${dir}/flow.json"
   flows_piece_problems "$dir"
+  flows_custom_piece_problems "$dir"
   flows_failure_problems "$dir"
   flows_leak_problems "$dir"
   flows_test_problems "$dir"
@@ -82,6 +84,14 @@ flows_format_problems() {
       ([.. | objects | select(has("type") and has("name") and has("settings")) | select(has("lastUpdatedDate") | not) | .name] |
         if length > 0 then "flow.json: steps without lastUpdatedDate: \(join(", "))" else empty end))
     end' "$1"
+}
+
+# flows_reference_problems <flow.json>: step references must use the flow schema 22+ form step_1['output']
+flows_reference_problems() {
+  jq -r '[.. | objects | del(.code) | .[] | strings | scan("\\{\\{(.*?)\\}\\}"; "s") | .[0]
+      | select(startswith("OPSKIT:") | not)
+      | select(test("\\b(trigger|step_[0-9]+)\\b(?!\\[.(output|error).\\])"))] | unique | .[:3] |
+    if length > 0 then "flow.json: write step references as {{step_1[\u0027output\u0027]…}} (flow schema 27): \(map("{{" + . + "}}") | join(" "))" else empty end' "$1"
 }
 
 flows_placeholder_problems() {
@@ -113,6 +123,24 @@ flows_piece_problems() {
     [ -n "$piece" ] || continue
     grep -qxF "$piece" <<< "$in_flow" || printf 'piece %s is in template.yaml pieces but not used in flow.json\n' "$piece"
   done <<< "$in_manifest"
+}
+
+# flows_custom_piece_problems <template dir>: our pieces need their archive committed in <custom>/release/
+flows_custom_piece_problems() {
+  local dir="$1" name version custom release file manifest
+  while IFS=$'\t' read -r name version custom; do
+    [ -n "$custom" ] || continue
+    release="${OPSKIT_REPO_ROOT:-$(cd "${OPSKIT_ROOT}/.." && pwd)}/${custom}/release"
+    file="$(sed -E 's#^@##; s#/#-#' <<< "$name")-${version}.tgz"
+    if [ ! -f "${release}/${file}" ]; then
+      printf 'custom piece archive missing: %s/release/%s (build it, copy it there, update SHA256SUMS)\n' "$custom" "$file"
+      continue
+    fi
+    manifest="$(tar -xzOf "${release}/${file}" package/package.json 2>/dev/null | jq -r '.name + "@" + .version' 2>/dev/null || true)"
+    [ "$manifest" = "${name}@${version}" ] || printf 'custom piece archive %s contains %s, expected %s@%s\n' "$file" "${manifest:-nothing readable}" "$name" "$version"
+    (cd "$release" && grep -F " ${file}" SHA256SUMS 2>/dev/null | sha256sum -c --status 2>/dev/null) \
+      || printf 'custom piece archive %s does not match %s/release/SHA256SUMS\n' "$file" "$custom"
+  done < <(yq -r '.pieces[] | [.name, .version, .custom // ""] | @tsv' "${dir}/template.yaml")
 }
 
 flows_failure_problems() {

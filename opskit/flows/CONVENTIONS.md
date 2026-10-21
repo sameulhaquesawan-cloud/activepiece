@@ -16,6 +16,13 @@
   allowed values (e.g. a dropdown's units).
 - No real ids, emails, URLs, sheet links or keys in a template. Examples use `example.com`.
 
+## Step references
+- Templates are written in flow schema 27 (`"schemaVersion": "27"`, Activepieces 0.92.3). Since schema
+  22 every reference goes through the step's output: `{{trigger['output']['body']['email']}}`,
+  `{{step_1['output']['email']}}`, in a loop `{{step_3['output']['item']}}`. The old form
+  (`{{step_1['email']}}`) is only rewritten for imports that declare an older schema; in ours it
+  silently resolves to nothing. `flows validate` rejects it.
+
 ## Pieces
 - Every piece step pins the exact version the template was tested with, listed in `template.yaml`
   `pieces` (the import fails if the client's stack does not know that version). Re-pin and re-test

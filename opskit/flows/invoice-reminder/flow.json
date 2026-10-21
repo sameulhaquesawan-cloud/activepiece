@@ -68,7 +68,7 @@
                 "packageJson": "{}"
               },
               "input": {
-                "rows": "{{step_1}}",
+                "rows": "{{step_1['output']}}",
                 "overdueDays": "{{OPSKIT:OVERDUE_DAYS}}",
                 "repeatDays": "{{OPSKIT:REPEAT_DAYS}}"
               },
@@ -88,7 +88,7 @@
               "valid": true,
               "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
               "settings": {
-                "items": "{{step_2['due']}}"
+                "items": "{{step_2['output']['due']}}"
               },
               "firstLoopAction": {
                 "name": "step_4",
@@ -103,11 +103,11 @@
                   "propertySettings": {},
                   "input": {
                     "receiver": [
-                      "{{step_3['item']['email']}}"
+                      "{{step_3['output']['item']['email']}}"
                     ],
-                    "subject": "Reminder: invoice {{step_3['item']['invoice']}} is due",
+                    "subject": "Reminder: invoice {{step_3['output']['item']['invoice']}} is due",
                     "body_type": "plain_text",
-                    "body": "Hi {{step_3['item']['customer']}},\n\nThis is a friendly reminder that invoice {{step_3['item']['invoice']}} over {{step_3['item']['amount']}} was due on {{step_3['item']['dueDate']}}.\n\n{{OPSKIT:PAYMENT_INFO}}\n\nIf you have already paid, please ignore this message.\n\n{{OPSKIT:BUSINESS_NAME}}",
+                    "body": "Hi {{step_3['output']['item']['customer']}},\n\nThis is a friendly reminder that invoice {{step_3['output']['item']['invoice']}} over {{step_3['output']['item']['amount']}} was due on {{step_3['output']['item']['dueDate']}}.\n\n{{OPSKIT:PAYMENT_INFO}}\n\nIf you have already paid, please ignore this message.\n\n{{OPSKIT:BUSINESS_NAME}}",
                     "reply_to": [
                       "{{OPSKIT:OWNER_EMAIL}}"
                     ],
@@ -139,7 +139,7 @@
                     "propertySettings": {},
                     "input": {
                       "includeTeamDrives": false,
-                      "row_id": "{{step_3['item']['row']}}",
+                      "row_id": "{{step_3['output']['item']['row']}}",
                       "first_row_headers": false,
                       "values": {
                         "values": [
@@ -149,7 +149,7 @@
                           "",
                           "",
                           "",
-                          "{{step_2['checkedAt']}}"
+                          "{{step_2['output']['checkedAt']}}"
                         ]
                       }
                     },
@@ -176,8 +176,8 @@
                     "packageJson": "{}"
                   },
                   "input": {
-                    "problems": "{{step_2['problems']}}",
-                    "count": "{{step_2['count']}}"
+                    "problems": "{{step_2['output']['problems']}}",
+                    "count": "{{step_2['output']['count']}}"
                   },
                   "errorHandlingOptions": {
                     "continueOnFailure": {

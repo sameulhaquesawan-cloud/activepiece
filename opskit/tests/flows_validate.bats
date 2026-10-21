@@ -74,6 +74,11 @@ CODE_INPUT='.flows[0].trigger.nextAction.settings.input'
   expect_problem "flow.json: malformed placeholder"
 }
 
+@test "step references must use the output form of flow schema 27" {
+  edit_flow "${CODE_INPUT}.name = \"{{trigger['body']['name']}}\" | ${CODE_INPUT}.extra = \"{{step_1.greeting}}\""
+  expect_problem "flow.json: write step references as {{step_1['output']…}} (flow schema 27): {{step_1.greeting}} {{trigger['body']['name']}}"
+}
+
 @test "piece version in flow.json differs from the manifest" {
   edit_flow '.flows[0].trigger.settings.pieceVersion = "0.1.41"'
   expect_problem "piece @activepieces/piece-webhook@0.1.41 is in flow.json but not in template.yaml pieces"
@@ -150,6 +155,23 @@ CODE_INPUT='.flows[0].trigger.nextAction.settings.input'
   yq -i '.test.runs[0].stubs = {"step_1": "test/nope.json"} | .test.runs[1].not_ran = ["step_9"]' "${T}/template.yaml"
   expect_problem "test payload missing: test/nope.json"
   [[ "$output" == *"test step step_9 does not exist in flow.json"* ]]
+}
+
+@test "our custom piece archive must be committed and match its checksum" {
+  unset OPSKIT_FLOWS_DIR
+  run "$OPSKIT" flows validate ai-email-sorter
+  [ "$status" -eq 0 ]
+  export OPSKIT_REPO_ROOT="${WORK}/repo"
+  local release="${OPSKIT_REPO_ROOT}/packages/pieces/custom/openai-compatible/release"
+  run "$OPSKIT" flows validate ai-email-sorter
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"custom piece archive missing"* ]]
+  mkdir -p "$release"
+  cp "${OPSKIT_ROOT}/../packages/pieces/custom/openai-compatible/release/"* "$release/"
+  printf 'x' >> "${release}/opskit-piece-openai-compatible-0.1.0.tgz"
+  run "$OPSKIT" flows validate ai-email-sorter
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"does not match packages/pieces/custom/openai-compatible/release/SHA256SUMS"* ]]
 }
 
 @test "missing README, CHECKLIST and test payload" {

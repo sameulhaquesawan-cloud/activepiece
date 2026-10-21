@@ -19,6 +19,9 @@ load helpers/common
     [[ "$output" == *"[ok] templates e2e: example: run 1 test/good.json → SUCCEEDED"* ]]
     [[ "$output" == *"[ok] templates e2e: example: run 2 test/missing-name.json → FAILED"* ]]
     [[ "$output" == *"[ok] templates e2e: lead-capture: run 2 test/bad-email.json → FAILED"* ]]
+    [[ "$output" == *"[ok] templates e2e: invoice-reminder: run 2 test/tick.json → FAILED"* ]]
+    [[ "$output" == *"[ok] templates e2e: review-request: run 2 test/shopify-paid.json → SUCCEEDED"* ]]
+    [[ "$output" == *"[ok] templates e2e: ai-email-sorter: run 1 test/urgent-email.json → SUCCEEDED"* ]]
   else
     [[ "$output" == *"[ok] monitoring e2e: failing flow"* || "$output" == *"monitoring e2e SKIPPED"* ]]
     [[ "$output" == *"[ok] templates e2e: example imported"* || "$output" == *"templates e2e SKIPPED"* ]]

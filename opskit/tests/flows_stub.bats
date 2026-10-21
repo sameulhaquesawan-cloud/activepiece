@@ -56,7 +56,7 @@ steps() {
   [ "$(jq -r '.request.trigger.nextAction.type' "${WORK}/request.json")" = "CODE" ]
   [[ "$(jq -r '.request.trigger.nextAction.settings.sourceCode.code' "${WORK}/request.json")" == *'"typo-at-example.com"'* ]]
   [ "$(jq -r '[.. | objects | select(.name? == "step_3")][0].type' "${WORK}/request.json")" = "LOOP_ON_ITEMS" ]
-  [ "$(jq -r '[.. | objects | select(.name? == "step_5")][0].settings.input.row_id' "${WORK}/request.json")" = "{{step_3['item']['row']}}" ]
+  [ "$(jq -r '[.. | objects | select(.name? == "step_5")][0].settings.input.row_id' "${WORK}/request.json")" = "{{step_3['output']['item']['row']}}" ]
 }
 
 @test "invoice reminder: a stubbed step's code runs and returns the stub" {
@@ -77,9 +77,18 @@ steps() {
 }
 
 @test "trigger references are rewritten only when the trigger is replaced" {
-  printf '%s' '{"name":"t","flows":[{"displayName":"x","schemaVersion":"27","trigger":{"name":"trigger","type":"PIECE_TRIGGER","lastUpdatedDate":"d","settings":{"pieceName":"@activepieces/piece-gmail"},"nextAction":{"name":"step_1","type":"CODE","lastUpdatedDate":"d","settings":{"input":{"s":"{{trigger['"'"'subject'"'"']}} {{trigger.from}}"}}}}}]}' > "${WORK}/g.json"
+  printf '%s' '{"name":"t","flows":[{"displayName":"x","schemaVersion":"27","trigger":{"name":"trigger","type":"PIECE_TRIGGER","lastUpdatedDate":"d","settings":{"pieceName":"@activepieces/piece-gmail"},"nextAction":{"name":"step_1","type":"CODE","lastUpdatedDate":"d","settings":{"input":{"s":"{{trigger['"'"'output'"'"']['"'"'subject'"'"']}}"}}}}}]}' > "${WORK}/g.json"
   jq --argjson pieces '["@activepieces/piece-gmail"]' --argjson stubs '{}' --arg webhookVersion 0.1.42 -f "$E2E_STUB_JQ" "${WORK}/g.json" > "${WORK}/out.json"
-  [ "$(jq -r '.trigger.nextAction.settings.input.s' "${WORK}/out.json")" = "{{trigger['body']['subject']}} {{trigger.body.from}}" ]
+  [ "$(jq -r '.trigger.nextAction.settings.input.s' "${WORK}/out.json")" = "{{trigger['output']['body']['subject']}}" ]
   stubbed lead-capture 0
-  [ "$(jq -r '.request.trigger.nextAction.settings.input.body' "${WORK}/request.json")" = "{{trigger['body']}}" ]
+  [ "$(jq -r '.request.trigger.nextAction.settings.input.body' "${WORK}/request.json")" = "{{trigger['output']['body']}}" ]
+}
+
+@test "ai email sorter: Gmail trigger becomes a webhook carrying the trigger output; AI, labels and Slack are stubbed" {
+  stubbed ai-email-sorter 0
+  [ "$(jq -r '.request.trigger.settings.pieceName' "${WORK}/request.json")" = "@activepieces/piece-webhook" ]
+  [ "$(jq -r '.request.trigger.nextAction.settings.input.messageId' "${WORK}/request.json")" = "{{trigger['output']['body']['message']['messageId']}}" ]
+  [ "$(jq -r '.request.trigger.nextAction.settings.input.maxChars' "${WORK}/request.json")" = "4000" ]
+  [[ "$(jq -r '[.. | objects | select(.name? == "step_2")][0].settings.sourceCode.code' "${WORK}/request.json")" == *'\"category\": \"urgent\"'* ]]
+  [ "$(steps | jq -c '[.[] | select(.[1] == "PIECE")]')" = "[]" ]
 }

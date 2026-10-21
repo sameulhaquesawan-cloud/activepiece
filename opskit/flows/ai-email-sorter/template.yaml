@@ -1,0 +1,61 @@
+template_id: ai-email-sorter
+name: AI email sorter
+description: New Gmail email → the client's own AI model picks a category → Gmail label; urgent mail is also posted to Slack. Email text goes only to the client's chosen AI provider.
+version: 1.0.0
+activepieces: 0.92.3
+pieces:
+  - name: "@activepieces/piece-gmail"
+    version: 0.18.1
+  - name: "@opskit/piece-openai-compatible"
+    version: 0.1.0
+    custom: packages/pieces/custom/openai-compatible
+  - name: "@activepieces/piece-slack"
+    version: 0.23.1
+placeholders:
+  - key: BUSINESS_NAME
+    description: Whose inbox this is (used in the AI instructions)
+    example: Example Dental
+  - key: BUSINESS_CONTEXT
+    description: One or two sentences about the business that help the AI decide what is urgent
+    example: A dental practice; patients email to book, move or cancel appointments.
+    default: A small business.
+  - key: MAX_CHARS
+    description: Characters of the email body sent to the AI (the rest is cut)
+    example: "4000"
+    default: "4000"
+    type: number
+connections:
+  - piece: "@activepieces/piece-gmail"
+    purpose: read new email and add labels in the client's mailbox
+    options:
+      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
+      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Service Account (Advanced): Google Workspace with domain-wide delegation only"
+  - piece: "@opskit/piece-openai-compatible"
+    purpose: the client's own AI provider and key (OpenAI, OpenRouter, Mistral, a local model, …)
+    options:
+      - "Base URL + API key of the client's account; for EU clients an EU-hosted provider or a local model"
+  - piece: "@activepieces/piece-slack"
+    purpose: post urgent email to the client's team channel
+    options:
+      - "OAuth2 (Recommended): sign in with Slack (via Activepieces' sign-in service)"
+      - "Bot Token: a Slack app the client creates (xoxb token); no third party"
+failure: fail-run
+test:
+  runs:
+    - payload: test/urgent-email.json
+      expect: SUCCEEDED
+      stubs:
+        step_2: test/ai-urgent.json
+      ran: [step_5, step_9]
+      not_ran: [step_6]
+    - payload: test/newsletter-email.json
+      expect: SUCCEEDED
+      stubs:
+        step_2: test/ai-newsletter.json
+      ran: [step_8]
+      not_ran: [step_5, step_9]
+    - payload: test/newsletter-email.json
+      expect: FAILED
+      stubs:
+        step_2: test/ai-garbage.json

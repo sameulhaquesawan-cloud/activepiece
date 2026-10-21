@@ -44,7 +44,7 @@
               "packageJson": "{}"
             },
             "input": {
-              "body": "{{trigger['body']}}"
+              "body": "{{trigger['output']['body']}}"
             },
             "errorHandlingOptions": {
               "continueOnFailure": {
@@ -67,7 +67,7 @@
               "actionName": "get",
               "propertySettings": {},
               "input": {
-                "key": "review-request:{{step_1['orderId']}}",
+                "key": "review-request:{{step_1['output']['orderId']}}",
                 "store_scope": "FLOW"
               },
               "errorHandlingOptions": {
@@ -91,8 +91,8 @@
                   "packageJson": "{}"
                 },
                 "input": {
-                  "seen": "{{step_2}}",
-                  "paid": "{{step_1['paid']}}"
+                  "seen": "{{step_2['output']}}",
+                  "paid": "{{step_1['output']['paid']}}"
                 },
                 "errorHandlingOptions": {
                   "continueOnFailure": {
@@ -118,7 +118,7 @@
                       "conditions": [
                         [
                           {
-                            "firstValue": "{{step_3['send']}}",
+                            "firstValue": "{{step_3['output']['send']}}",
                             "operator": "BOOLEAN_IS_TRUE"
                           }
                         ]
@@ -143,8 +143,8 @@
                       "actionName": "put",
                       "propertySettings": {},
                       "input": {
-                        "key": "review-request:{{step_1['orderId']}}",
-                        "value": "{{step_1['email']}}",
+                        "key": "review-request:{{step_1['output']['orderId']}}",
+                        "value": "{{step_1['output']['email']}}",
                         "store_scope": "FLOW"
                       },
                       "errorHandlingOptions": {
@@ -195,14 +195,14 @@
                             "from": "{{OPSKIT:FROM_EMAIL}}",
                             "senderName": "{{OPSKIT:BUSINESS_NAME}}",
                             "to": [
-                              "{{step_1['email']}}"
+                              "{{step_1['output']['email']}}"
                             ],
                             "cc": [],
                             "bcc": [],
                             "replyTo": "{{OPSKIT:REPLY_TO}}",
                             "subject": "{{OPSKIT:SUBJECT}}",
                             "body_type": "plain_text",
-                            "body": "Hi {{step_1['firstName']}},\n\nThank you for your order. If you have a minute, we would love to hear how it went:\n\n{{OPSKIT:REVIEW_URL}}\n\nThank you!\n{{OPSKIT:BUSINESS_NAME}}",
+                            "body": "Hi {{step_1['output']['firstName']}},\n\nThank you for your order. If you have a minute, we would love to hear how it went:\n\n{{OPSKIT:REVIEW_URL}}\n\nThank you!\n{{OPSKIT:BUSINESS_NAME}}",
                             "attachments": [],
                             "customHeaders": {}
                           },

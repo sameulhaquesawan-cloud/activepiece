@@ -43,7 +43,7 @@
               "packageJson": "{}"
             },
             "input": {
-              "body": "{{trigger['body']}}",
+              "body": "{{trigger['output']['body']}}",
               "defaultSource": "{{OPSKIT:LEAD_SOURCE}}"
             },
             "errorHandlingOptions": {
@@ -72,12 +72,12 @@
                 "as_string": true,
                 "values": {
                   "values": [
-                    "{{step_1['receivedAt']}}",
-                    "{{step_1['name']}}",
-                    "{{step_1['email']}}",
-                    "{{step_1['phone']}}",
-                    "{{step_1['message']}}",
-                    "{{step_1['source']}}"
+                    "{{step_1['output']['receivedAt']}}",
+                    "{{step_1['output']['name']}}",
+                    "{{step_1['output']['email']}}",
+                    "{{step_1['output']['phone']}}",
+                    "{{step_1['output']['message']}}",
+                    "{{step_1['output']['source']}}"
                   ]
                 }
               },
@@ -105,11 +105,11 @@
                   "receiver": [
                     "{{OPSKIT:OWNER_EMAIL}}"
                   ],
-                  "subject": "New lead: {{step_1['label']}}",
+                  "subject": "New lead: {{step_1['output']['label']}}",
                   "body_type": "plain_text",
-                  "body": "New lead from {{step_1['source']}} at {{step_1['receivedAt']}}\n\nName: {{step_1['name']}}\nEmail: {{step_1['email']}}\nPhone: {{step_1['phone']}}\n\n{{step_1['message']}}\n\nSaved to your leads sheet.",
+                  "body": "New lead from {{step_1['output']['source']}} at {{step_1['output']['receivedAt']}}\n\nName: {{step_1['output']['name']}}\nEmail: {{step_1['output']['email']}}\nPhone: {{step_1['output']['phone']}}\n\n{{step_1['output']['message']}}\n\nSaved to your leads sheet.",
                   "reply_to": [
-                    "{{step_1['email']}}"
+                    "{{step_1['output']['email']}}"
                   ],
                   "sender_name": "{{OPSKIT:BUSINESS_NAME}} leads",
                   "draft": false
@@ -136,11 +136,11 @@
                   "propertySettings": {},
                   "input": {
                     "receiver": [
-                      "{{step_1['email']}}"
+                      "{{step_1['output']['email']}}"
                     ],
                     "subject": "{{OPSKIT:REPLY_SUBJECT}}",
                     "body_type": "plain_text",
-                    "body": "Hi {{step_1['greetingName']}},\n\n{{OPSKIT:REPLY_TEXT}}\n\n{{OPSKIT:BUSINESS_NAME}}",
+                    "body": "Hi {{step_1['output']['greetingName']}},\n\n{{OPSKIT:REPLY_TEXT}}\n\n{{OPSKIT:BUSINESS_NAME}}",
                     "reply_to": [
                       "{{OPSKIT:OWNER_EMAIL}}"
                     ],

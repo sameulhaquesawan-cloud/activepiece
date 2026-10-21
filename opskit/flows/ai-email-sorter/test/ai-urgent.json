@@ -1,0 +1,5 @@
+{
+  "text": "{\"category\": \"urgent\", \"summary\": \"Jane wants to cancel tomorrow's 9:00 appointment and asks for a call.\"}",
+  "model": "example-model",
+  "finishReason": "stop"
+}

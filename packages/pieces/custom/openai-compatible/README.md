@@ -21,6 +21,16 @@ git checkout -- bun.lock
 ```
 `TS_NODE_TRANSPILE_ONLY` skips an upstream type error in `packages/core/utils` that only the CLI's ts-node trips on.
 
+**Release:** the archive that `opskit flows import` installs is committed in `release/` (checked by
+`opskit flows validate` against `release/SHA256SUMS`), so the owner's machine needs no TypeScript
+build. For every version bump: build, then
+```bash
+cp dist/opskit-piece-openai-compatible-<version>.tgz release/
+(cd release && sha256sum *.tgz > SHA256SUMS)
+```
+and update the pinned version in the templates that use it. 0.1.0 was rebuilt from the committed
+source on 21 Oct 2026: same content as the archive tested in Phase 1.
+
 ## Install into a Community Edition stack (no own image)
 Platform admin token (`POST /api/v1/authentication/sign-in` → `token`), then:
 ```bash

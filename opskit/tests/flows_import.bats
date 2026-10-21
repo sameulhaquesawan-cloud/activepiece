@@ -180,11 +180,20 @@ custom_template() {
     "${OPSKIT_FLOWS_DIR}/example/flow.json" > "${WORK}/f.json" && mv "${WORK}/f.json" "${OPSKIT_FLOWS_DIR}/example/flow.json"
 }
 
-@test "our custom piece is installed from its archive when the stack lacks it" {
+# fake_release: a small but well-formed custom piece archive committed in release/ with its checksum
+fake_release() {
+  local release="${OPSKIT_REPO_ROOT}/packages/pieces/custom/openai-compatible/release"
+  mkdir -p "${WORK}/pkg/package" "$release"
+  printf '{"name": "@opskit/piece-openai-compatible", "version": "0.1.0"}\n' > "${WORK}/pkg/package/package.json"
+  printf 'fake piece code\n' > "${WORK}/pkg/package/index.js"
+  tar -czf "${release}/opskit-piece-openai-compatible-0.1.0.tgz" -C "${WORK}/pkg" package
+  (cd "$release" && sha256sum opskit-piece-openai-compatible-0.1.0.tgz > SHA256SUMS)
+}
+
+@test "our custom piece is installed from its committed archive when the stack lacks it" {
   custom_template
   export OPSKIT_REPO_ROOT="${WORK}/repo"
-  mkdir -p "${OPSKIT_REPO_ROOT}/packages/pieces/custom/openai-compatible/dist"
-  printf 'fake archive' > "${OPSKIT_REPO_ROOT}/packages/pieces/custom/openai-compatible/dist/opskit-piece-openai-compatible-0.1.0.tgz"
+  fake_release
   responses '."POST /api/v1/pieces" = {status: 201, body: {}}'
   PW="$PASSWORD" import example acme
   [ "$status" -eq 0 ]
@@ -193,19 +202,32 @@ custom_template() {
   body="$(requests_to POST /api/v1/pieces | jq -r .body)"
   [[ "$body" == *'name="packageType"'*ARCHIVE* ]]
   [[ "$body" == *'name="pieceName"'*'@opskit/piece-openai-compatible'* ]]
-  [[ "$body" == *"fake archive"* ]]
+  [[ "$body" == *'filename="opskit-piece-openai-compatible-0.1.0.tgz"'* ]]
 }
 
-@test "a missing custom piece archive explains how to build it" {
+@test "a custom piece already on the stack is not installed again" {
+  custom_template
+  export OPSKIT_REPO_ROOT="${WORK}/repo"
+  fake_release
+  responses '."GET /api/v1/pieces/@opskit/piece-openai-compatible?*" = {body: {version: "0.1.0"}}'
+  PW="$PASSWORD" import example acme
+  [ "$status" -eq 0 ]
+  [ -z "$(requests_to POST /api/v1/pieces)" ]
+}
+
+@test "a missing custom piece archive stops the import before sign-in" {
   custom_template
   export OPSKIT_REPO_ROOT="${WORK}/repo"
   PW="$PASSWORD" import example acme
   [ "$status" -eq 1 ]
-  [[ "$output" == *"piece archive not built"*"Build the archive"* ]]
+  [[ "$output" == *"custom piece archive missing: packages/pieces/custom/openai-compatible/release/opskit-piece-openai-compatible-0.1.0.tgz"* ]]
+  [ "$(mock_requests | wc -l)" = "0" ]
 }
 
 @test "only the platform admin can install a custom piece" {
   custom_template
+  export OPSKIT_REPO_ROOT="${WORK}/repo"
+  fake_release
   responses '."POST /api/v1/authentication/sign-in".body.platformRole = "MEMBER"'
   PW="$PASSWORD" import example acme
   [ "$status" -eq 1 ]

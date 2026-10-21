@@ -1,0 +1,5 @@
+{
+  "text": "I think this is probably a newsletter.",
+  "model": "example-model",
+  "finishReason": "stop"
+}

@@ -1,5 +1,5 @@
 {
-  "name": "opskit example \u2014 webhook greeting",
+  "name": "opskit example — webhook greeting",
   "description": "Smallest opskit template: a webhook receives a name and the flow answers with a greeting. Used by the opskit tests.",
   "tags": [
     "opskit",
@@ -10,7 +10,7 @@
   ],
   "flows": [
     {
-      "displayName": "opskit example \u2014 webhook greeting",
+      "displayName": "opskit example — webhook greeting",
       "schemaVersion": "27",
       "notes": [],
       "trigger": {
@@ -39,7 +39,7 @@
               "packageJson": "{}"
             },
             "input": {
-              "name": "{{trigger['body']['name']}}",
+              "name": "{{trigger['output']['body']['name']}}",
               "greeting": "{{OPSKIT:GREETING}}"
             },
             "errorHandlingOptions": {

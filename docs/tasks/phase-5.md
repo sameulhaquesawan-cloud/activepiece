@@ -54,7 +54,7 @@ SPEC: Section 17 Phase 5, Section 11, Section 10 (failure notifications), Sectio
 ### [x] 5.7 — Template 3: review request
 - **Goal:** "order paid" webhook (Q3) → wait 7 days (Delay; shortened by a placeholder for testing) → review-request email; duplicate orders ignored.
 
-### [ ] 5.8 — Template 2: AI email sorter
+### [x] 5.8 — Template 2: AI email sorter
 - **Goal:** new Gmail email → AI classifies (Q2, client's own key) → Gmail label + Slack message for urgent ones; never sends email content anywhere else.
 
 ### [ ] 5.9 — Template 5: lead-ad alert

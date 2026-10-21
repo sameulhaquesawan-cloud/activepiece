@@ -1,0 +1,45 @@
+{
+  "message": {
+    "subject": "Appointment tomorrow - I have to cancel",
+    "from": {
+      "text": "Jane Example <jane@example.com>",
+      "value": [
+        {
+          "address": "jane@example.com",
+          "name": "Jane Example"
+        }
+      ]
+    },
+    "text": "Hi, I can't make it tomorrow at 9. Please call me back.",
+    "messageId": "<new-1@example.com>"
+  },
+  "thread": {
+    "data": {
+      "id": "thread-example-1",
+      "messages": [
+        {
+          "id": "msg-older",
+          "payload": {
+            "headers": [
+              {
+                "name": "Message-ID",
+                "value": "<older@example.com>"
+              }
+            ]
+          }
+        },
+        {
+          "id": "msg-new",
+          "payload": {
+            "headers": [
+              {
+                "name": "Message-ID",
+                "value": "<new-1@example.com>"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
