@@ -65,7 +65,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** every security claim maps to something the kit does (with the command or file); clearly marked "template — have it reviewed"; no claim of certifications we do not have.
 - **Manual verification:** owner reads the sub-processor list and fills in their business details.
 
-### [ ] 4b.8 — Owner sign-off and phase close
+### [x] 4b.8 — Owner sign-off and phase close
 - **Goal:** owner reviews 4b.2–4b.6, requests changes, signs off; record the sign-off and final numbers in PROGRESS; next phase (5) starts.
 - **Files likely touched:** `docs/PROGRESS.md`, `docs/go-to-market/README.md` (index + status of each document)
 - **Acceptance checks:** SPEC 4b accept: offer, pricing sheet, page draft, demo script signed off by the owner.

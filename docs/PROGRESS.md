@@ -1,14 +1,14 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.8 — owner sign-off (see `docs/tasks/phase-4b.md`)
+- **Current phase:** Phase 4b done (owner signed off 21 Oct 2026); approved follow-up: encrypt database backups
+- **Current task:** backup encryption (owner approved 21 Oct 2026) — then Phase 5 planning
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. **Owner:** review the drafts in `docs/go-to-market/` (start with `README.md`), ask for changes, then sign off (task 4b.8). Decide on the two backup/alert privacy items under Known issues (encrypt whole database backups; option to drop error excerpts for EU clients).
-2. Agent, after sign-off: record it, close Phase 4b, then Phase 5 (flow template library) via `/opskit-start-phase`.
-3. Owner (not blocking): Telegram bot (monitoring runbook A), age key + off-server storage (backup runbook A/B); optionally a real demo server (`demo-script.md` option A).
+1. Agent: encrypt database backups (owner approved): `agent/backup.sh` writes `db.dump.age` (age, owner public key) after the readability check and removes the plain dump; restore/restore-test decrypt with the owner key (old plain backups still restore); tests + selftest; update docs (`docs/go-to-market/eu/security-measures.md`, offer wording, runbook).
+2. Agent: then Phase 5 (flow template library) via `/opskit-start-phase`.
+3. Owner (not blocking): business name/domain (replace "YourBrand"), Telegram bot, age key + off-server storage, optional demo server; lawyer review of `docs/go-to-market/eu/`, accountant for VAT.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -18,7 +18,7 @@
 | 2 | Client deployment kit | Done (owner check-in pending) | `check` + `selftest` pass 20 Oct 2026 |
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
-| 4b | Go to market (owner-led) | In progress (owner accepted Q1–Q5, added Europe, 21 Oct 2026) | — |
+| 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Not started | — |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — Phase 4b closed.** Owner signed off all go-to-market drafts (4b.8) and approved encrypting the database backups (Known issue). `docs/go-to-market/README.md` statuses updated.
 - **2026-10-21 — 4b.7 draft done.** `docs/go-to-market/eu/`: DPA template (Art. 28; 48 h breach notice to the controller, 30-day deletion, sub-processor notice), security measures (each line points to the kit file/command; no certifications claimed; states what is *not* encrypted), sub-processor list (Hetzner, DigitalOcean, Backblaze EU region *(verify)*, Telegram, Slack, email provider, UptimeRobot), privacy notice; site `privacy.html` + `imprint.html` (legal notice for DE/AT) — all templates for legal review. Found and corrected an over-claim in all drafts ("encrypted backups"); logged two privacy items under Known issues. `docs/go-to-market/README.md` indexes everything. html-validate clean on all three pages.
 - **2026-10-21 — 4b.6 draft done.** `outreach.md` (ideal clients per niche + where to find them incl. Malt for the EU, first-20 mix, EU contact rules — no B2B cold email in DE/AT, three templates + follow-ups, 10 discovery questions, objections), `proposal-template.md` (situation, scope, flow table, price table, 4-week timeline, client duties, terms, signature), `zapier-migration-checklist.md` (inventory, piece check, Zapier/Make → Activepieces mapping verified against `packages/pieces/core` in 0.92.3, CE limits, rebuild/test, side-by-side switch-over, handover). Awaiting owner sign-off (4b.8).
 - **2026-10-21 — 4b.5 draft done.** `docs/go-to-market/demo-script.md`: timed 3-minute script (own builder → deliberate failure → Telegram alert with run link → backups + monthly restore-test result → daily summary → price), fallbacks per step, prospect Q&A. Preparation: option A real demo server `demo.yourbrand.com` (≈ €20/month, recommended — also rehearses the first install); option B Codespace (explore stack for the builder, kept practice stack for alerts/backups; practice stacks only answer on `*.localhost`). Awaiting owner sign-off (4b.8).
