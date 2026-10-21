@@ -20,7 +20,7 @@
         "name": "trigger",
         "displayName": "New email in Gmail",
         "type": "PIECE_TRIGGER",
-        "valid": true,
+        "valid": false,
         "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
         "settings": {
           "pieceName": "@activepieces/piece-gmail",
@@ -67,7 +67,7 @@
             "name": "step_2",
             "displayName": "Ask AI for the category",
             "type": "PIECE",
-            "valid": true,
+            "valid": false,
             "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
             "settings": {
               "pieceName": "@opskit/piece-openai-compatible",
@@ -189,7 +189,7 @@
                     "name": "step_5",
                     "displayName": "Label: urgent",
                     "type": "PIECE",
-                    "valid": true,
+                    "valid": false,
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
@@ -212,7 +212,7 @@
                       "name": "step_9",
                       "displayName": "Tell the team on Slack",
                       "type": "PIECE",
-                      "valid": true,
+                      "valid": false,
                       "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                       "settings": {
                         "pieceName": "@activepieces/piece-slack",
@@ -243,7 +243,7 @@
                     "name": "step_6",
                     "displayName": "Label: customer",
                     "type": "PIECE",
-                    "valid": true,
+                    "valid": false,
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
@@ -267,7 +267,7 @@
                     "name": "step_7",
                     "displayName": "Label: invoice",
                     "type": "PIECE",
-                    "valid": true,
+                    "valid": false,
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
@@ -291,7 +291,7 @@
                     "name": "step_8",
                     "displayName": "Label: newsletter",
                     "type": "PIECE",
-                    "valid": true,
+                    "valid": false,
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
@@ -315,7 +315,7 @@
                     "name": "step_10",
                     "displayName": "Label: other",
                     "type": "PIECE",
-                    "valid": true,
+                    "valid": false,
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",

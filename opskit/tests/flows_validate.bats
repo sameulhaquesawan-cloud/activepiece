@@ -211,3 +211,8 @@ CODE_INPUT='.flows[0].trigger.nextAction.settings.input'
   [ "$status" -eq 1 ]
   [[ "$output" == *"Usage: opskit flows list"* ]]
 }
+
+@test "steps of pieces that need the client's account must start incomplete" {
+  yq -i '.connections = [{"piece": "@activepieces/piece-webhook", "purpose": "pretend it needs an account", "options": ["Connect"]}]' "${T}/template.yaml"
+  expect_problem "steps that need the client's connection must be \"valid\": false: trigger"
+}

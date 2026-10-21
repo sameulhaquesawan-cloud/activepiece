@@ -39,7 +39,7 @@
           "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
           "settings": {
             "sourceCode": {
-              "code": "export const code = async (inputs) => {\n  const body = inputs.body || {};\n  const text = (value, max) => String(value ?? '').trim().slice(0, max);\n  const email = text(body.email, 254).toLowerCase();\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new Error('Invalid email in field \"email\" - lead not saved');\n  }\n  const name = text(body.name, 200);\n  return {\n    receivedAt: new Date().toISOString(),\n    name,\n    email,\n    greetingName: name || 'there',\n    label: name || email,\n    phone: text(body.phone, 50),\n    message: text(body.message, 5000),\n    source: text(body.source, 100) || inputs.defaultSource,\n  };\n};",
+              "code": "export const code = async (inputs) => {\n  const body = inputs.body || {};\n  const text = (value, max) => String(value ?? '').trim().slice(0, max);\n  const email = text(body.email, 254).toLowerCase();\n  if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {\n    throw new Error('Invalid email in field \"email\" - lead not saved');\n  }\n  const name = text(body.name, 200);\n  return {\n    receivedAt: new Date().toISOString(),\n    name,\n    email,\n    greetingName: name.split(/\\s+/)[0] || 'there',\n    label: name || email,\n    phone: text(body.phone, 50),\n    message: text(body.message, 5000),\n    source: text(body.source, 100) || inputs.defaultSource,\n  };\n};",
               "packageJson": "{}"
             },
             "input": {
@@ -59,7 +59,7 @@
             "name": "step_2",
             "displayName": "Add lead to sheet",
             "type": "PIECE",
-            "valid": true,
+            "valid": false,
             "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
             "settings": {
               "pieceName": "@activepieces/piece-google-sheets",
@@ -94,7 +94,7 @@
               "name": "step_3",
               "displayName": "Email the new lead to the owner",
               "type": "PIECE",
-              "valid": true,
+              "valid": false,
               "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
               "settings": {
                 "pieceName": "@activepieces/piece-gmail",
@@ -112,7 +112,10 @@
                     "{{step_1['output']['email']}}"
                   ],
                   "sender_name": "{{OPSKIT:BUSINESS_NAME}} leads",
-                  "draft": false
+                  "draft": false,
+                  "cc": [],
+                  "bcc": [],
+                  "attachments": []
                 },
                 "errorHandlingOptions": {
                   "continueOnFailure": {
@@ -127,7 +130,7 @@
                 "name": "step_4",
                 "displayName": "Auto-reply to the lead",
                 "type": "PIECE",
-                "valid": true,
+                "valid": false,
                 "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                 "settings": {
                   "pieceName": "@activepieces/piece-gmail",
@@ -145,7 +148,10 @@
                       "{{OPSKIT:OWNER_EMAIL}}"
                     ],
                     "sender_name": "{{OPSKIT:BUSINESS_NAME}}",
-                    "draft": false
+                    "draft": false,
+                    "cc": [],
+                    "bcc": [],
+                    "attachments": []
                   },
                   "errorHandlingOptions": {
                     "continueOnFailure": {

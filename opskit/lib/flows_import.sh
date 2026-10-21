@@ -189,10 +189,11 @@ flows_import_one() {
     log_info "removed the half-created flow ${id}"
     return 1
   fi
-  invalid="$(jq -r '[.version.trigger | .. | objects | select(has("valid") and has("settings") and .valid == false) | .displayName] | join(", ")' \
-    "${FLOWS_TMP}/imported.json" 2>/dev/null || true)"
+  invalid="$(jq -r --argjson i "$index" --argjson pieces "$FLOWS_CONNECTION_PIECES" \
+    '[.flows[$i].trigger | .. | objects | select(has("settings") and (.settings.pieceName as $p | $pieces | index($p)))
+      | .displayName] | join(", ")' "$filled")"
   log_ok "imported \"${name}\" (switched off): ${FLOWS_BASE_URL}/flows/${id}"
-  [ -z "$invalid" ] || log_info "     steps to finish in the builder (pick the client's connection): ${invalid}"
+  [ -z "$invalid" ] || log_info "     steps to finish in the builder (pick the client's connection and its dropdowns): ${invalid}"
 }
 
 flows_next_steps() {

@@ -69,6 +69,7 @@ flows_problems() {
   flows_reference_problems "${dir}/flow.json"
   flows_piece_problems "$dir"
   flows_custom_piece_problems "$dir"
+  flows_connection_step_problems "$dir"
   flows_failure_problems "$dir"
   flows_leak_problems "$dir"
   flows_test_problems "$dir"
@@ -141,6 +142,14 @@ flows_custom_piece_problems() {
     (cd "$release" && grep -F " ${file}" SHA256SUMS 2>/dev/null | sha256sum -c --status 2>/dev/null) \
       || printf 'custom piece archive %s does not match %s/release/SHA256SUMS\n' "$file" "$custom"
   done < <(yq -r '.pieces[] | [.name, .version, .custom // ""] | @tsv' "${dir}/template.yaml")
+}
+
+# flows_connection_step_problems <template dir>: steps that need the client's account start incomplete
+flows_connection_step_problems() {
+  local dir="$1"
+  jq -r --argjson pieces "$(yq -o=json -I=0 '[.connections[]?.piece]' "${dir}/template.yaml")" '
+    [.. | objects | select(has("settings") and .valid == true and (.settings.pieceName as $p | $pieces | index($p))) | .name]
+    | if length > 0 then "steps that need the client'"'"'s connection must be \"valid\": false: \(join(", "))" else empty end' "${dir}/flow.json"
 }
 
 flows_failure_problems() {

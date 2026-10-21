@@ -36,10 +36,11 @@ opskit flows import ai-email-sorter <client> --set BUSINESS_NAME="…" --set BUS
 The import installs our `openai-compatible` piece on the client's server first (platform admin).
 
 ## Connections (the client's own accounts)
-- **Gmail** — "OAuth2 (Recommended)", "Custom OAuth2 App (Advanced)" (own Google Cloud app, redirect
+How-to: `../CONNECTIONS.md`.
+- **Gmail** — **Connect** (tick every box), Try another method → Custom OAuth2 App (own Google Cloud app, redirect
   `https://<domain>/redirect`) or a Workspace service account.
 - **OpenAI Compatible (BYOK)** — base URL and the client's API key.
-- **Slack** — "OAuth2 (Recommended)" or "Bot Token" from a Slack app the client creates (no third party).
+- **Slack** — **Connect**, or Try another method → Bot Token from a Slack app the client creates (no third party).
 
 In the flow: trigger → Gmail connection (optionally restrict to a Gmail category or label); "Ask AI for
 the category" → connection and model (a small, cheap model is enough; reasoning is set to low); each

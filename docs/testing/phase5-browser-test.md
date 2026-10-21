@@ -1,5 +1,9 @@
 # Phase 5 real-account test — instructions for Claude in Chrome
 
+**Version 2 (21 Oct 2026).** First run: T1 partly passed, T2 blocked by Google Sheets' "insufficient
+authentication scopes". Fixed since: Gmail steps no longer import as "Incomplete"; Sheets now use a
+Google service account; the auto-reply greets by first name. Run T1 and T2 again (T3/T4 optional).
+
 **Owner: before pasting.** Fill in the 3 values in "My values" below. Be signed in, in this Chrome, to:
 GitHub (your Codespace), a **test** Google account (Gmail + Google Sheets), and — only for tests 4 —
 a free Slack workspace and an AI provider account (e.g. OpenRouter). Do **not** put any password, API
@@ -45,6 +49,11 @@ down exactly what you see. At the end, produce the report described in "Final re
    opskit/bin/explore-stack up
    ```
    Wait for the line `[ok] Activepieces is up: https://…-8080.…`. Copy that URL: it is BUILDER_URL.
+   In VS Code open the **Ports** tab: if port 8080 shows "Private", right-click it → Port Visibility →
+   **Public** (practice data only). If BUILDER_URL shows 404 or a GitHub "development port" page, click
+   Continue and/or open it in a fresh tab.
+   If the codespace stops while you work (idle timeout), reopen it and run `opskit/bin/explore-stack up`
+   again; the builder keeps its data.
 3. Open BUILDER_URL in a new tab. If it shows a sign-up page, sign up with MY_EMAIL (first name
    "Opskit", last name "Test"); **ask me to type the password**. If it shows sign-in, ask me to sign
    in (the account may already exist from an earlier test; then I tell you its email). You should see
@@ -67,13 +76,30 @@ or `{}` output means it was received.
    ```
    opskit/bin/opskit flows import lead-capture --url http://localhost:8080 --email ⟨ADMIN_EMAIL⟩ --set OWNER_EMAIL=⟨MY_EMAIL⟩ --set BUSINESS_NAME="Opskit Test"
    ```
-   Check the output lists steps still needing a connection ("Add lead to sheet", the two email steps).
+   Check the output line "steps to finish in the builder" names "Add lead to sheet", "Email the new lead
+   to the owner" and "Auto-reply to the lead". If it says the flow "is already imported", first delete
+   the old "Lead capture" flow in the builder (row menu → Delete; it was created by the first test run),
+   then run the command again.
 3. In the builder open the flow "Lead capture". Check it is **not published** (off).
-4. Click "Add lead to sheet" → Connection → create a new Google Sheets connection → choose
-   "OAuth2 (Recommended)" → sign in with the test Google account (let me approve). Select spreadsheet
-   `opskit test - Leads` and its sheet. Leave other fields as they are.
-5. Click "Email the new lead to the owner" → create a Gmail connection the same way. Pick the same
-   Gmail connection in "Auto-reply to the lead".
+4. Google Sheets through a **service account** (once; reused in T2). In a new tab open
+   https://console.cloud.google.com with the test Google account:
+   - a) create a project "opskit-test" (accept the terms if asked; no billing needed);
+   - b) APIs & Services → Library → enable **Google Sheets API**, then **Google Drive API**;
+   - c) IAM & Admin → Service Accounts → Create service account, name `activepieces`, skip the optional
+     steps → Done. Copy its email (`activepieces@…iam.gserviceaccount.com`) = SA_EMAIL;
+   - d) open it → Keys → Add key → Create new key → JSON → Create. A file downloads. **Do not open or
+     read it yourself.**
+   - e) in `opskit test - Leads` click Share → add SA_EMAIL as **Editor** → untick "Notify" → Share.
+   Back in the builder: "Add lead to sheet" → Connection → new → **Try another method** → **Service
+   Account (Advanced)** → name it "Sheets (service account)". **Ask me to open the downloaded JSON file
+   and paste its whole content into "Service Account JSON Key"**; leave "User Email" empty; Save.
+   Then pick spreadsheet `opskit test - Leads` and its sheet. Open "Values": if it is empty, re-enter,
+   in this order: `{{step_1['output']['receivedAt']}}`, `{{step_1['output']['name']}}`,
+   `{{step_1['output']['email']}}`, `{{step_1['output']['phone']}}`, `{{step_1['output']['message']}}`,
+   `{{step_1['output']['source']}}` (note in the report whether it was cleared).
+5. "Email the new lead to the owner" → reuse the Gmail connection from the first run if it is listed,
+   else create one with **Connect** (let me approve; all boxes ticked). Same connection in "Auto-reply to
+   the lead". Check that neither email step shows "Incomplete" now (report if they do).
 6. Click the trigger "Website form (webhook)". It shows a test URL. Run in the terminal (sends a sample
    lead whose email is your address with "+lead"):
    ```
@@ -85,7 +111,8 @@ or `{}` output means it was received.
    - b) a new row in the sheet with the 6 columns in order (time, Jane Example, your +lead address,
      phone, message, "contact form");
    - c) in Gmail: an email "New lead: Jane Example" from "Opskit Test leads";
-   - d) an auto-reply "Thanks for getting in touch" starting "Hi Jane," and signed "Opskit Test".
+   - d) an auto-reply "Thanks for getting in touch" starting "Hi Jane," and signed "Opskit Test"
+     (open both emails and check the text on screen).
 8. Publish the flow (switch it on). Then send an invalid lead to the live URL:
    ```
    curl -s -X POST "http://localhost:8080/api/v1/webhooks/⟨FLOW_ID⟩" -H 'content-type: application/json' -d @opskit/flows/lead-capture/test/bad-email.json
@@ -106,9 +133,12 @@ or `{}` output means it was received.
    ```
    opskit/bin/opskit flows import invoice-reminder --url http://localhost:8080 --email ⟨ADMIN_EMAIL⟩ --set OWNER_EMAIL=⟨MY_EMAIL⟩ --set BUSINESS_NAME="Opskit Test" --set TIMEZONE=Europe/Berlin --set PAYMENT_INFO="Please pay by bank transfer quoting the invoice number."
    ```
-3. Open "Invoice reminder". In "Read invoices sheet" and "Mark invoice as reminded": pick the Google
-   Sheets connection from T1, spreadsheet `opskit test - Invoices`, its sheet. In "Send reminder
-   email": the Gmail connection.
+3. Share `opskit test - Invoices` with SA_EMAIL as Editor (as in T1 4e). Open "Invoice reminder". In
+   "Read invoices sheet" and "Mark invoice as reminded": pick the "Sheets (service account)"
+   connection, spreadsheet `opskit test - Invoices`, its sheet. In "Mark invoice as reminded" check
+   "Row id" still says `{{step_3['output']['item']['row']}}` and "Values" still has 6 empty entries and
+   `{{step_2['output']['checkedAt']}}` (note if cleared; re-enter if so). In "Send reminder email": the
+   Gmail connection. No step should show "Incomplete" (report any that do).
 4. Click the trigger "Every morning" and use its test button (if it asks for sample data, accept).
 5. Click "Test Flow". Check:
    - a) the run succeeds;
@@ -157,7 +187,7 @@ Slack workspace with a test channel. Otherwise mark T4 SKIPPED.
    - "Ask AI for the category" → new "OpenAI Compatible (BYOK)" connection: Base URL of the provider,
      **ask me to type the API key**; then pick a small, cheap model in the Model list (note which);
    - each "Label: …" step → Gmail connection and the matching `AI/…` label;
-   - "Tell the team on Slack" → Slack connection ("OAuth2 (Recommended)", let me approve) and the test
+   - "Tell the team on Slack" → Slack connection (**Connect**, let me approve) and the test
      channel.
 4. From Gmail send yourself (to MY_EMAIL) an email: subject "Appointment tomorrow - I have to cancel",
    body "Hi, I can't make it tomorrow at 9. Please call me back.". Wait until it is in the inbox.
@@ -176,7 +206,7 @@ Needs a Meta developer app per client (see `opskit/flows/lead-ad-alert/README.md
 unless I tell you the Meta app is ready.
 
 ## Clean up
-Switch off every flow you published. Leave the spreadsheets, labels and connections (I will review
+Switch off every flow you published, and the old flow "Phase 0 - Lead capture (practice)" if it is on. Leave the spreadsheets, labels and connections (I will review
 them). Do not delete the codespace.
 
 ## Final report
@@ -191,12 +221,15 @@ T0 setup: PASS/FAIL — notes:
 T1 lead capture:
   import output OK (steps needing connection listed): PASS/FAIL
   flow off after import: PASS/FAIL
-  Google Sheets connection (OAuth2 Recommended): PASS/FAIL — notes:
-  Gmail connection: PASS/FAIL
+  import lists the 3 step names: PASS/FAIL
+  Sheets service account connection + spreadsheet dropdown works: PASS/FAIL — notes:
+  "Values" cleared after picking the sheet: yes/no
+  Gmail connection, no step "Incomplete": PASS/FAIL
   7a steps green / 7b sheet row (columns in order) / 7c owner email / 7d auto-reply: PASS/FAIL each
   8 invalid lead → Failed at "Check lead", no row: PASS/FAIL — exact error text:
 T2 invoice reminder:
   date format on column E possible: yes/no
+  "Mark invoice as reminded" fields kept after picking the sheet: yes/no (which were cleared)
   5a run ok / 5c one reminder + bcc / 5d column G filled, others unchanged: PASS/FAIL each
   5b "Read invoices sheet" output (first ~15 lines, exact):
   6 second test sends nothing: PASS/FAIL

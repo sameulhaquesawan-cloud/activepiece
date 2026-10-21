@@ -27,15 +27,17 @@ automatically, so no lead is saved or emailed twice.
 opskit flows import lead-capture <client> --set OWNER_EMAIL=… --set BUSINESS_NAME="…"
 ```
 
-## Connections (the client's own accounts)
-- **Google Sheets** — "OAuth2 (Recommended)" (sign in with Google through Activepieces' sign-in service), or
-  "Service Account (Advanced)": share the sheet with the service account's email (no third party).
-- **Gmail** — "OAuth2 (Recommended)", or "Custom OAuth2 App (Advanced)" with the client's own Google Cloud
-  app (redirect URL `https://<domain>/redirect`), or a Workspace service account with domain-wide
-  delegation.
+## Connections (the client's own accounts — how-to: `../CONNECTIONS.md`)
+- **Google Sheets** — Try another method → **Service Account (Advanced)**, sheet shared with the service
+  account (our default; "Connect" failed with "insufficient authentication scopes" in our test).
+- **Gmail** — **Connect** (tick every box on Google's screen), or Try another method → Custom OAuth2 App
+  with the client's own Google Cloud app.
 
-Then in the flow: step "Add lead to sheet" → pick the Sheets connection, the spreadsheet and the sheet;
-both Gmail steps → pick the Gmail connection.
+Then in the flow: step "Add lead to sheet" → pick the Sheets connection, then the spreadsheet and the
+sheet. **Check "Values" afterwards:** choosing a sheet can clear it; if it is empty, put back, in order
+(A–F): `{{step_1['output']['receivedAt']}}`, `{{step_1['output']['name']}}`,
+`{{step_1['output']['email']}}`, `{{step_1['output']['phone']}}`, `{{step_1['output']['message']}}`,
+`{{step_1['output']['source']}}`. Both Gmail steps → pick the Gmail connection.
 
 ## Hooking up the form
 Publish the flow, open the trigger and copy the **production** webhook URL. Point the form at it
@@ -44,6 +46,8 @@ optionally `source`. Most form tools can send submissions to a webhook URL, nati
 map their field names to these. Check the field names once in the sample run.
 
 ## Sample run
+Test with **Test Flow** (whole flow) rather than single steps: a single email step tested before "Check
+lead" has data fails with "Recipient address required".
 1. With the flow open, use **Test** on the trigger and send `test/good-lead.json`:
    `curl -X POST <test webhook url> -H 'content-type: application/json' -d @test/good-lead.json`
 2. Test the flow → a row appears in the sheet, the owner gets "New lead: Jane Example", the auto-reply

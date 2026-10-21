@@ -35,14 +35,14 @@ connections:
   - piece: "@activepieces/piece-google-sheets"
     purpose: read the invoices sheet and mark reminded rows
     options:
-      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
-      - "Service Account (Advanced): share the sheet with the service account's email; no third party"
+      - "Try another method → Service Account (Advanced): share the sheet with the service account's email; no third party; our default for Sheets"
+      - "Connect: Activepieces' Google sign-in (tick every permission box on Google's screen)"
   - piece: "@activepieces/piece-gmail"
     purpose: send the reminders from the client's mailbox
     options:
-      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
-      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
-      - "Service Account (Advanced): Google Workspace with domain-wide delegation only"
+      - "Connect: Activepieces' Google sign-in (tick every permission box on Google's screen)"
+      - "Try another method → Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Try another method → Service Account (Advanced): Google Workspace with domain-wide delegation only"
 failure: fail-run
 test:
   runs:

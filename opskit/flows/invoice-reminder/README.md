@@ -42,9 +42,10 @@ opskit flows import invoice-reminder <client> --set OWNER_EMAIL=… --set BUSINE
 ```
 
 ## Connections (the client's own accounts)
-- **Google Sheets** — "OAuth2 (Recommended)", or "Service Account (Advanced)" with the sheet shared with
-  the service account's email (no third party).
-- **Gmail** — "OAuth2 (Recommended)", or "Custom OAuth2 App (Advanced)" (client's own Google Cloud app,
+How-to: `../CONNECTIONS.md`.
+- **Google Sheets** — Try another method → **Service Account (Advanced)**, sheet shared with the service
+  account as Editor (our default; "Connect" failed with "insufficient authentication scopes" in our test).
+- **Gmail** — **Connect** (tick every box), or Try another method → Custom OAuth2 App (client's own Google Cloud app,
   redirect `https://<domain>/redirect`), or a Workspace service account.
 
 In the flow: "Read invoices sheet" and "Mark invoice as reminded" → pick the Sheets connection, the

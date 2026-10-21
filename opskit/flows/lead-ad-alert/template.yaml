@@ -21,17 +21,17 @@ connections:
   - piece: "@activepieces/piece-facebook-leads"
     purpose: receive leads from the client's Facebook page (and Instagram ads using its forms)
     options:
-      - "Custom OAuth2 App (Advanced) only: a Meta app per client stack, plus its app secret in channels.env and client.yaml app_webhooks (see README)"
+      - "Try another method → Custom OAuth2 App (Advanced) only: a Meta app per client stack, plus its app secret in channels.env and client.yaml app_webhooks (see README)"
   - piece: "@activepieces/piece-hubspot"
     purpose: create or update the lead as a HubSpot contact
     options:
-      - "OAuth2 (Recommended): sign in with HubSpot (via Activepieces' sign-in service)"
-      - "Private App Access Token: a HubSpot private app with contacts read/write scopes; no third party"
+      - "Connect: Activepieces' HubSpot sign-in"
+      - "Try another method → Private App Access Token: a HubSpot private app with contacts read/write scopes; no third party"
   - piece: "@activepieces/piece-gmail"
     purpose: email the sales person from the client's mailbox
     options:
-      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
-      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Connect: Activepieces' Google sign-in (tick every permission box on Google's screen)"
+      - "Try another method → Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
 failure: fail-run
 test:
   runs:

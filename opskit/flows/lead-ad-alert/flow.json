@@ -20,7 +20,7 @@
         "name": "trigger",
         "displayName": "New Facebook lead",
         "type": "PIECE_TRIGGER",
-        "valid": true,
+        "valid": false,
         "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
         "settings": {
           "pieceName": "@activepieces/piece-facebook-leads",
@@ -56,7 +56,7 @@
             "name": "step_2",
             "displayName": "Add or update contact in HubSpot",
             "type": "PIECE",
-            "valid": true,
+            "valid": false,
             "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
             "settings": {
               "pieceName": "@activepieces/piece-hubspot",
@@ -85,7 +85,7 @@
               "name": "step_3",
               "displayName": "Email the sales person",
               "type": "PIECE",
-              "valid": true,
+              "valid": false,
               "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
               "settings": {
                 "pieceName": "@activepieces/piece-gmail",
@@ -103,7 +103,10 @@
                     "{{step_1['output']['email']}}"
                   ],
                   "sender_name": "{{OPSKIT:BUSINESS_NAME}} leads",
-                  "draft": false
+                  "draft": false,
+                  "cc": [],
+                  "bcc": [],
+                  "attachments": []
                 },
                 "errorHandlingOptions": {
                   "continueOnFailure": {

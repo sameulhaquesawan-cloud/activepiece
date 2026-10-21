@@ -165,11 +165,14 @@ requests_to() {
   [ -z "$(requests_to POST /api/v1/flows)" ]
 }
 
-@test "steps that still need a connection are listed" {
-  responses '."POST /api/v1/flows/flow1".body.version.trigger.nextAction.valid = false'
+@test "steps of pieces that need the client's account are listed by name" {
+  yq -i '.connections = [{"piece": "@activepieces/piece-webhook", "purpose": "pretend it needs an account", "options": ["Connect"]}]' \
+    "${OPSKIT_FLOWS_DIR}/example/template.yaml"
+  jq '.flows[0].trigger.valid = false' "${OPSKIT_FLOWS_DIR}/example/flow.json" > "${WORK}/f.json" && mv "${WORK}/f.json" "${OPSKIT_FLOWS_DIR}/example/flow.json"
   PW="$PASSWORD" import example acme
   [ "$status" -eq 0 ]
-  [[ "$output" == *"steps to finish in the builder (pick the client's connection): Check name"* ]]
+  [[ "$output" == *"steps to finish in the builder (pick the client's connection and its dropdowns): Catch webhook"* ]]
+  [[ "$output" != *"Check name"* ]]
 }
 
 custom_template() {

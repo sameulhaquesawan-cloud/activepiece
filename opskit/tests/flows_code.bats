@@ -10,6 +10,7 @@ load helpers/flow_code
   [ "$(jq -r .name <<< "$output")" = "Jane Example" ]
   [ "$(jq -r .source <<< "$output")" = "contact form" ]
   [ "$(jq -r .label <<< "$output")" = "Jane Example" ]
+  [ "$(jq -r .greetingName <<< "$output")" = "Jane" ]
   [[ "$(jq -r .receivedAt <<< "$output")" == 20*Z ]]
 }
 

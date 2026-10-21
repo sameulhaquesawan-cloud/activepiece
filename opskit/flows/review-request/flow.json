@@ -184,7 +184,7 @@
                         "name": "step_7",
                         "displayName": "Send review request",
                         "type": "PIECE",
-                        "valid": true,
+                        "valid": false,
                         "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                         "settings": {
                           "pieceName": "@activepieces/piece-smtp",

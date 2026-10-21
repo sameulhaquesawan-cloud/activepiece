@@ -6,9 +6,9 @@
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Owner: create `main` on GitHub and merge (the agent was not permitted to push `main`): see the agent's message of 21 Oct 2026; `main` must contain the pinned 0.92.3 release + all our commits.
-2. Owner: run `docs/testing/phase5-browser-test.md` with Claude in Chrome, paste the report into the opskit session.
-3. Agent: act on that report (fix templates, record CHECKLIST results), then `/opskit-start-phase` for Phase 6.
+1. Owner: create `main` on GitHub (branch dropdown → "main" → create from `claude/funny-keller-x6sgy1`; Settings → Default branch → main). The agent may not push `main`.
+2. Owner: run `docs/testing/phase5-browser-test.md` **version 2** (T1 + T2 again; Sheets via service account) with Claude in Chrome and paste the report back.
+3. Agent: act on that report (shape of Sheets `get-many-rows` output, whether choosing a sheet clears mappings), then `/opskit-start-phase` for Phase 6.
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
@@ -28,6 +28,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — Browser test 1 (owner, Claude in Chrome) and fixes.** Results: T0 pass (port 8080 had to be Public); T1 import + "Check lead" failure path + both Gmail sends pass; Sheets via "Connect" failed `403 insufficient authentication scopes`; T2 blocked by that; T3–T5 skipped. Fixes: Gmail send steps now carry `cc`/`bcc`/`attachments` `[]` (they imported "Incomplete"); new `opskit flows check-pieces` compares every step with the catalog (`flows_pieces.bats`, live test in check/CI); steps needing the client's account are `valid: false` and listed by name at import (validate rule + test); auto-reply greets by first name; `opskit/flows/CONNECTIONS.md` (service account for Sheets by default, exact builder labels "Connect"/"Try another method"); READMEs, runbook, CONVENTIONS, ASSUMPTIONS #20–21; browser test plan version 2.
 - **2026-10-21 — Phase 5 signed off; browser test plan.** Owner signed off and asked to merge; creating `main` was blocked by the session's permission check (owner does it, see Next steps). `opskit flows import <template> --url <builder>` now works without a client id (practice Codespace); test in `flows_import.bats`. `docs/testing/phase5-browser-test.md`: step-by-step real-account test for Claude in Chrome (T1–T4, T5 skipped without a Meta app), secrets always typed by the owner, fixed report format.
 - **2026-10-21 — 5.11–5.12 acceptance and phase close.** CI run 33 green with real imports and stub runs of every template; `docs/runbooks/flow-templates.md` (owner: import for a client, connect, test, switch on, pause), ADR-017, go-to-market updated (offer, site, demo script: ready-made flows no longer "coming"). Verification report below. Verify: read the runbook; `opskit/bin/opskit flows list`.
 - **2026-10-21 — 5.9 lead-ad alert.** `opskit/flows/lead-ad-alert/` (Facebook Lead Ads `new_lead` → read answers (no email fails, naming only the lead id) → HubSpot `create-or-update-contact` (firstname, lastname, phone, lifecycle lead) → Gmail to `SALES_EMAIL`); README covers the per-client Meta app (redirect, webhook `…/api/v1/app-events/facebook-leads`, verify token `activepieces`, app secret). `client.yaml` `app_webhooks.facebook_leads.secret` names a `channels.env` entry; render writes `AP_APP_WEBHOOK_SECRETS` (default `{}`; missing/malformed secret stops the render). Tests: `render_client.bats` +3 (incl. docker compose reads the JSON), `flows_code.bats` +2, `flows_stub.bats` +1. Not verified: Meta development-mode limits (CHECKLIST).

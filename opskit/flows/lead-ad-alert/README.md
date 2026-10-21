@@ -46,9 +46,10 @@ opskit flows import lead-ad-alert <client> --set SALES_EMAIL=… --set BUSINESS_
 
 ## Connections (the client's own accounts)
 - **Facebook Lead Ads** — "Custom OAuth2 App (Advanced)" with the App ID / App secret from step 4.
-- **HubSpot** — "OAuth2 (Recommended)" or "Private App Access Token" (a private app with
+How-to: `../CONNECTIONS.md`.
+- **HubSpot** — **Connect**, or Try another method → Private App Access Token (a private app with
   `crm.objects.contacts.read` and `.write` scopes; no third party).
-- **Gmail** — "OAuth2 (Recommended)" or the client's own Google Cloud app.
+- **Gmail** — **Connect** (tick every box) or Try another method → the client's own Google Cloud app.
 
 In the flow: trigger → Facebook connection, page and (optionally) form; HubSpot and Gmail steps →
 their connections.

@@ -36,7 +36,7 @@
           "name": "step_1",
           "displayName": "Read invoices sheet",
           "type": "PIECE",
-          "valid": true,
+          "valid": false,
           "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
           "settings": {
             "pieceName": "@activepieces/piece-google-sheets",
@@ -94,7 +94,7 @@
                 "name": "step_4",
                 "displayName": "Send reminder email",
                 "type": "PIECE",
-                "valid": true,
+                "valid": false,
                 "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                 "settings": {
                   "pieceName": "@activepieces/piece-gmail",
@@ -115,7 +115,9 @@
                       "{{OPSKIT:OWNER_EMAIL}}"
                     ],
                     "sender_name": "{{OPSKIT:BUSINESS_NAME}}",
-                    "draft": false
+                    "draft": false,
+                    "cc": [],
+                    "attachments": []
                   },
                   "errorHandlingOptions": {
                     "continueOnFailure": {
@@ -130,7 +132,7 @@
                   "name": "step_5",
                   "displayName": "Mark invoice as reminded",
                   "type": "PIECE",
-                  "valid": true,
+                  "valid": false,
                   "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                   "settings": {
                     "pieceName": "@activepieces/piece-google-sheets",

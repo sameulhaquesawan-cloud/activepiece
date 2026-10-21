@@ -32,8 +32,9 @@ opskit/bin/opskit flows list
 
 ## Connect, test, switch on (with the client, on a call)
 1. **Connections:** in the builder, the client creates each connection themselves (they type their own
-   passwords and keys — never send them to you). Then open the flow and pick the connection in every
-   step the import listed.
+   passwords and keys — never send them to you), following `opskit/flows/CONNECTIONS.md` (Google Sheets:
+   service account). Then open the flow and pick the connection in every step the import listed, and
+   check the step's other fields are still filled (choosing a sheet can clear column mappings).
 2. **Test:** follow "Sample run" in the README (test buttons in the builder, or the `test/` payloads with
    `curl`). Use your own email address as the test recipient.
 3. **Switch on:** Publish. Watch the first real run on the Runs page.
@@ -50,7 +51,9 @@ cause (often an expired connection: reconnect it), then **Retry** the failed run
 
 ## For you (maintenance)
 - `opskit/bin/opskit flows validate` must pass before any template change is committed (it runs in
-  `opskit/bin/check` and CI).
+  `opskit/bin/check` and CI). `opskit/bin/opskit flows check-pieces` compares every step with the
+  official piece definitions (needs internet; also in check/CI): it catches steps the builder would
+  show as "Incomplete".
 - After an Activepieces upgrade: re-pin the piece versions in `flow.json` + `template.yaml`, run CI
   (it imports every template and replays its samples), redo the CHECKLIST of templates whose pieces
   changed.

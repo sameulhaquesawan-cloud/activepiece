@@ -23,6 +23,15 @@
   (`{{step_1['email']}}`) is only rewritten for imports that declare an older schema; in ours it
   silently resolves to nothing. `flows validate` rejects it.
 
+## Step inputs
+- Every list input of a piece step must be present, `[]` when unused (`cc`, `bcc`, `attachments`, …):
+  0.92.3 treats a missing optional list as invalid and the builder shows the step "Incomplete".
+  Required inputs are filled; dropdowns that depend on the client's account (spreadsheet, label,
+  channel, page) stay empty for the client to pick. `flows check-pieces` checks this against the
+  catalog.
+- Steps of pieces listed in `connections` are `"valid": false` (they cannot run before the client picks
+  a connection; Activepieces' own exports do the same); the import lists them by name.
+
 ## Pieces
 - Every piece step pins the exact version the template was tested with, listed in `template.yaml`
   `pieces` (the import fails if the client's stack does not know that version). Re-pin and re-test
@@ -33,8 +42,9 @@
 - Piece steps that need an account leave the connection empty; the client creates it in their builder
   and picks it in the step. We never put a client's credentials in a template, a file or chat.
 - `template.yaml` `connections` lists, per piece, what it is for and the ways to connect. Name both:
-  "OAuth2 (Recommended)" (quick; for Gmail, Sheets, Slack and HubSpot it signs in through Activepieces'
-  `secrets.activepieces.com`, which then sees the tokens) and an own-credential option with no third
+  "Connect" (quick; for Gmail, Sheets, Slack and HubSpot it signs in through Activepieces'
+  `secrets.activepieces.com`, which then sees the tokens; the builder calls the others "Try another
+  method") and an own-credential option with no third
   party (service account, bot token, private-app token, own OAuth app). EU clients: own credentials by
   default (`docs/go-to-market/eu/subprocessors.md`).
 - AI steps use the client's own key (`openai-compatible` piece, ADR-013).

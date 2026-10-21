@@ -28,9 +28,9 @@ connections:
   - piece: "@activepieces/piece-gmail"
     purpose: read new email and add labels in the client's mailbox
     options:
-      - "OAuth2 (Recommended): sign in with Google (via Activepieces' sign-in service)"
-      - "Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
-      - "Service Account (Advanced): Google Workspace with domain-wide delegation only"
+      - "Connect: Activepieces' Google sign-in (tick every permission box on Google's screen)"
+      - "Try another method → Custom OAuth2 App (Advanced): the client's own Google Cloud OAuth app, redirect https://<domain>/redirect; no third party"
+      - "Try another method → Service Account (Advanced): Google Workspace with domain-wide delegation only"
   - piece: "@opskit/piece-openai-compatible"
     purpose: the client's own AI provider and key (OpenAI, OpenRouter, Mistral, a local model, …)
     options:
@@ -38,8 +38,8 @@ connections:
   - piece: "@activepieces/piece-slack"
     purpose: post urgent email to the client's team channel
     options:
-      - "OAuth2 (Recommended): sign in with Slack (via Activepieces' sign-in service)"
-      - "Bot Token: a Slack app the client creates (xoxb token); no third party"
+      - "Connect: Activepieces' Slack sign-in"
+      - "Try another method → Bot Token: a Slack app the client creates (xoxb token); no third party"
 failure: fail-run
 test:
   runs:

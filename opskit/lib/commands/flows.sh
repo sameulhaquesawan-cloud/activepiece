@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: flow template library: list, validate, import a template into a client's builder
 
-for lib in validate schema registry stack host flows flows_import; do
+for lib in validate schema registry stack host flows flows_import flows_pieces; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -10,6 +10,7 @@ flows_usage() {
   cat <<'USAGE'
 Usage: opskit flows list
        opskit flows validate [<template>]
+       opskit flows check-pieces [<template>]
        opskit flows import <template> <client id> [--set KEY=value]... [--email <admin email>]
                            [--again] [--print-steps] [--url <https://…>]
        opskit flows import <template> --url <builder address> [--set KEY=value]... [--email …]
@@ -21,6 +22,9 @@ validate [<template>] check one template (or all): flow.json is valid Activepiec
                      placeholder is declared and every declared one is used, pinned pieces match
                      the manifest, no real-looking emails, URLs, ids or keys, README.md,
                      CHECKLIST.md and the test payloads are present. Rules: opskit/flows/CONVENTIONS.md
+check-pieces         compare every piece step with the piece's definition in the Activepieces
+                     catalog (needs internet): list inputs present, required inputs filled, no
+                     unknown inputs. Catches steps the builder would show as "Incomplete".
 import               validate, fill the {{OPSKIT:KEY}} placeholders (--set, else the template's
                      default), sign in to the client's builder (admin password asked at the prompt,
                      used once, never stored), install our custom pieces, create the flow switched
@@ -44,6 +48,17 @@ flows_validate() {
   fi
   while IFS= read -r id; do
     flows_validate_one "$id" || failed=1
+  done <<< "$ids"
+  return "$failed"
+}
+
+flows_check_pieces() {
+  local id failed=0 ids
+  ids="${1:-$(flows_ids)}"
+  FLOWS_META_DIR="$(mktemp -d)"
+  trap 'rm -rf "${FLOWS_META_DIR:-}"' EXIT
+  while IFS= read -r id; do
+    flows_check_pieces_one "$id" || failed=1
   done <<< "$ids"
   return "$failed"
 }
@@ -107,6 +122,8 @@ flows_import() {
   [ -n "$email" ] || die "no admin email given (--email)"
   flows_sign_in "$email" || return 1
   flows_ensure_pieces "$dir" || return 1
+  # shellcheck disable=SC2034 # used by flows_import_one in lib/flows_import.sh
+  FLOWS_CONNECTION_PIECES="$(yq -o=json -I=0 '[.connections[]?.piece]' "${dir}/template.yaml")"
   count="$(jq '.flows | length' "$filled")"
   for i in $(seq 0 $((count - 1))); do
     flows_import_one "$filled" "$i" "$again" || return 1
@@ -119,6 +136,7 @@ cmd_main() {
     -h|--help) flows_usage; return 0 ;;
     list) flows_list ;;
     validate) flows_validate "${2:-}" ;;
+    check-pieces) flows_check_pieces "${2:-}" ;;
     import) shift; flows_import "$@" ;;
     *) flows_usage >&2; return 1 ;;
   esac
