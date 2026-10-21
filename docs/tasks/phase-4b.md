@@ -37,7 +37,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 - **Acceptance checks:** every plan covers server cost + included hours at your target hourly rate; numbers recompute from the CSV inputs.
 - **Manual verification:** owner changes one input in a spreadsheet and the totals follow.
 
-### [ ] 4b.4 — One-page site draft
+### [x] 4b.4 — One-page site draft
 - **Goal:** a single static page (plain HTML + CSS, no build step, works offline, mobile-friendly): problem, what you do, how it works (setup → hosting → care), plans and prices, trust points (backups tested monthly, alerts, you own your data, open source), FAQ, contact (email link; no form backend yet). Brand placeholders from Q1; no client names or fake testimonials.
 - **Spec refs:** 1, 4b
 - **Files likely touched:** `docs/go-to-market/site/index.html`

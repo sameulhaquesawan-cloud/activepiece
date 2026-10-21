@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YourBrand — your automations, hosted and cared for</title>
+<meta name="description" content="Your own private automation system (open-source Zapier alternative) on your own server, monitored around the clock, backed up every night, fixed when something breaks.">
+<style>
+:root {
+  --bg: #fbfaf7;
+  --ink: #1d1b19;
+  --muted: #5c5750;
+  --line: #e4ded4;
+  --card: #ffffff;
+  --accent: #2f5d50;
+  --accent-ink: #ffffff;
+  --soft: #eef3f0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141615;
+    --ink: #ecebe7;
+    --muted: #a7a39b;
+    --line: #2c302e;
+    --card: #1b1e1d;
+    --accent: #7fb8a4;
+    --accent-ink: #0f1211;
+    --soft: #1e2624;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+a { color: var(--accent); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+header.top { border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 14px; padding-bottom: 14px; }
+.logo { font-weight: 700; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); font-size: 19px; }
+nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+nav a:hover { color: var(--ink); }
+.hero { padding: 72px 0 56px; }
+.hero h1 { font-size: clamp(32px, 5vw, 50px); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 18px; max-width: 18ch; }
+.hero p.lead { font-size: 20px; color: var(--muted); max-width: 60ch; margin: 0 0 28px; }
+.btn { display: inline-block; background: var(--accent); color: var(--accent-ink); padding: 13px 22px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); margin-left: 8px; }
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 44px; }
+.fact { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.fact b { display: block; font-size: 22px; }
+.fact span { color: var(--muted); font-size: 14px; }
+section { padding: 56px 0; border-top: 1px solid var(--line); }
+section h2 { font-size: 30px; letter-spacing: -0.01em; margin: 0 0 10px; }
+section p.sub { color: var(--muted); margin: 0 0 28px; max-width: 62ch; }
+.cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+.card h3 { margin: 0 0 8px; font-size: 19px; }
+.card p { margin: 0; color: var(--muted); }
+.step { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+ul.ticks { list-style: none; padding: 0; margin: 0; }
+ul.ticks li { padding: 6px 0 6px 28px; position: relative; }
+ul.ticks li::before { content: "✓"; position: absolute; left: 4px; color: var(--accent); font-weight: 700; }
+.currency { display: flex; gap: 8px; margin: 0 0 22px; }
+#cur-eur, #cur-usd { position: absolute; opacity: 0; pointer-events: none; }
+.currency label { border: 1px solid var(--line); border-radius: 999px; padding: 6px 16px; cursor: pointer; font-size: 15px; }
+#cur-eur:checked ~ .currency label[for="cur-eur"],
+#cur-usd:checked ~ .currency label[for="cur-usd"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+#cur-eur:focus-visible ~ .currency label[for="cur-eur"],
+#cur-usd:focus-visible ~ .currency label[for="cur-usd"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.usd { display: none; }
+#cur-usd:checked ~ .plans .eur { display: none; }
+#cur-usd:checked ~ .plans .usd { display: inline; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.plan { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; }
+.plan.main { border: 2px solid var(--accent); }
+.plan h3 { margin: 0; font-size: 20px; }
+.price { font-size: 34px; font-weight: 700; margin: 10px 0 2px; letter-spacing: -0.01em; }
+.per { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.plan ul.ticks { margin-bottom: 8px; }
+.note { color: var(--muted); font-size: 14px; margin-top: 18px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { color: var(--muted); margin: 10px 0 2px; }
+.contact { background: var(--soft); border-radius: 18px; padding: 40px; text-align: center; }
+.contact p { color: var(--muted); max-width: 52ch; margin: 0 auto 22px; }
+footer { padding: 36px 0 48px; color: var(--muted); font-size: 14px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
+@media (max-width: 860px) {
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .cols3, .plans, .split { grid-template-columns: 1fr; }
+  nav { display: none; }
+  .hero { padding: 48px 0 40px; }
+  .btn.ghost { margin: 10px 0 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#">YourBrand</a>
+    <nav aria-label="Sections">
+      <a href="#how">How it works</a>
+      <a href="#included">What's included</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Your automations, hosted and cared for.</h1>
+    <p class="lead">We set up your own private automation system — an open-source alternative to Zapier — on a server that is yours alone. We watch it around the clock, back it up every night and fix it when something breaks. One fixed monthly price, no per-task fees.</p>
+    <a class="btn" href="#contact">Book a free 20-minute call</a>
+    <a class="btn ghost" href="#pricing">See prices</a>
+    <div class="facts">
+      <div class="fact"><b>1 min</b><span>your site is checked every minute</span></div>
+      <div class="fact"><b>5 min</b><span>failed runs reported with a direct link</span></div>
+      <div class="fact"><b>Nightly</b><span>encrypted backups, stored off the server</span></div>
+      <div class="fact"><b>Monthly</b><span>a backup is restored to prove it works</span></div>
+    </div>
+  </div>
+
+  <section id="problem">
+    <div class="wrap split">
+      <div>
+        <h2>Automation is easy to start and hard to keep running.</h2>
+        <p class="sub">Per-task bills grow every month. A step fails at 2 a.m. and nobody notices until a customer complains. Nobody knows if the backups would actually work.</p>
+      </div>
+      <div class="card">
+        <ul class="ticks">
+          <li>No per-task or per-run fees — run as much as your server handles.</li>
+          <li>Your data on your own server, in the EU or the US.</li>
+          <li>Alerts to you and to us within minutes, with what to do first.</li>
+          <li>A real person who fixes things — not a ticket queue.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p class="sub">Three steps. You keep using the apps you already have.</p>
+      <div class="cols3">
+        <div class="card"><div class="step">Step 1 · Setup</div><h3>We build your system</h3><p>Your own server, your domain with HTTPS, backups, monitoring and your alert channels. We build or move your first three flows from Zapier or Make.</p></div>
+        <div class="card"><div class="step">Step 2 · Hosting</div><h3>It runs on your server</h3><p>Built on Activepieces, open source (MIT), with hundreds of ready integrations. Your connected-app passwords are stored encrypted on your server.</p></div>
+        <div class="card"><div class="step">Step 3 · Care</div><h3>We watch and fix it</h3><p>Uptime checks every minute, failed-run alerts, a daily summary, nightly backups with monthly restore tests and version updates.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="included">
+    <div class="wrap split">
+      <div>
+        <h2>What's included</h2>
+        <p class="sub">Everything below is in place from day one.</p>
+        <ul class="ticks">
+          <li>A private server for you only (EU: Germany or Finland; or the US)</li>
+          <li>Your automation builder on your own domain, with HTTPS</li>
+          <li>Firewall, key-only login and automatic security updates</li>
+          <li>Nightly encrypted backups, copied to a second location, kept 30 days</li>
+          <li>A monthly test restore of your latest backup</li>
+          <li>Uptime check every minute and a backup watchdog</li>
+          <li>Failed-run alerts with the flow name, the failing step and a link</li>
+          <li>Disk, memory and certificate checks; a daily summary</li>
+          <li>Alerts by Telegram, Slack or email — with quiet hours</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Coming soon to every plan</h3>
+        <p>A library of ready-made flows, staged version upgrades with automatic rollback, a written handover pack and a monthly care report. Included when available, at no extra cost.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <h2>Simple pricing</h2>
+      <p class="sub">Prices exclude VAT. EU clients are billed in euros on an EU server.</p>
+      <input type="radio" name="currency" id="cur-eur" checked>
+      <input type="radio" name="currency" id="cur-usd">
+      <div class="currency" role="group" aria-label="Currency">
+        <label for="cur-eur">EUR</label>
+        <label for="cur-usd">USD</label>
+      </div>
+      <div class="plans">
+        <div class="plan">
+          <h3>Setup</h3>
+          <div class="price"><span class="eur">€690</span><span class="usd">$749</span></div>
+          <div class="per">one-time</div>
+          <ul class="ticks">
+            <li>Server, domain, HTTPS</li>
+            <li>Backups and monitoring</li>
+            <li>Up to 3 flows built or migrated</li>
+            <li>45-minute handover call</li>
+          </ul>
+        </div>
+        <div class="plan main">
+          <h3>Care</h3>
+          <div class="price"><span class="eur">€159</span><span class="usd">$179</span></div>
+          <div class="per">per month</div>
+          <ul class="ticks">
+            <li>Hosting, backups, restore tests</li>
+            <li>Monitoring and alerts</li>
+            <li>1 hour of fixes or changes</li>
+            <li>Reply within 12 business hours, 4 if down</li>
+            <li>Quarterly version updates</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Care Plus</h3>
+          <div class="price"><span class="eur">€319</span><span class="usd">$349</span></div>
+          <div class="per">per month</div>
+          <ul class="ticks">
+            <li>Everything in Care</li>
+            <li>3 hours of fixes or changes</li>
+            <li>Handled first</li>
+            <li>Monthly version updates</li>
+            <li>1 small new flow a month</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">Extra flows from <span class="eur">€120</span><span class="usd">$140</span> · Zapier/Make migration <span class="eur">€90</span><span class="usd">$100</span> per flow · extra hours <span class="eur">€55</span><span class="usd">$60</span>. Minimum term 3 months, then monthly. Pay yearly: 2 months free.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>Questions</h2>
+      <details><summary>Is this cheaper than Zapier?</summary><p>Often, when you run many tasks — there are no per-task fees. But you are mainly paying for reliability: a private server, tested backups, alerts within minutes and someone who fixes things.</p></details>
+      <details><summary>What happens if something breaks at night?</summary><p>You and we get an alert within minutes. Urgent problems are handled within 4 hours on business days and on a best-effort basis at weekends. Less urgent alerts can wait for your daily summary during your quiet hours.</p></details>
+      <details><summary>Who owns my data and my app passwords?</summary><p>You do. They live encrypted on your own server. We only look at your data when you ask us to fix something. Alerts contain the flow name and a short error, never your customers' full details.</p></details>
+      <details><summary>Can I leave?</summary><p>Yes, any time after the first three months. The software is open source: we hand over your flows, a full backup and your settings so you can run it anywhere. We delete your server and backups 30 days after the end.</p></details>
+      <details><summary>Do you work with EU businesses (GDPR)?</summary><p>Yes. EU clients run on servers in Germany or Finland and get a data-processing agreement and the list of services we use.</p></details>
+      <details><summary>What is not included?</summary><p>Problems inside third-party apps (we tell you quickly and fix your side), flows you build yourself (supported at the hourly rate), and features that are paid in Activepieces, such as team roles, single sign-on or custom branding of the builder.</p></details>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact">
+        <h2>Let's look at your automations</h2>
+        <p>Tell us what you run today (Zapier, Make or by hand). In a free 20-minute call we'll tell you what we would move, what it costs and what you'd save.</p>
+        <a class="btn" href="mailto:hello@yourbrand.com?subject=Automation%20call">hello@yourbrand.com</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© YourBrand · Built on Activepieces (open source, MIT). Not affiliated with Activepieces, Zapier or Make.</span>
+    <span><a href="privacy.html">Privacy</a> · <a href="imprint.html">Legal notice</a> · This page uses no cookies and no trackers.</span>
+  </div>
+</footer>
+
+</body>
+</html>
