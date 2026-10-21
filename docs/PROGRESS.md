@@ -1,13 +1,14 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 4b done (owner signed off 21 Oct 2026); next: Phase 5 (flow template library)
-- **Current task:** none — waiting for the owner to say "go Phase 5"
+- **Current phase:** Phase 5 — Flow template library
+- **Current task:** 5.1 after owner review of `docs/tasks/phase-5.md` (Q1–Q6)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent, when the owner says go: Phase 5 (flow template library) via `/opskit-start-phase` → `docs/tasks/phase-5.md` for owner review.
-2. Owner (not blocking): business name/domain (replace "YourBrand"), Telegram bot (monitoring runbook A), age key + off-server storage (backup runbook A/B), optional demo server; lawyer review of `docs/go-to-market/eu/`, accountant for VAT; decide on the alert error-excerpt option (Known issues).
+1. **Owner:** review `docs/tasks/phase-5.md` and answer Q1–Q6 (or "ok" to the defaults).
+2. Agent: then 5.1 (verify import/export, OAuth on self-hosted CE, piece versions — needs internet for pieces: Codespace or CI), 5.2 onwards in order.
+3. Owner (not blocking): business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -18,7 +19,7 @@
 | 3 | Backups & restore | Done (owner said go Phase 4, 20 Oct 2026) | `check` + `selftest` (backup→restore round trip) + real `restore-test` pass 20 Oct 2026 |
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
-| 5 | Flow template library | Not started | — |
+| 5 | Flow template library | Planned — task file awaiting owner review | — |
 | 6 | Safe upgrades | Not started | — |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
@@ -26,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — Phase 5 planned.** Owner said "go Phase 5". `docs/tasks/phase-5.md`: 12 tasks (verify facts, format/manifest/conventions, `flows list/validate`, `flows import`, six templates, CI import acceptance, docs), questions Q1 (Elmo report → generic monthly report), Q2 (AI via our openai-compatible piece), Q3 (order webhook), Q4 (Lead Ads → HubSpot → email), Q5 (import signs in with the admin password typed at the prompt, nothing stored), Q6 (real-account runs as manual checklists).
 - **2026-10-21 — Error-excerpt setting (owner approved).** `client.yaml` `alerts.include_error_excerpt` (default true; schema) → rendered `ERROR_EXCERPTS` in client `alerts.conf` → `detect-failed-runs.sh` leaves the error text out (flow, step, status, run id and link stay). Recommended `false` for EU clients (monitoring runbook, EU security measures, sub-processors updated). Tests: detector (docker, email in the error never reaches the alert) + render.
 - **2026-10-21 — Database backups encrypted (owner approved).** `agent/backup.sh`: after the `pg_restore --list` check the dump is encrypted with the owner's age public key to `db.dump.age` and the plain dump is deleted (status.json `encrypted: true`, `db_bytes` = encrypted size); a failed encryption leaves no backup. `lib/restore.sh`: `backup_dump_file` finds `db.dump.age` (or an older plain `db.dump`), copies it between hosts as is, and `restore_decrypt_dump` streams it through `age -d` on the operator machine into a 600 temp file on the target host that is removed after `pg_restore` (every pipeline stage checked). selftest now checks that the off-server copy has no plain dump and that `db.dump.age` decrypts to a pg dump; the round trip restores from the encrypted dump. Docs/sales drafts/EU security measures/ADR-015/runbook updated. Tests: `backup_agent.bats` (+1), `restore.bats` (+4); full check incl. docker passes.
 - **2026-10-21 — Phase 4b closed.** Owner signed off all go-to-market drafts (4b.8) and approved encrypting the database backups (Known issue). `docs/go-to-market/README.md` statuses updated.
