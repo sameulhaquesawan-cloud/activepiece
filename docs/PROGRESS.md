@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 4b — Go to market (owner-led)
-- **Current task:** 4b.1 (see `docs/tasks/phase-4b.md`)
+- **Current task:** 4b.2 (see `docs/tasks/phase-4b.md`)
 - **Last updated:** 2026-10-20 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 4b.1 fresh market and cost facts (USD + EUR, US + EU providers) with sources and dates → `docs/go-to-market/research.md`, then 4b.2–4b.7 in order; owner signs off in 4b.8.
+1. Agent: 4b.2 the offer (`docs/go-to-market/offer.md`), then 4b.3 pricing + calculator, 4b.4 one-page site, 4b.5 demo script, 4b.6 outreach kit, 4b.7 Europe readiness; owner signs off in 4b.8.
 3. Owner (not blocking): monitoring runbook section A (Telegram bot); Phase 3 runbook A (age key) and B (off-server storage).
 
 ## Phases
@@ -26,6 +26,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-21 — 4b.1 done.** `docs/go-to-market/research.md`: dated prices with official/secondary marks — Zapier Professional from $19.99 (annual) / ≈ $29.99 monthly, Team from $69 / ≈ $103.50; Make $9/$16/$29 annual (not verified, site blocked); Activepieces Cloud now credit-based $0/$20/$200 (the per-flow model in RESEARCH is outdated — flagged there); Hetzner CX23 €5.99 sold out, CPX22 €19.99 EU, CPX21 €32.49 US; DigitalOcean 2 vCPU/4 GiB $24; B2 $6.95/TB; Brevo free 300/day; freelance rates $40–235/h. Owner Q4 adjusted: EU → Hetzner, US → DigitalOcean. Starting rate assumption $60/€55 per hour.
 - **2026-10-21 — Phase 4b planned; CI fix.** Owner said "go Phase 4b". `docs/tasks/phase-4b.md`: 7 tasks (facts, offer, pricing + calculator, one-page site, demo script, outreach kit incl. Zapier migration checklist, sign-off), questions Q1–Q5 with defaults. CI run 26 was red: the new edge readiness probe (`wget localhost:2019` in the Caddy container) never answered on GitHub runners; replaced by retrying `caddy reload` (what callers need). Verify: `bats opskit/tests/bootstrap.bats`.
 - **2026-10-21 — 4.12 done; Phase 4 complete.** `docs/runbooks/monitoring.md` (what watches what, Telegram bot + chat id steps, SMTP, Uptime Kuma server, UptimeRobot, first actions per alert), ADR-016, ENVIRONMENT (Uptime Kuma admin, `OPSKIT_MONITOR_HOST`, `OPSKIT_REQUIRE_PIECES`, test-only variables). Fixes found while closing: practice heartbeats use an exported, readable copy of Caddy's public local root CA (`<root>/caddy/local-root.crt`; the original is root-only, failed in CI as non-root); `bootstrap.sh` waits for Caddy's admin endpoint before returning (reload race seen once after a machine restart). Monitor tests also verified as a non-root user.
 - **2026-10-21 — 4.11 done.** `lib/e2e.sh`, called by `opskit selftest`: publishes "E2E deliberately failing flow" (webhook trigger + code step that throws) via the API, triggers it, waits for the FAILED run, runs the host detector twice against a mock Telegram API → requires exactly 1 message containing the flow name and `/projects/<p>/runs/<r>`. Skipped with a warning when the app has no piece metadata (cloud session); `OPSKIT_REQUIRE_PIECES=1` in opskit-ci makes it mandatory. Passed on GitHub CI run 24 (selftest test 204). CI timeout 20 → 40 min.

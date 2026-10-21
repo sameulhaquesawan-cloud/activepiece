@@ -6,6 +6,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 
 ## Open questions for the owner (recommended defaults in brackets — "ok" accepts them)
 **Answered 21 Oct 2026: owner accepted all defaults (Q1–Q5) and added Europe as a target market** — prices shown in USD and EUR, client servers in the EU for EU clients (Hetzner Germany/Finland), GDPR material in task 4b.7. Legal documents are templates for a lawyer or accountant to review, not legal advice.
+**Q4 adjusted by 4b.1 facts:** Hetzner's cheap line is sold out and its US servers now cost more than DigitalOcean, so EU clients → Hetzner CPX22 (≈ €20/month), US clients → DigitalOcean (≈ $24/month).
 - **Q1 — Business name and domain** (App. B #1). [Drafts use the placeholder "YourBrand" / `yourbrand.com`; replace any time.]
 - **Q2 — Who and where:** country and currency for prices, page language, and the first niche to target. [USD, English, first niche = small agencies and e-commerce stores that already pay for Zapier/Make; others later.]
 - **Q3 — Response-time promise** for care clients (App. B #4). [12 hours on business days for normal issues, 4 hours for "everything is down"; best effort at weekends.]
@@ -14,7 +15,7 @@ Phases 1–4 are the minimum sellable service. The agent drafts; the owner decid
 
 ## Tasks
 
-### [ ] 4b.1 — Fresh market and cost facts
+### [x] 4b.1 — Fresh market and cost facts
 - **Goal:** re-check and date every number the offer depends on: Zapier, Make and Activepieces Cloud prices, n8n licence position, typical freelancer rates, VPS prices for 2 vCPU / 4 GB (Hetzner, DigitalOcean, Vultr), backup storage (Backblaze B2), Telegram/SMTP costs. Sources and dates for each.
 - **Spec refs:** 1 (positioning), 18 (pricing check); RESEARCH says "re-check before quoting".
 - **Files likely touched:** `docs/go-to-market/research.md`, `docs/RESEARCH.md` (pointer)

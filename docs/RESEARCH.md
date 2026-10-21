@@ -8,6 +8,7 @@
 - CE vs paid (sources vary): CE self-hosted has unlimited flows/runs; projects, SSO, roles, audit logs, branding, Git Sync, secret managers and possibly API access/agents are paid.
   Sources: https://noderidge.com/activepieces-review-small-business-automation-2026/ · https://workflowautomation.net/reviews/activepieces
 - Cloud pricing moved to per active flow in 2026 (free up to 10 active flows, then ~$5/flow/month).
+  **Outdated (checked 21 Oct 2026):** the official pricing page now shows credit plans (Free $0 / Plus $20 / Team $200 per month; 1 run = 1 credit). See `docs/go-to-market/research.md`.
   Sources: https://automationatlas.io/answers/activepieces-pricing-explained-2026/ · https://blocksentient.com/review/activepieces/
 
 ## 2. Install facts (official docs)
