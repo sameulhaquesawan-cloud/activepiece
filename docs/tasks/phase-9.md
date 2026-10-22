@@ -7,6 +7,7 @@ SPEC: 17 Phase 9; everything it exercises: 3 (rules), 6–7 (registry, deploy ki
 **Who runs what.** This cloud session cannot open SSH connections (port 22 blocked, checked 22 Oct 2026), so it cannot reach a VPS. The agent writes the guide, the helper commands and the Cowork test prompts and fixes what the runs find; the owner (or Cowork on the owner's behalf) runs the guide in a Codespace (has Docker, SSH and internet) — which is exactly what the acceptance asks for: the guide alone must be enough.
 
 ## Open questions for the owner (recommended defaults in brackets — "ok" accepts them)
+**Owner, 22 Oct 2026:** wants a **$0 stack**; has an **Oracle Cloud Always Free instance** running (SSH key in hand) and a **domain at Spaceship**; is not comfortable with server work and wants the agent to do it. Consequences: Q2 = Oracle Always Free (ARM — verified 22 Oct: `activepieces/activepieces` 0.92.2/0.92.3, caddy 2.10.0, postgres, uptime-kuma all publish linux/arm64); Q1 = a Claude Code session *inside the owner's Codespace* (it has SSH; this cloud session does not) does the server work, with the private key stored as a Codespaces secret (never in chat, never in git); Q3 = the Spaceship domain, two A records added by the owner with exact clicks (an API key would control the whole domain for a one-time change); Q5 = Backblaze B2 free 10 GB (Oracle Object Storage free 20 GB as fallback); SMTP = Brevo free or Gmail app password. Still needed from the owner (not secret): domain name, server public IP, instance shape (OCPU/RAM), image (Ubuntu or Oracle Linux), login user, region.
 - **Q1 — Where do you run the commands?** [A GitHub Codespace on this repo, like the Phase 6+7 test. WSL on your laptop works the same and is the long-term home (your age key and registry stay on your machine); the guide covers both.]
 - **Q2 — Which server?** SPEC: Oracle Always Free if capacity allows, else a ~$5 VPS, deleted after. [Hetzner Cloud, the smallest 2 vCPU / 4 GB x86 type available in an EU location, Ubuntu 24.04, hourly billing (a few days cost about €1–3). Oracle Always Free is ARM and usually out of capacity — skip it unless you already have an account. US clients later: DigitalOcean, same steps.]
 - **Q3 — Which domain?** Appendix B Q1 is still open. [Your business domain if you have one, else buy one now (~€10/year, any registrar with simple DNS — Cloudflare, Porkbun, Namecheap). Practice names: `practice.<domain>` (client) and `status.<domain>` (Uptime Kuma).]
@@ -18,8 +19,8 @@ SPEC: 17 Phase 9; everything it exercises: 3 (rules), 6–7 (registry, deploy ki
 - **Q9 — Fix the two open known issues before the run?** (deploy without the owner public key drops the nightly backup line; host agent logs never rotate) [Yes — 9.2 and 9.3, both small and both would bite on a real server.]
 
 ## What the owner prepares (task 9.6 turns this into exact clicks)
-1. **Hetzner Cloud account** (card or PayPal; identity check can take a day) — create nothing yet.
-2. **Domain** with access to its DNS settings.
+1. **Oracle Cloud Always Free instance** (have) — tell the agent its public IP, shape, image, login user, region; keep the private key file safe.
+2. **Domain at Spaceship** (have) — two A records later, exact clicks given.
 3. **Backblaze B2 account** — create nothing yet.
 4. **Telegram:** a bot from @BotFather (token) and your chat id (Phase 4 runbook `docs/runbooks/monitoring.md`).
 5. **SMTP account** for alerts and reports: Gmail app password (needs 2-step verification) or Brevo free (300 mails/day).
@@ -28,7 +29,7 @@ SPEC: 17 Phase 9; everything it exercises: 3 (rules), 6–7 (registry, deploy ki
 ## Tasks
 
 ### [ ] 9.1 — Field facts and pre-flight design (no code)
-- **Goal:** Verify against the pinned version and today's providers what a real run depends on: Hetzner types/prices/locations for 2 vCPU/4 GB (hourly), its "Cloud config" field (cloud-init user-data) to create the `ops` user with key + passwordless sudo at creation, Let's Encrypt via Caddy on a fresh host (ports 80/443 open, A record first, rate limits), B2 S3 endpoint and rclone `b2` remote fields, Activepieces image architecture (amd64/arm64), Ubuntu 24.04 defaults that bootstrap touches (ufw, unattended-upgrades, sshd drop-ins, IPv6 on).
+- **Goal:** Verify against the pinned version and today's providers what a real run depends on: Oracle Always Free limits (A1 ARM 4 OCPU / 24 GB total, block storage, egress), idle-instance reclamation rules and how to avoid them, VCN security list ingress for 80/443, the iptables rules Oracle's Ubuntu images ship (vs ufw), Ubuntu 24.04 aarch64 vs Oracle Linux (bootstrap needs Ubuntu; recreate if needed — free), creating the `ops` user with key + passwordless sudo, Let's Encrypt via Caddy on a fresh host (ports 80/443 open, A record first, rate limits), B2 S3 endpoint and rclone `b2` remote fields, Activepieces image architecture (amd64/arm64), Ubuntu 24.04 defaults that bootstrap touches (ufw, unattended-upgrades, sshd drop-ins, IPv6 on).
 - **Spec refs:** 4, 7.3–7.4, 9.3, 15, 18
 - **Files likely touched:** `docs/ASSUMPTIONS.md`, `docs/EXPLORATION_REPORT.md` (§11 field facts)
 - **Acceptance checks:** each fact has a source (doc URL + date, or a command output); price table dated.
