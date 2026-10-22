@@ -24,12 +24,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** none (facts).
 - **Result (22 Oct 2026):** EXPLORATION_REPORT §10, ASSUMPTIONS #29–31. Runs: production runs created in the client-time-zone month, archived included; run rows survive log retention but die with their flow. Uptime: Kuma raw heartbeats (365 days) via `getMonitorBeats`, exact at month edges. Backups: no month-long record exists → 7.7 adds an append-only `history.jsonl` written by the backup agent.
 
-### [ ] 7.2 — Owner business profile and client fields
+### [x] 7.2 — Owner business profile and client fields
 - **Goal:** `opskit/owner/business.yaml` (name, website, support email, signature; placeholder values allowed) with a schema; `client.yaml`: `support.included_hours`, `report.recipients` (existing), `notes.yaml` per client (one sentence per flow, contacts for credentials). `opskit validate` covers both.
 - **Spec refs:** 6, 13
 - **Files likely touched:** `opskit/schema/*.json`, `opskit/templates/client.yaml.tmpl`, `opskit/lib/validate.sh`, tests
 - **Acceptance checks:** missing/invalid fields fail with a clear message; existing clients stay valid (defaults).
 - **Tests required:** `validate.bats` cases.
+- **Result (22 Oct 2026):** `opskit/schema/business.schema.json` (`business_name`, `support_email` required; `website` https, `phone`, `support_hours`, `signature`), `opskit/schema/notes.schema.json` (`notes_for`, `flows`/`accounts` one sentence each, `welcome`), `opskit/templates/business.example.yaml`, `opskit/lib/business.sh` (`business_get` with placeholders + one warning on stderr), client `support.included_hours` (0–40, default 1, in the client template), `opskit validate` detects both new types. Tests: `validate.bats` +3, `business.bats` (2).
 
 ### [ ] 7.3 — Read-only client data layer
 - **Goal:** `opskit/lib/clientdata.sh`: `clientdata_active_flows` (name, trigger piece/type, last run) and `clientdata_month_runs` (per flow: total, succeeded, failed, other) for a month in the client's time zone, through `opskit_ro` only (read-only SQL).

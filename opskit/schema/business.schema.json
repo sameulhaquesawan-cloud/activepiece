@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opskit.local/schema/business.schema.json",
+  "title": "opskit owner business profile (registry owner/business.yaml)",
+  "description": "Who the client deals with: shown in handover packs and care reports instead of any Activepieces branding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["business_name", "support_email"],
+  "properties": {
+    "business_name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "support_email": { "type": "string", "format": "email" },
+    "website": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 200 },
+    "phone": { "type": "string", "pattern": "^\\+?[0-9 ()-]{6,24}$" },
+    "support_hours": { "type": "string", "minLength": 1, "maxLength": 120, "description": "e.g. Mon–Fri 9:00–17:00 CET" },
+    "signature": { "type": "string", "minLength": 1, "maxLength": 300, "description": "closing line of reports and packs" }
+  }
+}

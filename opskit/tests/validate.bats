@@ -174,3 +174,32 @@ expect_template_error() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"mikefarah yq v4 is required"*"opskit/bin/dev-env"* ]]
 }
+
+@test "owner business profile: the example is valid; missing email, bad website and unknown fields fail" {
+  run "$OPSKIT" validate "${OPSKIT_ROOT}/templates/business.example.yaml"
+  [ "$status" -eq 0 ]
+  yq 'del(.support_email) | .website = "http://plain.example" | .logo = "x"' "${OPSKIT_ROOT}/templates/business.example.yaml" > "${WORK}/business.yaml"
+  run "$OPSKIT" validate "${WORK}/business.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] support_email: is required"* ]]
+  [[ "$output" == *"[fail] website: has an invalid format"* ]]
+  [[ "$output" == *"[fail] logo: unknown field"* ]]
+}
+
+@test "client notes: flows and accounts take one short sentence each" {
+  printf 'notes_for: acme\nflows:\n  Lead capture: Website form leads go to the sales sheet.\naccounts:\n  Gmail: Anna owns it; login in the company password manager.\n' > "${WORK}/notes.yaml"
+  run "$OPSKIT" validate "${WORK}/notes.yaml"
+  [ "$status" -eq 0 ]
+  yq -i '.flows["Lead capture"] = "" | .password = "x"' "${WORK}/notes.yaml"
+  run "$OPSKIT" validate "${WORK}/notes.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] password: unknown field"* ]]
+  [[ "$output" == *"flows.Lead capture"* ]]
+}
+
+@test "included support hours are 0 to 40 per month" {
+  broken_client '.support.included_hours = 3'
+  run "$OPSKIT" validate "${WORK}/client.yaml"
+  [ "$status" -eq 0 ]
+  expect_client_error '.support.included_hours = 41' "support.included_hours"
+}

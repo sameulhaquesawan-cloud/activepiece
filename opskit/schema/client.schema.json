@@ -288,6 +288,13 @@
           "minimum": 1,
           "maximum": 168,
           "default": 12
+        },
+        "included_hours": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 40,
+          "default": 1,
+          "description": "support hours included per month (Care 1, Care Plus 3); shown as used vs included in the care report"
         }
       }
     },

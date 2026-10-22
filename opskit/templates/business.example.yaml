@@ -1,0 +1,7 @@
+# Copy to <registry>/owner/business.yaml (opskit/owner/business.yaml) and fill in.
+# Shown to clients in handover packs and care reports. Check: opskit/bin/opskit validate <file>
+business_name: YourBrand
+support_email: support@yourbrand.example
+website: https://yourbrand.example
+support_hours: Mon–Fri 9:00–17:00 CET
+signature: Thanks for working with us. — YourBrand
