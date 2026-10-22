@@ -124,3 +124,22 @@ monitor_set_active() {
   fi
   log_ok "uptime monitor of ${id} $([ "$action" = pause ] && echo paused || echo resumed) in Uptime Kuma"
 }
+
+# monitor_uptime <id> <from epoch> <to epoch>: {measured, up, down, uptime, down_periods} of the client's uptime
+# monitor from Uptime Kuma's raw heartbeats (ASSUMPTIONS #30); no Kuma host or monitor → {"measured": false}
+monitor_uptime() {
+  local id="$1" from="$2" to="$3" mhost input result hours
+  mhost="$(monitor_host_for 2>/dev/null)" || { printf '{"measured":false,"reason":"no Uptime Kuma host"}'; return 0; }
+  monitor_require "$mhost" >/dev/null 2>&1 || { printf '{"measured":false,"reason":"no Uptime Kuma host"}'; return 0; }
+  hours=$(( ($(date +%s) - from) / 3600 + 2 ))
+  input="$(jq -nc --argjson admin "$(monitor_admin_json "$mhost")" --arg name "${id} uptime" --argjson hours "$hours" \
+    --arg from "$(date -u -d "@${from}" '+%Y-%m-%d %H:%M:%S')" --arg to "$(date -u -d "@${to}" '+%Y-%m-%d %H:%M:%S')" \
+    '{admin: $admin, name: $name, hours: $hours, from: $from, to: $to}')"
+  result="$(monitor_node_retry "$mhost" "${OPSKIT_ROOT}/templates/monitor/uptime.js" "$input")" \
+    || { log_fail "could not read uptime of ${id} from Uptime Kuma: ${result:0:200}"; return 1; }
+  if [ "$(jq -r '.found' <<< "$result")" != "true" ]; then
+    printf '{"measured":false,"reason":"no uptime monitor for %s (opskit monitor sync %s)"}' "$id" "$id"
+    return 0
+  fi
+  jq -c '.beats' <<< "$result" | jq -c -f "${OPSKIT_ROOT}/templates/monitor/uptime-stats.jq" | jq -c '{measured: true} + .'
+}

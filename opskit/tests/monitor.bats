@@ -117,6 +117,28 @@ wait_for_message() {
 }
 
 # bats test_tags=docker
+@test "uptime of a time window comes from Uptime Kuma's heartbeats, with the down period" {
+  for lib in log validate schema registry render secrets stack ssh host deploy monitor monitor_sync; do source "${OPSKIT_ROOT}/lib/${lib}.sh"; done
+  OPSKIT_MONITOR_INTERVAL=20 "$OPSKIT" monitor sync acme >/dev/null
+  local start
+  start="$(date +%s)"
+  sleep 45
+  docker stop "$MON_APP" >/dev/null
+  sleep 70
+  docker start "$MON_APP" >/dev/null
+  sleep 45
+  run monitor_uptime acme "$start" "$(date +%s)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.measured' <<< "$output")" = "true" ]
+  [ "$(jq -r '.down > 0 and .up > 0 and .uptime < 100' <<< "$output")" = "true" ]
+  [ "$(jq -r '.down_periods | length >= 1 and (.[0].minutes >= 1)' <<< "$output")" = "true" ]
+  run monitor_uptime nobody "$start" "$(date +%s)"
+  [ "$(jq -c '.measured' <<< "$output")" = "false" ]
+  [[ "$(jq -r '.reason' <<< "$output")" == *"no uptime monitor for nobody"* ]]
+  OPSKIT_MONITOR_INTERVAL=60 "$OPSKIT" monitor sync acme >/dev/null
+}
+
+# bats test_tags=docker
 @test "monitor remove deletes the client's monitors and is safe to repeat" {
   "$OPSKIT" monitor sync acme >/dev/null
   run "$OPSKIT" monitor remove acme

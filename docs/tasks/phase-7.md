@@ -56,12 +56,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** bats.
 - **Result (22 Oct 2026):** `opskit/lib/worklog.sh`, `opskit hours <id> add|list`, `opskit incident <id> add|list` (`clients/<id>/hours.jsonl` with local dates, `incidents.jsonl` in UTC, month filters in the client's time zone; notes one line ≤ 300 chars, key-like text refused). `worklog_hours_month` / `worklog_incidents_month` feed the report. Tests: `worklog.bats` (4).
 
-### [ ] 7.6 — Uptime for a month from Uptime Kuma
+### [x] 7.6 — Uptime for a month from Uptime Kuma
 - **Goal:** `monitor_uptime <id> <from> <to>` through Kuma's own socket API (method from 7.1), plus the down periods (start, length) for incidents.
 - **Spec refs:** 13, 10
 - **Files likely touched:** `opskit/templates/monitor/uptime.js`, `opskit/lib/monitor_sync.sh`, tests
 - **Acceptance checks:** a monitor with a forced down period reports it and a matching percentage; no Kuma host → "uptime not measured" (not 100 %).
 - **Tests required:** docker-tagged bats with real Kuma (extend `monitor.bats`).
+- **Result (22 Oct 2026):** `opskit/templates/monitor/uptime.js` (socket: login, find "<id> uptime", `getMonitorBeats`, beats inside the window), `opskit/templates/monitor/uptime-stats.jq` (up/down counts, uptime % with 3 decimals rounded down, down periods with start/end/minutes), `monitor_uptime` in `monitor_sync.sh` (`{"measured": false, …}` without Kuma host or monitor). Tests: `uptime_stats.bats` (4), `monitor.bats` +1 with real Kuma (70 s outage shows as a down period and < 100 %).
 
 ### [ ] 7.7 — Report data collector
 - **Goal:** backup agent appends one line per run to `<root>/backups/<id>/history.jsonl` (ASSUMPTIONS #31); `report_collect <id> <YYYY-MM>` → one JSON: runs per flow (7.3), uptime + down periods (7.6), backups (nights complete/incomplete from that history, last success, off-server state), last restore test, upgrades and rollbacks (history), incidents (auto + logged), hours used vs included.
