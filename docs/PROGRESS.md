@@ -2,13 +2,14 @@
 
 ## Current status
 - **Current phase:** Phase 7 — Handover docs & care report
-- **Current task:** 7.11 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** Phase 7 done — waiting for the owner's sign-off (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: confirm CI green for the report selftest round, then 7.11 close (verification report, go-to-market: handover pack and care report move from "coming" to included) and Phase 7 sign-off request. Owner (when convenient): set `location:` (e.g. "Germany (Falkenstein)") in each host yaml; it appears in handover packs. Owner (when convenient): copy `opskit/templates/business.example.yaml` to `opskit/owner/business.yaml` with your business name and support email. Owner: merge Phase 6 to `main` by PR when convenient.
-3. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants).
-4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
+1. Owner: look at the two samples (handover pack, care report) and sign off Phase 7; merge to `main` by PR when convenient.
+2. Agent after sign-off: Phase 9 (field readiness: a real VPS run of everything, operator guide, cost/timing numbers) — `/opskit-start-phase`, with a step-by-step list of what the owner prepares (VPS, domain, SMTP app password, Telegram bot, Backblaze B2, age key). Phase 8 is V2 (skipped).
+3. Owner (not blocking, from the runbooks): `opskit/owner/business.yaml`, SMTP keys in `opskit/owner/alerts.conf`, `location:` in each host yaml.
+4. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants); Meta app per lead-ad client; lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -21,12 +22,13 @@
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
 | 6 | Safe upgrades | Done — owner signed off 22 Oct 2026 | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
-| 7 | Handover docs & care report | In progress (plan approved by the owner, 22 Oct 2026) | — |
+| 7 | Handover docs & care report | Done — owner sign-off pending | `check` + CI run 60 (selftest report round with pieces required), 22 Oct 2026 |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 7.11 phase close.** CI run 60 green: the selftest's report round ran with pieces (exact demo counts, pack with pause steps, email in the mock inbox). Runbook `docs/runbooks/handover-and-report.md`, ADR-019, verification report below, go-to-market updated (handover pack and care report no longer "coming").
 - **2026-10-22 — 7.10 report round in selftest; runbook + ADR-019 drafted.** Selftest creates two demo flows with known runs and checks the care report numbers exactly, the handover pack (flows + pause steps, privacy, Zapier) and the report email in a mock inbox. `docs/runbooks/handover-and-report.md`, ADR-019. Files: `opskit/lib/e2e_report.sh`, `commands/selftest.sh`, `opskit/tests/selftest.bats`.
 - **2026-10-22 — 7.9 sending reports.** `opskit report <id> --send` / `opskit report --all --send`: one email per client (text + HTML) to the report recipients with a copy to you, through your SMTP account in `opskit/owner/alerts.conf`; each month only once (`--resend`). Files: `opskit/lib/report_send.sh`, `commands/report.sh`; tests `report_send.bats` (5).
 - **2026-10-22 — 7.8 report rendering.** `opskit report <id> [--month]` writes the month's report as HTML (email/printable), text and JSON in `opskit/clients/<id>/reports/`. Files: `opskit/lib/report.sh`, `opskit/lib/commands/report.sh`, `opskit/templates/report/report.jq`; tests `report_render.bats` (golden file), `report_collect.bats`. Verify: `opskit/bin/opskit report <client>` and open the HTML.
@@ -147,6 +149,17 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 7 — 22 Oct 2026
+| Acceptance (SPEC 17 Phase 7) | Evidence |
+|---|---|
+| Report numbers for a demo month match fixture DB counts exactly | `clientdata.bats`: hand-counted fixture Postgres (month edges in Berlin vs UTC, test runs excluded, archived included, renamed versions) via the read-only role; `report_collect.bats`: exact JSON for a fixture month (backup nights across the UTC/local date line, restore tests, upgrades, incidents, hours); CI run 60: real runs of two demo flows (3 succeeded, 2 failed) counted exactly in the month's report |
+| Generated handover docs list every active flow with pause instructions | `docs.bats` and CI run 60: every switched-on flow with what it does, accounts used and pause steps in the 0.92.3 UI's words (Automations page, "Flow is off" switch) |
+| Report email is delivered to a test inbox | `report_send.bats` (mock SMTP: recipients + owner copy, auth, text and HTML parts identical to the files, sent once) and CI run 60 |
+| Handover docs include the privacy note and Zapier checklist | sections 6 and 7 of the pack, asserted in `docs.bats` and CI run 60 |
+| Uptime and incidents (SPEC 13) | `monitor.bats` with a real Uptime Kuma outage, `uptime_stats.bats`; incidents from down periods, missing backup nights, rollbacks and `opskit incident` |
+| `opskit/bin/check` passes | quick check after every task; selftest locally (pieces offline) and CI run 60 |
+Not verified here: a report from a real client month (needs a real server and Uptime Kuma: Phase 9); delivery through a real mail provider (owner's SMTP account); the owner's reading of the samples (manual check).
+
 ### Phase 6 — 22 Oct 2026
 | Acceptance (SPEC 17 Phase 6) | Evidence |
 |---|---|

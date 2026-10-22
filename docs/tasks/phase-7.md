@@ -94,11 +94,12 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Files likely touched:** `opskit/lib/e2e_report.sh`, `opskit/lib/commands/selftest.sh`, `opskit/tests/selftest.bats`
 - **Acceptance checks:** green locally and in CI.
 - **Tests required:** selftest + bats.
-- **Result (22 Oct 2026):** `opskit/lib/e2e_report.sh` after the smoke step: "Report demo" (3 webhooks → SUCCEEDED) and "Report demo failing" (2 → FAILED) on the selftest client; the month's report must show exactly 3/3/0 and 2/0/2 for them; `opskit docs` must list both with pause steps plus the privacy and Zapier sections; `report_send` must deliver one multipart email to a mock SMTP inbox (client + owner copy). Required in CI (pieces), skipped offline. Local selftest green (skip path); CI: see PROGRESS.
+- **Result (22 Oct 2026):** `opskit/lib/e2e_report.sh` after the smoke step: "Report demo" (3 webhooks → SUCCEEDED) and "Report demo failing" (2 → FAILED) on the selftest client; the month's report must show exactly 3/3/0 and 2/0/2 for them; `opskit docs` must list both with pause steps plus the privacy and Zapier sections; `report_send` must deliver one multipart email to a mock SMTP inbox (client + owner copy). Required in CI (pieces), skipped offline. Local selftest green (skip path); CI run 60 green with pieces required (the round ran for real).
 
-### [ ] 7.11 — Runbook, ADR-019 and phase close
+### [x] 7.11 — Runbook, ADR-019 and phase close
 - **Goal:** `docs/runbooks/handover-and-report.md` (when to send the pack, how to log hours/incidents, monthly routine), ADR-019, PROGRESS + verification report, go-to-market: handover pack and care report move from "coming" to included.
 - **Spec refs:** 13, 17
 - **Files likely touched:** `docs/runbooks/`, `docs/DECISIONS.md`, `docs/PROGRESS.md`, `docs/go-to-market/*`
 - **Acceptance checks:** you can produce a client's pack and month report from the runbook alone.
 - **Manual verification:** you read one generated pack and one report and say whether a client would understand them.
+- **Result (22 Oct 2026):** `docs/runbooks/handover-and-report.md` (business profile and SMTP once, notes per client, pack at go-live, hours/incidents during the month, `report --all` then `--send` on the 1st, cron line, reading a report), ADR-019, verification report in PROGRESS, go-to-market (site card "In writing, every month", offer rows for the handover pack and care report, demo script). Samples sent to the owner for the manual check.

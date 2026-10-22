@@ -47,9 +47,9 @@ your data on your server, and you can take it all with you if you ever leave. Sh
 today?"
 [Screen: pricing section of the site.]
 
-US version: $749 setup, $179 per month. Never demo features marked *coming* (care report,
-handover pack). Ready-made flows may be shown (`opskit/flows/`), connected to your own test
-accounts only.
+US version: $749 setup, $179 per month. A sample care report and handover pack may be shown (generate them for your demo client with
+`opskit report` / `opskit docs`; never a real client's). Ready-made flows may be shown (`opskit/flows/`),
+connected to your own test accounts only.
 
 ## Preparation
 

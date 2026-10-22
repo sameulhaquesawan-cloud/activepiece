@@ -5,7 +5,8 @@ your own server, watch it around the clock, back it up every night and fix it wh
 fixed monthly fee and no per-task charges.*
 
 Brand placeholder: **YourBrand** (`yourbrand.com`). Prices: see `pricing.md`. Every promise below is something
-the kit does today (Phases 1–6); items marked *coming* are planned (Phase 7) and must not be sold as ready.
+the kit does today (Phases 1–7). Nothing in this offer is "coming" any more; if a new item is added before the
+kit does it, mark it *coming* and do not sell it as ready.
 
 ## Who it is for
 - Small agencies and online stores that already pay for Zapier or Make and want lower, predictable costs
@@ -25,7 +26,7 @@ the kit does today (Phases 1–6); items marked *coming* are planned (Phase 7) a
 | Monitoring and alerts | site checked every minute; failed runs reported within 5 minutes with a link; daily summary | Uptime Kuma + `agent/detect-failed-runs.sh`, `health.sh`, `digest.sh` (Phase 4) |
 | Your alert channels | Telegram, Slack and/or email, with quiet hours | `alerts` in `client.yaml` |
 | First flows | up to **3 flows** built for you, moved from Zapier/Make, or started from our ready-made flows: website lead capture, invoice reminders, review requests, AI email sorting, lead-ad alerts | `opskit flows import` (Phase 5); each one is tested with your own accounts during onboarding |
-| Handover call | 45 minutes: how to log in, read runs, pause a flow, who to call | owner; written handover pack *coming* (Phase 7) |
+| Handover call + pack | 45 minutes: how to log in, read runs, pause a flow, who to call; the written handover pack (every flow and how to pause it, account owners, support, data location, privacy, Zapier move) | owner; `opskit docs <id>` |
 
 ### 2. Monthly hosting + care
 | | **Care** | **Care Plus** |
@@ -37,7 +38,7 @@ the kit does today (Phases 1–6); items marked *coming* are planned (Phase 7) a
 | Response time (business days) | 12 h normal, 4 h if everything is down | same, handled first |
 | Activepieces version updates (tried on a copy first, checked after, automatic rollback) | quarterly | monthly or on request |
 | New flows | billed per flow or hourly | 1 small flow / month included in the hours |
-| Monthly care report | *coming* (Phase 7) | *coming* (Phase 7) |
+| Monthly care report (email: runs and failures per flow, availability, backups, updates, incidents, hours used) | ✓ | ✓ |
 
 Weekends and holidays: best effort for "everything is down"; normal issues wait for the next business day.
 Unused hours do not roll over.
