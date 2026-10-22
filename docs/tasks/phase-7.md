@@ -48,12 +48,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** bats with a stubbed data layer; leak check like `flows validate`.
 - **Result (22 Oct 2026):** `opskit docs <id>` → `clients/<id>/docs/handover.html`, one printable page (8 sections: welcome + builder address, active flows with what/starts/accounts/last run/**pause steps**, accounts and owners, support, backups and data location, **data & privacy**, **moving from Zapier or Make**, if something breaks). `opskit/lib/docs.sh` (data object), `opskit/templates/docs/handover.jq` (renderer, every value `@html`-escaped), host schema gains optional `location`. Pause wording from the 0.92.3 web source (Automations page, switch tooltip "Flow is on/off"). Refuses output with unfilled values or secret-looking strings. Tests: `docs.bats` (6); html-validate clean; screenshot checked.
 
-### [ ] 7.5 — Hours and incident log
+### [x] 7.5 — Hours and incident log
 - **Goal:** `opskit hours <id> add <h> "<note>"|list [--month]` and `opskit incident <id> add "<what>" [--at]|list` (JSON lines in the client registry); notes cut to 300 chars, no secrets.
 - **Spec refs:** 13
 - **Files likely touched:** `opskit/lib/commands/{hours,incident}.sh`, schema, tests
 - **Acceptance checks:** totals per month correct; bad input refused.
 - **Tests required:** bats.
+- **Result (22 Oct 2026):** `opskit/lib/worklog.sh`, `opskit hours <id> add|list`, `opskit incident <id> add|list` (`clients/<id>/hours.jsonl` with local dates, `incidents.jsonl` in UTC, month filters in the client's time zone; notes one line ≤ 300 chars, key-like text refused). `worklog_hours_month` / `worklog_incidents_month` feed the report. Tests: `worklog.bats` (4).
 
 ### [ ] 7.6 — Uptime for a month from Uptime Kuma
 - **Goal:** `monitor_uptime <id> <from> <to>` through Kuma's own socket API (method from 7.1), plus the down periods (start, length) for incidents.
