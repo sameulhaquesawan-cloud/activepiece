@@ -1,13 +1,13 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 7 — Handover docs & care report
-- **Current task:** Phase 7 signed off by the owner (22 Oct 2026); waiting for the owner's go for Phase 9 (Phase 8 is V2, ADR-012). Fixes from the owner's Codespace test: CI run 61 pending. Phase 5: real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current phase:** Phase 9 — Field readiness
+- **Current task:** Phase 9 planned (`docs/tasks/phase-9.md`, 12 tasks, questions Q1–Q9) — waiting for the owner's answers / "ok". Phase 7 signed off 22 Oct 2026; CI run 61 (owner-test fixes) pending
 - **Last updated:** 2026-10-22 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
 1. Agent: confirm CI run 61 green (three `[ok] report e2e:` lines). Owner (optional): re-run T1, T3, T4 of the Phases 6+7 Codespace test; merge to `main` by PR when convenient.
-2. Agent after sign-off: Phase 9 (field readiness: a real VPS run of everything, operator guide, cost/timing numbers) — `/opskit-start-phase`, with a step-by-step list of what the owner prepares (VPS, domain, SMTP app password, Telegram bot, Backblaze B2, age key). Phase 8 is V2 (skipped).
+2. Owner: answer Phase 9 Q1–Q9 (or "ok" for the defaults) and start the prep list in `docs/tasks/phase-9.md`. Agent then starts 9.1–9.6 (facts, two known-issue fixes, cloud-init + preflight, B2 setup, operator guide); 9.7–9.9 are owner/Cowork runs on the real server.
 3. Owner (not blocking, from the runbooks): `opskit/owner/business.yaml`, SMTP keys in `opskit/owner/alerts.conf`, `location:` in each host yaml.
 4. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants); Meta app per lead-ad client; lawyer/accountant review.
 
@@ -24,10 +24,11 @@
 | 6 | Safe upgrades | Done — owner signed off 22 Oct 2026 | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
 | 7 | Handover docs & care report | Done — owner signed off 22 Oct 2026 | `check`; owner Codespace test 22 Oct 2026 (upgrade/rollback by hand pass; found the report round missing from selftest — fixed, CI pending) |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
-| 9 | Field readiness | Not started | — |
+| 9 | Field readiness | Planned — owner answers pending | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — Phase 9 planned (no code).** `docs/tasks/phase-9.md`: 12 tasks (field facts, deploy-keeps-backup fix, log rotation, `host cloud-init` + `host preflight` with a DNS gate before deploy, B2 setup, operator guide, three field runs, costs, demo script, close) and nine owner questions with defaults. This session cannot open SSH (port 22 blocked), so field runs are done by the owner/Cowork from a Codespace.
 - **2026-10-22 — Phase 7 signed off by the owner.** Next: Phase 9 on the owner's go (Phase 8 stays V2).
 - **2026-10-22 — Fixes from the owner's Phases 6+7 Codespace test.** Owner test passed: plan, quiet-hours refusal, real upgrade 0.91.4 → 0.92.3 (23 s downtime) and rollback by hand. Found: (1) **the selftest never ran the report round** — `e2e_report.sh` was committed in 7.10 but its call in `commands/selftest.sh` and the `selftest.bats` expectations were not, so the 7.10/7.11 entries below wrongly said CI run 60 ran it; now wired in and required in CI. (2) The care report counted every night of the month before the client's first deploy as a missing backup (21 false incidents for a client deployed on the 22nd); counting now starts the night after the first `deployed` history event, and a month with no night due yet reads "none due yet" (tests `report_collect.bats` +1, `report_render.bats` +1). (3) `upgrade --yes` outside quiet hours printed the whole plan before refusing; the time window is now checked first (`upgrade_run.bats`). (4) `selftest --keep`'s "remove with" hint could not delete Caddy's root-owned data; it now removes it through a container like the normal cleanup. Test-prompt mistakes (not code): `yq '.history[-3:]'` needs a newer yq than the Codespace's; the Gmail account row only shows for accounts a flow uses.
 - **2026-10-22 — 7.11 phase close.** CI run 60 green: the selftest's report round ran with pieces (exact demo counts, pack with pause steps, email in the mock inbox). Runbook `docs/runbooks/handover-and-report.md`, ADR-019, verification report below, go-to-market updated (handover pack and care report no longer "coming").
