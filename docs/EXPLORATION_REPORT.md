@@ -123,3 +123,16 @@ Sources: pinned 0.92.3 source (`packages/server/api/src/rollback.ts`, `app/datab
 | Each image carries its migration list in `/usr/src/app/packages/server/api/dist/src/migration-manifest.json` (unnamed migrations are `null`) | images |
 
 **Consequences for the design (6.7):** upstream's undo is not dependable across releases, and an old image hides a too-new schema. The automatic rollback therefore restores a database dump taken **right before the switch with the app and worker stopped** (nothing is lost but what arrived on the new version during the upgrade window), then starts the old tag. The migration undo stays a documented manual tool (`--manifest`, never automatic `--force`). The production smoke test must compare the `migrations` table with the running image's manifest so a mismatch is caught.
+
+## 10. Addendum — Phase 7 report facts (task 7.1, 22 Oct 2026)
+| Fact | Finding | Source |
+|---|---|---|
+| Run rows | `flow_run`: `projectId`, `flowId`, `flowVersionId`, `environment` (`PRODUCTION` / test runs), `status`, `created`, `startTime`, `finishTime`, `archivedAt` (set by "archive" in the Runs page; the row stays), `parentRunId` | `packages/server/api/src/app/flows/flow-run/flow-run-entity.ts` |
+| Run retention | `AP_EXECUTION_DATA_RETENTION_DAYS` (default 30) deletes the run **log files** only; run rows stay | `system.ts`, `file/file.service.ts` (`deleteStaleBulk`) |
+| Deleted flows | `flow_run.flowId` and `flowVersionId` are `ON DELETE CASCADE`: deleting a flow deletes its runs | `flow-run-entity.ts` relations |
+| Statuses | `SUCCEEDED`; failed = `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED`, `QUOTA_EXCEEDED`, `LOG_SIZE_EXCEEDED`; other = `CANCELED`, `PAUSED`, `RUNNING`, `QUEUED` | `packages/core/execution/.../flow-execution.ts` |
+| Active flows | `flow.status = 'ENABLED'`, published version via `flow.publishedVersionId` → `flow_version.displayName`, `flow_version.trigger` (JSON: `settings.pieceName`, `triggerName`, nested actions' `pieceName`) | `flow.entity.ts`, `packages/core/piece-types/src/lib/flow-contracts.ts` |
+| Read-only role | `opskit_ro` reads `flow`, `flow_version`, `flow_run`, `project` only (no connections, no users) | `opskit/templates/readonly-role.sql` |
+| Uptime source | Uptime Kuma 2.5.5 keeps raw heartbeats (`heartbeat` table: time UTC, status 0 down / 1 up / 2 pending / 3 maintenance) for `keepDataPeriodDays` (default 365); socket `getMonitorBeats(monitorID, hours)` returns them. `getMonitorChartData` only gives UTC-day buckets beyond 720 h, so month edges in the client's time zone would be blurred. A paused monitor writes no beats (planned upgrade downtime is not counted) | `/app/server/server.js`, `socket-handlers/chart-socket-handler.js`, `uptime-calculator.js`, `jobs/clear-old-data.js` in the image |
+| Backups | Each backup's `status.json` lives only as long as the backup (14 days local, 30 remote); a failed night leaves nothing. A month report needs an append-only per-run history on the host | `opskit/agent/backup.sh` |
+| Restore tests, upgrades | `clients/<id>/restore-tests.jsonl`; client.yaml `history` (`upgraded`, `upgrade_failed`, `rolled_back`, `deployed`) | Phases 3, 6 |

@@ -2,12 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 7 — Handover docs & care report
-- **Current task:** Phase 7 planning (Phase 6 signed off 22 Oct 2026; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** 7.2 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Owner: answer Q1–Q7 in `docs/tasks/phase-7.md` ("ok" accepts the defaults) — reports read client data, so code waits for that. Merge Phase 6 to `main` by PR when convenient.
-2. Agent after "ok": 7.1 verify report facts (flow_run counting, month boundaries, Uptime Kuma monthly uptime), then 7.2 onwards.
+1. Agent: 7.2 owner business profile (`opskit/owner/business.yaml` + schema) and client fields (`support.included_hours`, `notes.yaml`), then 7.3 read-only data layer. Owner: merge Phase 6 to `main` by PR when convenient.
 3. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
@@ -22,12 +21,13 @@
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
 | 6 | Safe upgrades | Done — owner signed off 22 Oct 2026 | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
-| 7 | Handover docs & care report | Planned — waiting for the owner's answers | — |
+| 7 | Handover docs & care report | In progress (plan approved by the owner, 22 Oct 2026) | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 7.1 report facts verified (no code).** Owner accepted all Phase 7 defaults. Facts in `docs/EXPLORATION_REPORT.md` §10 and `docs/ASSUMPTIONS.md` #29–31: run counting (production runs created in the client's month, archived included, deleted flows lose their runs), uptime from Uptime Kuma's raw heartbeats (365 days, exact month edges), backups need a new per-run history on the host.
 - **2026-10-22 — Phase 6 signed off; Phase 7 planned (no code).** `docs/tasks/phase-7.md`: 11 tasks (facts, owner profile, read-only data layer, handover pack, hours/incident log, Kuma uptime, report collector, rendering, sending, selftest round, runbook + ADR-019) and seven owner questions with recommended defaults.
 - **2026-10-22 — 6.12 runbook, ADR-018, phase close.** `docs/runbooks/upgrade.md` (owner: plan → upgrade → follow-ups, rollback, interrupted runs), checklist, ADR-018, verification report below, go-to-market (site: upgrades moved from "coming soon" to included; offer: Phases 1–6 real, update row says copy-first + automatic rollback; demo script). CI: runs 48–50 found the template step-check bug and two selftest timing issues (fixed, see below); run 51 green with both upgrade rounds and the staging flow checks.
 - **2026-10-22 — 6.11 fork-sync rehearsal.** Upstream has no tag newer than 0.92.3. Commands and timings: `git fetch upstream main --no-tags` 13 s (512 commits since 0.92.3); `git worktree add -b sync/rehearsal-main <scratch> HEAD` 7 s; `git merge --no-commit --no-ff upstream/main` 1 s → 22 conflicts (14 workflows we deleted, `benchmark/setup.sh` deleted upstream, `package.json`, `bun.lock`, `docker-compose.yml`, `deploy/activepieces-helm/Chart.yaml`, `brain/knowledge/engineering/ci-pr-review-hygiene.md`) — all release-branch-vs-main differences (release tags are not on `main`), none in our paths; resolved by rule in 1 s; `opskit sync-check --tree <worktree>` 17/17 facts hold; merge aborted, worktree and branch removed, nothing pushed. New `opskit sync-check` (step 7 automated) + `opskit/tests/sync_check.bats`; `docs/UPSTREAM_SYNC.md` updated (tags only, conflict rules, sync-check, selftest round versions). Check/selftest/upgrade-demo for the current pin: green locally, CI pending.

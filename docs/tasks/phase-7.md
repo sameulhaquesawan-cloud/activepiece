@@ -5,6 +5,7 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 **Rule from `.claude/CLAUDE.md`:** reports read client data, so this plan waits for the owner's "ok" before code.
 
 ## Open questions for the owner (recommended defaults in brackets — "ok" accepts them)
+**Answered 22 Oct 2026:** owner said "ok, go with your recommendations" — all seven defaults accepted, plan approved.
 - **Q1 — How is the report sent?** SPEC 13 says "emailed by an owner-side cron", the phase line also names a `monthly-report-sender` flow. [`opskit report --all --send` on your machine (by hand on the 1st, or a cron line on an always-on WSL/Codespace), through your SMTP account with `curl` exactly like alerts — no msmtp, no Activepieces flow (that would need the ops-hub we ruled out, ADR-012). Each month is sent once; re-running says "already sent".]
 - **Q2 — What format?** [One HTML email with inline styles that also prints cleanly to PDF from any browser; the same file is kept in `opskit/clients/<id>/reports/YYYY-MM.html`. No PDF tool to install.]
 - **Q3 — "Hours used vs included": where do hours come from?** [You log work as you go: `opskit hours <id> add 1.5 "changed the invoice flow"`. Included hours per client in `client.yaml` (`support.included_hours`: Care 1, Care Plus 3). Unused hours do not roll over (as in the offer).]
@@ -15,12 +16,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 
 ## Tasks
 
-### [ ] 7.1 — Verify report facts (no code)
+### [x] 7.1 — Verify report facts (no code)
 - **Goal:** On the pinned version: columns and statuses for per-flow monthly counts (`flow_run.created`/`finishTime`, `environment = PRODUCTION`, `flowId` → `flow_version.displayName`, statuses), month boundaries in the client's time zone, `flow.status = ENABLED` + trigger type from the published version, what the read-only role can read (no connections), Uptime Kuma 2.5.5: how to get exact monthly uptime (socket `getMonitorBeats` / `getMonitorChartData`, or its `stat_daily` table) and how long it keeps data; what backups/restore tests/history already record.
 - **Spec refs:** 13, 15, 0 (never invent tables)
 - **Files likely touched:** `docs/ASSUMPTIONS.md`, `docs/EXPLORATION_REPORT.md` (addendum)
 - **Acceptance checks:** each fact names its source file or a run; uptime method chosen with its accuracy.
 - **Tests required:** none (facts).
+- **Result (22 Oct 2026):** EXPLORATION_REPORT §10, ASSUMPTIONS #29–31. Runs: production runs created in the client-time-zone month, archived included; run rows survive log retention but die with their flow. Uptime: Kuma raw heartbeats (365 days) via `getMonitorBeats`, exact at month edges. Backups: no month-long record exists → 7.7 adds an append-only `history.jsonl` written by the backup agent.
 
 ### [ ] 7.2 — Owner business profile and client fields
 - **Goal:** `opskit/owner/business.yaml` (name, website, support email, signature; placeholder values allowed) with a schema; `client.yaml`: `support.included_hours`, `report.recipients` (existing), `notes.yaml` per client (one sentence per flow, contacts for credentials). `opskit validate` covers both.
@@ -58,7 +60,7 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** docker-tagged bats with real Kuma (extend `monitor.bats`).
 
 ### [ ] 7.7 — Report data collector
-- **Goal:** `report_collect <id> <YYYY-MM>` → one JSON: runs per flow (7.3), uptime + down periods (7.6), backups (nights complete/incomplete, last success, off-server state), last restore test, upgrades and rollbacks (history), incidents (auto + logged), hours used vs included.
+- **Goal:** backup agent appends one line per run to `<root>/backups/<id>/history.jsonl` (ASSUMPTIONS #31); `report_collect <id> <YYYY-MM>` → one JSON: runs per flow (7.3), uptime + down periods (7.6), backups (nights complete/incomplete from that history, last success, off-server state), last restore test, upgrades and rollbacks (history), incidents (auto + logged), hours used vs included.
 - **Spec refs:** 13
 - **Files likely touched:** `opskit/lib/report.sh`, tests
 - **Acceptance checks:** fixture month (DB + backup folders + restore tests + history + logs) gives exactly the expected JSON.
