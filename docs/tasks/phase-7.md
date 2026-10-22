@@ -80,12 +80,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** bats golden files; html check.
 - **Result (22 Oct 2026):** `opskit report <id> [--month YYYY-MM]` (default last month in the client's time zone) writes `clients/<id>/reports/<month>.{html,txt,json}`; `opskit/templates/report/report.jq` renders both versions from the same data (six headline numbers, flows table, availability + interruptions, backups + restore test, updates, incidents, support hours; local dates; inline styles for mail clients). html-validate clean apart from the deliberate inline styles; screenshot checked. Tests: `report_render.bats` (4, golden text file `opskit/tests/fixtures/report/2026-09.txt`), `report_collect.bats` +2.
 
-### [ ] 7.9 — Sending the report
+### [x] 7.9 — Sending the report
 - **Goal:** `opskit report --all --send [--month]` (default: last month): one email per client to `report.recipients`, copy to you, through your SMTP (curl, like alerts); sent log so a month is never sent twice; a cron line example for an always-on machine.
 - **Spec refs:** 13
 - **Files likely touched:** `opskit/lib/report_send.sh`, `opskit/lib/commands/report.sh`, docs, tests
 - **Acceptance checks:** the mock SMTP inbox receives the email with HTML + text parts and the right recipients; second run sends nothing.
 - **Tests required:** bats with `mock_smtp`.
+- **Result (22 Oct 2026):** `opskit/lib/report_send.sh`: multipart/alternative email (text + HTML, base64 parts, UTF-8 encoded subject/sender name), To = `report.recipients`, Cc = owner (`OWNER_EMAIL`, else the business support email), SMTP settings from `owner/alerts.conf` (same keys as alerts; password via curl config on stdin, backslashes and quotes escaped), `clients/<id>/reports/sent.jsonl` so a month goes out once (`--resend`). `opskit report <id> --send`, `opskit report --all [--send]` (deployed clients, keeps going after a failure). Cron line for the runbook (7.11). Tests: `report_send.bats` (5, mock SMTP: recipients, auth, decoded parts equal the files, send-once, missing settings).
 
 ### [ ] 7.10 — Selftest and CI round
 - **Goal:** selftest seeds a demo month on its throwaway client (runs created through flows), generates the handover pack and the report, checks the numbers against the database and that the email reaches the mock inbox.
