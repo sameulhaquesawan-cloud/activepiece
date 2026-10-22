@@ -32,12 +32,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** `validate.bats` cases.
 - **Result (22 Oct 2026):** `opskit/schema/business.schema.json` (`business_name`, `support_email` required; `website` https, `phone`, `support_hours`, `signature`), `opskit/schema/notes.schema.json` (`notes_for`, `flows`/`accounts` one sentence each, `welcome`), `opskit/templates/business.example.yaml`, `opskit/lib/business.sh` (`business_get` with placeholders + one warning on stderr), client `support.included_hours` (0–40, default 1, in the client template), `opskit validate` detects both new types. Tests: `validate.bats` +3, `business.bats` (2).
 
-### [ ] 7.3 — Read-only client data layer
+### [x] 7.3 — Read-only client data layer
 - **Goal:** `opskit/lib/clientdata.sh`: `clientdata_active_flows` (name, trigger piece/type, last run) and `clientdata_month_runs` (per flow: total, succeeded, failed, other) for a month in the client's time zone, through `opskit_ro` only (read-only SQL).
 - **Spec refs:** 13, 15
 - **Files likely touched:** `opskit/lib/clientdata.sh`, `opskit/tests/fixtures/`, tests
 - **Acceptance checks:** on a fixture database with hand-counted runs (incl. runs at the month edges in another time zone, test runs, deleted flows) every number matches exactly.
 - **Tests required:** docker-tagged bats with a fixture Postgres (like `detect_failed_runs.bats`).
+- **Result (22 Oct 2026):** `opskit/lib/clientdata.sh`: `clientdata_active_flows` (published name, trigger piece/name, every piece used via `jsonb_path_query($.**.pieceName)`, last production run) and `clientdata_month_runs` (per flow: total/succeeded/failed/other; month in the client's time zone via `AT TIME ZONE`; grouped by flow, current published name), both through `opskit_ro` only. `clientdata.bats` (5, docker): hand-counted fixture incl. Berlin/UTC month edges, test runs excluded, archived included, renamed versions, `opskit_ro` cannot read connections. SQL also ran on the real 0.92.3 schema (Phase 0 stack, no data there); real runs are checked in 7.10.
 
 ### [ ] 7.4 — Handover pack `opskit docs <id>`
 - **Goal:** renders `opskit/clients/<id>/docs/` (Markdown + one printable HTML): welcome and how to log in; active flows (7.3) with what each does and **how to pause it**; credential ownership checklist (which accounts each flow uses, who owns them, how to rotate); support promise (response hours, how to reach you); backups and data location (server region, backup copies, retention, restore tests); **data & privacy note**; **Zapier → Activepieces migration checklist**; what to do if something breaks. Templates in `opskit/templates/docs/`, white-labelled from `business.yaml`.
