@@ -201,6 +201,7 @@ upgrade_steps() {
 # upgrade_start <id> <to>: gates, lock, wait for a running backup, state, steps
 upgrade_start() {
   local id="$1" to="$2" cfile host run
+  upgrade_window_ok "$id" || return 1
   upgrade_plan "$id" "$to" || { log_fail "a gate failed: nothing was changed"; return 1; }
   upgrade_confirm "$id" "$to" || return 1
   cfile="$(client_file "$id")"

@@ -3,10 +3,10 @@
 ## Current status
 - **Current phase:** Phase 7 — Handover docs & care report
 - **Current task:** Phase 7 done — waiting for the owner's sign-off (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
-- **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
+- **Last updated:** 2026-10-22 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Owner: look at the two samples (handover pack, care report) and sign off Phase 7; merge to `main` by PR when convenient.
+1. Owner: re-run T1, T3 and T4 of the Phases 6+7 Codespace test after CI is green on the fixes below (the report round now runs in the selftest, so the demo flows exist), then sign off Phase 7; merge to `main` by PR when convenient.
 2. Agent after sign-off: Phase 9 (field readiness: a real VPS run of everything, operator guide, cost/timing numbers) — `/opskit-start-phase`, with a step-by-step list of what the owner prepares (VPS, domain, SMTP app password, Telegram bot, Backblaze B2, age key). Phase 8 is V2 (skipped).
 3. Owner (not blocking, from the runbooks): `opskit/owner/business.yaml`, SMTP keys in `opskit/owner/alerts.conf`, `location:` in each host yaml.
 4. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants); Meta app per lead-ad client; lawyer/accountant review.
@@ -22,12 +22,13 @@
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
 | 6 | Safe upgrades | Done — owner signed off 22 Oct 2026 | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
-| 7 | Handover docs & care report | Done — owner sign-off pending | `check` + CI run 60 (selftest report round with pieces required), 22 Oct 2026 |
+| 7 | Handover docs & care report | Done — owner sign-off pending | `check`; owner Codespace test 22 Oct 2026 (upgrade/rollback by hand pass; found the report round missing from selftest — fixed, CI pending) |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — Fixes from the owner's Phases 6+7 Codespace test.** Owner test passed: plan, quiet-hours refusal, real upgrade 0.91.4 → 0.92.3 (23 s downtime) and rollback by hand. Found: (1) **the selftest never ran the report round** — `e2e_report.sh` was committed in 7.10 but its call in `commands/selftest.sh` and the `selftest.bats` expectations were not, so the 7.10/7.11 entries below wrongly said CI run 60 ran it; now wired in and required in CI. (2) The care report counted every night of the month before the client's first deploy as a missing backup (21 false incidents for a client deployed on the 22nd); counting now starts the night after the first `deployed` history event, and a month with no night due yet reads "none due yet" (tests `report_collect.bats` +1, `report_render.bats` +1). (3) `upgrade --yes` outside quiet hours printed the whole plan before refusing; the time window is now checked first (`upgrade_run.bats`). (4) `selftest --keep`'s "remove with" hint could not delete Caddy's root-owned data; it now removes it through a container like the normal cleanup. Test-prompt mistakes (not code): `yq '.history[-3:]'` needs a newer yq than the Codespace's; the Gmail account row only shows for accounts a flow uses.
 - **2026-10-22 — 7.11 phase close.** CI run 60 green: the selftest's report round ran with pieces (exact demo counts, pack with pause steps, email in the mock inbox). Runbook `docs/runbooks/handover-and-report.md`, ADR-019, verification report below, go-to-market updated (handover pack and care report no longer "coming").
 - **2026-10-22 — 7.10 report round in selftest; runbook + ADR-019 drafted.** Selftest creates two demo flows with known runs and checks the care report numbers exactly, the handover pack (flows + pause steps, privacy, Zapier) and the report email in a mock inbox. `docs/runbooks/handover-and-report.md`, ADR-019. Files: `opskit/lib/e2e_report.sh`, `commands/selftest.sh`, `opskit/tests/selftest.bats`.
 - **2026-10-22 — 7.9 sending reports.** `opskit report <id> --send` / `opskit report --all --send`: one email per client (text + HTML) to the report recipients with a copy to you, through your SMTP account in `opskit/owner/alerts.conf`; each month only once (`--resend`). Files: `opskit/lib/report_send.sh`, `commands/report.sh`; tests `report_send.bats` (5).

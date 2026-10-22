@@ -18,7 +18,8 @@ def event_text: if .event == "upgraded" then "Updated to version \(.tag)"
     {k: "Availability", v: (if $measured then ($r.uptime.uptime | pct) else "not measured" end)},
     {k: "Flow runs", v: "\($r.runs.total)"},
     {k: "Failed runs", v: "\($r.runs.failed)"},
-    {k: "Nightly backups", v: (if $bhist then "\($r.backups.complete) of \($r.backups.nights)" else "no record" end)},
+    {k: "Nightly backups", v: (if $bhist | not then "no record" elif $r.backups.nights == 0 then "none due yet"
+      else "\($r.backups.complete) of \($r.backups.nights)" end)},
     {k: "Incidents", v: "\($r.incidents | length)"},
     {k: "Support hours", v: "\($r.hours.used) of \($r.hours.included)"}
   ],
@@ -37,6 +38,7 @@ def event_text: if .event == "upgraded" then "Updated to version \(.tag)"
       end)},
     {title: "Backups", lines: (
       (if $bhist | not then ["No backup record exists for this month yet (recording started later)."]
+       elif $r.backups.nights == 0 then ["Nightly backups start the night after your system went live; none was due yet this month."]
        elif ($r.backups.missing | length) == 0 then ["A complete, encrypted backup was made every night (\($r.backups.nights) of \($r.backups.nights)), each copied to a second location."]
        else ["\($r.backups.complete) of \($r.backups.nights) nights had a complete backup. Missing: \($r.backups.missing | map(. + "T12:00:00Z" | day) | join(", ")). We were alerted and checked each one."] end)
       + (if $r.restore_test == null then ["No restore test yet."]

@@ -175,6 +175,7 @@ fake_run() {
   go --to 0.92.3 --yes
   [ "$status" -eq 1 ]
   [[ "$output" == *"acme has no quiet hours (alerts.quiet_hours): agree a time with the client and add --now"* ]]
+  [[ "$output" != *"Upgrade plan for acme"* ]]
   yq -i '.timezone = "Europe/Berlin" | .alerts.quiet_hours = {"from": "22:00", "to": "06:00"}' "${REG}/clients/acme/client.yaml"
   OPSKIT_UPGRADE_CLOCK="$(date -d '2026-10-22T12:00:00Z' +%s)" go --to 0.92.3 --yes
   [ "$status" -eq 1 ]

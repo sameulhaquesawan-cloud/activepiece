@@ -79,6 +79,16 @@ JSON
   [ "$(jq -c '.uptime.measured, .restore_test' <<< "$output" | paste -sd' ')" = "false null" ]
 }
 
+@test "nights before the client's first deploy are not counted as missing backups" {
+  yq -i '.history = [{"at": "2026-09-08T10:00:00Z", "event": "deployed", "tag": "0.92.3"}] + .history' "${REG}/clients/acme/client.yaml"
+  run report_collect acme 2026-09
+  [ "$status" -eq 0 ]
+  [ "$(jq -c '.backups | {nights, complete, missing}' <<< "$output")" = '{"nights":22,"complete":20,"missing":["2026-09-10","2026-09-11"]}' ]
+  yq -i '.history[0].at = "2026-09-12T10:00:00Z"' "${REG}/clients/acme/client.yaml"
+  run report_collect acme 2026-09
+  [ "$(jq -c '(.backups | {nights, complete, missing}), [.incidents[] | select(.source == "backup")]' <<< "$output" | paste -sd' ')" = '{"nights":18,"complete":18,"missing":[]} []' ]
+}
+
 @test "a bad month or an unreadable database stops the report" {
   run report_collect acme 2026-9
   [ "$status" -eq 1 ]

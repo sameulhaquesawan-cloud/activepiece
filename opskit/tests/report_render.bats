@@ -41,6 +41,13 @@ setup() {
   [[ "$output" == *$'Incidents\nNone.'* ]]
 }
 
+@test "a client that went live after the last night of the month has no backup due yet" {
+  run report_render "$(jq '.backups = {history: true, nights: 0, complete: 0, missing: [], failed_runs: 0, last_complete: "2026-09-30T09:00:00Z"}' <<< "$DATA")" text
+  [[ "$output" == *"Nightly backups: none due yet"* ]]
+  [[ "$output" == *"Nightly backups start the night after your system went live; none was due yet this month."* ]]
+  [[ "$output" != *"0 of 0"* ]]
+}
+
 @test "last month is computed in the client's time zone" {
   run report_last_month UTC
   [[ "$output" =~ ^[0-9]{4}-[0-9]{2}$ ]]

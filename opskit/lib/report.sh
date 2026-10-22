@@ -9,17 +9,21 @@ report_window() {
     "$(date -u -d "TZ=\"$2\" $(date -d "$1-01 +1 month" +%Y-%m-%d) 00:00" +%s)"
 }
 
-# report_backups <id> <YYYY-MM> <tz> <from> <to>: nights of the month with a complete backup (host history)
+# report_backups <id> <YYYY-MM> <tz> <from> <to>: nights of the month with a complete backup (host history);
+# counting starts the night after the client's first deploy
 report_backups() {
-  local id="$1" month="$2" tz="$3" from="$4" to="$5" host history now last_day
+  local id="$1" month="$2" tz="$3" from="$4" to="$5" host history now last_day deployed
   host="$(yaml_get "$(client_file "$id")" .host.name)"
+  deployed="$(yq -r '[.history // [] | .[] | select(.event == "deployed") | .at] | sort | .[0] // ""' "$(client_file "$id")")"
   history="$(host_run "$host" cat "$(host_root "$host")/backups/${id}/history.jsonl" 2>/dev/null || true)"
   now="$(date +%s)"
   last_day=$(( now < to ? now : to ))
-  jq -sc --arg tz "$tz" --argjson from "$from" --argjson to "$to" --argjson last "$last_day" --arg month "$month" '
+  jq -sc --arg tz "$tz" --argjson from "$from" --argjson to "$to" --argjson last "$last_day" --arg month "$month" \
+    --arg deployed "$deployed" '
     def local_day: (fromdate | strflocaltime("%Y-%m-%d"));
-    [.[] | select((.at | fromdate) >= $from and (.at | fromdate) < $to)] as $runs
-    | [range($from + 43200; $last; 86400) | strflocaltime("%Y-%m-%d") | select(startswith($month))] as $days
+    (if $deployed == "" then "" else ($deployed | local_day) end) as $first
+    | [.[] | select((.at | fromdate) >= $from and (.at | fromdate) < $to)] as $runs
+    | [range($from + 43200; $last; 86400) | strflocaltime("%Y-%m-%d") | select(startswith($month) and . > $first)] as $days
     | ([$runs[] | select(.result == "complete") | .at | local_day] | unique) as $good
     | {
         history: ($runs | length > 0),

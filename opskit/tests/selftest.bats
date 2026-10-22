@@ -35,9 +35,13 @@ load helpers/common
     [[ "$output" == *"[ok] templates e2e: lead-capture-tables imported"* ]]
     [[ "$output" == *"[ok] templates e2e: lead-capture-tables: run 2 test/bad-email.json → FAILED"* ]]
     [[ "$output" == *"[ok] templates e2e: invoice-reminder-tables: run 3 test/tick.json → FAILED"* ]]
+    [[ "$output" == *"[ok] report e2e: "*" report counts the demo runs exactly (3 succeeded, 2 failed)"* ]]
+    [[ "$output" == *"[ok] report e2e: handover pack lists every active flow with pause steps, the privacy note and the Zapier checklist"* ]]
+    [[ "$output" == *"[ok] report e2e: report email delivered to the test inbox (client + owner copy, text + HTML)"* ]]
   else
     [[ "$output" == *"[ok] monitoring e2e: failing flow"* || "$output" == *"monitoring e2e SKIPPED"* ]]
     [[ "$output" == *"[ok] templates e2e: example imported"* || "$output" == *"templates e2e SKIPPED"* ]]
+    [[ "$output" == *"[ok] report e2e: handover pack"* || "$output" == *"report e2e SKIPPED"* ]]
     [[ "$output" == *"[ok] smoke webhook flow: run SUCCEEDED"* || "$output" == *"smoke flow checks SKIPPED"* ]]
   fi
   [[ "$output" == *"[ok] selftest passed"* ]]

@@ -29,19 +29,25 @@ upgrade_hhmm() {
   printf '%s' $(( 10#${BASH_REMATCH[1]} * 60 + 10#${BASH_REMATCH[2]} ))
 }
 
+# upgrade_window_ok <id>: inside the client's quiet hours, or --now
+upgrade_window_ok() {
+  local id="$1" cfile quiet
+  cfile="$(client_file "$id")"
+  [ "$UPGRADE_NOW" = "true" ] && return 0
+  upgrade_in_quiet_hours "$id" && return 0
+  quiet="$(yaml_get "$cfile" .alerts.quiet_hours.from)"
+  if [ -n "$quiet" ]; then
+    log_fail "outside ${id}'s quiet hours (${quiet}–$(yaml_get "$cfile" .alerts.quiet_hours.to) $(yaml_get "$cfile" .timezone UTC)): run then, or add --now"
+  else
+    log_fail "${id} has no quiet hours (alerts.quiet_hours): agree a time with the client and add --now"
+  fi
+  return 1
+}
+
 # upgrade_confirm <id> <to>: quiet hours (or --now), then --yes and the typed client id
 upgrade_confirm() {
-  local id="$1" to="$2" cfile quiet
-  cfile="$(client_file "$id")"
-  if [ "$UPGRADE_NOW" != "true" ] && ! upgrade_in_quiet_hours "$id"; then
-    quiet="$(yaml_get "$cfile" .alerts.quiet_hours.from)"
-    if [ -n "$quiet" ]; then
-      log_fail "outside ${id}'s quiet hours (${quiet}–$(yaml_get "$cfile" .alerts.quiet_hours.to) $(yaml_get "$cfile" .timezone UTC)): run then, or add --now"
-    else
-      log_fail "${id} has no quiet hours (alerts.quiet_hours): agree a time with the client and add --now"
-    fi
-    return 1
-  fi
+  local id="$1" to="$2"
+  upgrade_window_ok "$id" || return 1
   confirm_destructive "$id" "$UPGRADE_YES" "upgrade ${id} to ${to} (the app is down for 1–3 minutes)"
 }
 
