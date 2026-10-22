@@ -44,6 +44,12 @@
       "type": "string",
       "maxLength": 60
     },
+    "location": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 80,
+      "description": "where the server stands, as told to clients (e.g. Germany (Falkenstein)); shown in handover packs"
+    },
     "cpus": {
       "type": "integer",
       "minimum": 1,

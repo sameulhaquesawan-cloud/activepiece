@@ -40,12 +40,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** docker-tagged bats with a fixture Postgres (like `detect_failed_runs.bats`).
 - **Result (22 Oct 2026):** `opskit/lib/clientdata.sh`: `clientdata_active_flows` (published name, trigger piece/name, every piece used via `jsonb_path_query($.**.pieceName)`, last production run) and `clientdata_month_runs` (per flow: total/succeeded/failed/other; month in the client's time zone via `AT TIME ZONE`; grouped by flow, current published name), both through `opskit_ro` only. `clientdata.bats` (5, docker): hand-counted fixture incl. Berlin/UTC month edges, test runs excluded, archived included, renamed versions, `opskit_ro` cannot read connections. SQL also ran on the real 0.92.3 schema (Phase 0 stack, no data there); real runs are checked in 7.10.
 
-### [ ] 7.4 — Handover pack `opskit docs <id>`
+### [x] 7.4 — Handover pack `opskit docs <id>`
 - **Goal:** renders `opskit/clients/<id>/docs/` (Markdown + one printable HTML): welcome and how to log in; active flows (7.3) with what each does and **how to pause it**; credential ownership checklist (which accounts each flow uses, who owns them, how to rotate); support promise (response hours, how to reach you); backups and data location (server region, backup copies, retention, restore tests); **data & privacy note**; **Zapier → Activepieces migration checklist**; what to do if something breaks. Templates in `opskit/templates/docs/`, white-labelled from `business.yaml`.
 - **Spec refs:** 13, A4, A5
 - **Files likely touched:** `opskit/lib/commands/docs.sh`, `opskit/lib/docs.sh`, `opskit/templates/docs/`, tests
 - **Acceptance checks:** every active flow appears with pause steps; privacy note and Zapier checklist present; no secrets, ids or personal data in the output; unresolved placeholder fails the render.
 - **Tests required:** bats with a stubbed data layer; leak check like `flows validate`.
+- **Result (22 Oct 2026):** `opskit docs <id>` → `clients/<id>/docs/handover.html`, one printable page (8 sections: welcome + builder address, active flows with what/starts/accounts/last run/**pause steps**, accounts and owners, support, backups and data location, **data & privacy**, **moving from Zapier or Make**, if something breaks). `opskit/lib/docs.sh` (data object), `opskit/templates/docs/handover.jq` (renderer, every value `@html`-escaped), host schema gains optional `location`. Pause wording from the 0.92.3 web source (Automations page, switch tooltip "Flow is on/off"). Refuses output with unfilled values or secret-looking strings. Tests: `docs.bats` (6); html-validate clean; screenshot checked.
 
 ### [ ] 7.5 — Hours and incident log
 - **Goal:** `opskit hours <id> add <h> "<note>"|list [--month]` and `opskit incident <id> add "<what>" [--at]|list` (JSON lines in the client registry); notes cut to 300 chars, no secrets.
