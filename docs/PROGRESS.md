@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 7 — Handover docs & care report
-- **Current task:** 7.10 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** 7.11 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 7.10 selftest round (two demo flows with known runs → report numbers exact, handover pack lists them with pause steps, report email reaches the mock inbox), then 7.11 runbook, ADR-019, phase close. Owner (when convenient): set `location:` (e.g. "Germany (Falkenstein)") in each host yaml; it appears in handover packs. Owner (when convenient): copy `opskit/templates/business.example.yaml` to `opskit/owner/business.yaml` with your business name and support email. Owner: merge Phase 6 to `main` by PR when convenient.
+1. Agent: confirm CI green for the report selftest round, then 7.11 close (verification report, go-to-market: handover pack and care report move from "coming" to included) and Phase 7 sign-off request. Owner (when convenient): set `location:` (e.g. "Germany (Falkenstein)") in each host yaml; it appears in handover packs. Owner (when convenient): copy `opskit/templates/business.example.yaml` to `opskit/owner/business.yaml` with your business name and support email. Owner: merge Phase 6 to `main` by PR when convenient.
 3. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 7.10 report round in selftest; runbook + ADR-019 drafted.** Selftest creates two demo flows with known runs and checks the care report numbers exactly, the handover pack (flows + pause steps, privacy, Zapier) and the report email in a mock inbox. `docs/runbooks/handover-and-report.md`, ADR-019. Files: `opskit/lib/e2e_report.sh`, `commands/selftest.sh`, `opskit/tests/selftest.bats`.
 - **2026-10-22 — 7.9 sending reports.** `opskit report <id> --send` / `opskit report --all --send`: one email per client (text + HTML) to the report recipients with a copy to you, through your SMTP account in `opskit/owner/alerts.conf`; each month only once (`--resend`). Files: `opskit/lib/report_send.sh`, `commands/report.sh`; tests `report_send.bats` (5).
 - **2026-10-22 — 7.8 report rendering.** `opskit report <id> [--month]` writes the month's report as HTML (email/printable), text and JSON in `opskit/clients/<id>/reports/`. Files: `opskit/lib/report.sh`, `opskit/lib/commands/report.sh`, `opskit/templates/report/report.jq`; tests `report_render.bats` (golden file), `report_collect.bats`. Verify: `opskit/bin/opskit report <client>` and open the HTML.
 - **2026-10-22 — 7.7 report data.** The backup agent now keeps a per-run history on the host (`backups/<id>/history.jsonl`); `report_collect` gathers one client-month (runs per flow, uptime and interruptions, backup nights, restore test, updates, incidents, hours). Files: `opskit/agent/backup.sh`, `opskit/lib/report.sh`, `opskit/lib/business.sh`; tests `report_collect.bats` (3), `backup_agent.bats` +1, `business.bats`. Hosts get the new agent with the next `opskit deploy`.

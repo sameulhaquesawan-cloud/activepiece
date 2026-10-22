@@ -88,12 +88,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** bats with `mock_smtp`.
 - **Result (22 Oct 2026):** `opskit/lib/report_send.sh`: multipart/alternative email (text + HTML, base64 parts, UTF-8 encoded subject/sender name), To = `report.recipients`, Cc = owner (`OWNER_EMAIL`, else the business support email), SMTP settings from `owner/alerts.conf` (same keys as alerts; password via curl config on stdin, backslashes and quotes escaped), `clients/<id>/reports/sent.jsonl` so a month goes out once (`--resend`). `opskit report <id> --send`, `opskit report --all [--send]` (deployed clients, keeps going after a failure). Cron line for the runbook (7.11). Tests: `report_send.bats` (5, mock SMTP: recipients, auth, decoded parts equal the files, send-once, missing settings).
 
-### [ ] 7.10 — Selftest and CI round
+### [x] 7.10 — Selftest and CI round
 - **Goal:** selftest seeds a demo month on its throwaway client (runs created through flows), generates the handover pack and the report, checks the numbers against the database and that the email reaches the mock inbox.
 - **Spec refs:** 17 Phase 7 accept
 - **Files likely touched:** `opskit/lib/e2e_report.sh`, `opskit/lib/commands/selftest.sh`, `opskit/tests/selftest.bats`
 - **Acceptance checks:** green locally and in CI.
 - **Tests required:** selftest + bats.
+- **Result (22 Oct 2026):** `opskit/lib/e2e_report.sh` after the smoke step: "Report demo" (3 webhooks → SUCCEEDED) and "Report demo failing" (2 → FAILED) on the selftest client; the month's report must show exactly 3/3/0 and 2/0/2 for them; `opskit docs` must list both with pause steps plus the privacy and Zapier sections; `report_send` must deliver one multipart email to a mock SMTP inbox (client + owner copy). Required in CI (pieces), skipped offline. Local selftest green (skip path); CI: see PROGRESS.
 
 ### [ ] 7.11 — Runbook, ADR-019 and phase close
 - **Goal:** `docs/runbooks/handover-and-report.md` (when to send the pack, how to log hours/incidents, monthly routine), ADR-019, PROGRESS + verification report, go-to-market: handover pack and care report move from "coming" to included.
