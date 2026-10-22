@@ -18,10 +18,10 @@ deploy → re-deploy (must keep the same containers) → seed 3 flows + a stored
 backup (off-server copy to a local rclone remote) → restore into "<id>-rt" → the copy has the
 flows and the connection decrypts → a deliberately failing flow produces exactly one Telegram
 alert (mock API) via the failed-run detector (skipped when pieces are offline unless
-OPSKIT_REQUIRE_PIECES=1) → the upgrade smoke checks pass, and fail when the stack is broken on
+OPSKIT_REQUIRE_PIECES=1) → two demo flows with known runs: the month's care report counts them
+exactly, the handover pack lists them, the report email reaches a mock inbox → the upgrade smoke checks pass, and fail when the stack is broken on
 purpose (lowered baseline, stopped worker, connection with another key, newer schema), plus a
-webhook and a schedule flow run (pieces) → two demo flows with known runs: the month's care report
-counts them exactly, the handover pack lists them, the report email reaches a mock inbox → upgrade rounds on two more throwaway clients: 0.92.2 →
+webhook and a schedule flow run (pieces) → upgrade rounds on two more throwaway clients: 0.92.2 →
 pinned (plan, staging, switch, checks) and 0.91.4 → pinned with an injected production failure that
 must roll back with data intact and one owner alert → teardown of only what it created.
 --keep leaves everything running for inspection (prints how to remove it).
@@ -100,8 +100,8 @@ cmd_main() {
   rt_verify selftest "${SELFTEST_ID}-rt" "${SELFTEST_ID}-rt.localhost" "$https_port" || die "selftest: restored copy is incomplete"
   e2e_monitoring selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: monitoring end-to-end check failed"
   e2e_flow_templates "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: flow template import check failed"
-  e2e_smoke selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: upgrade smoke checks failed"
   e2e_report "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" "$SELFTEST_DIR" || die "selftest: care report and handover pack check failed"
+  e2e_smoke selftest "$SELFTEST_ID" "${SELFTEST_ID}.localhost" "$https_port" || die "selftest: upgrade smoke checks failed"
   [ "$SELFTEST_KEEP" = "true" ] || practice_teardown "$SELFTEST_ROOT" "" "${SELFTEST_ID}-rt"
   e2e_upgrade "$SELFTEST_ID" "$https_port" "$SELFTEST_DIR" || die "selftest: upgrade rounds failed"
   if [ "$SELFTEST_KEEP" = "true" ]; then

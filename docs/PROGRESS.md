@@ -136,6 +136,7 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- 2026-10-22: in CI, publishing a webhook flow right after the selftest smoke step's broken-condition checks (worker stopped and restarted, fake newer migration, wrong-key connection) got no answer within 120 s (runs 50 and 63); on a fresh stack it takes seconds. Selftest now publishes before those checks. Check on the Phase 9 server whether a plain worker restart alone delays publishing (a client editing flows right after an upgrade or reboot would see it).
 - 2026-10-22: `opskit deploy` on a machine without the owner public key (`opskit/keys/owner.age.pub` or `OPSKIT_OWNER_AGE_PUB`) re-installs the client's cron **without** the nightly backup line, even if backups ran before (warns only). The upgrade now refuses in that case (plan gate); plain `deploy` still does it. Proposed fix: refuse (or keep the existing backup line) when the host already has `agent/backup.sh` installed.
 - Codespace `verbose-trout` (4-core) runs the explore stack; an older broken codespace `symmetrical-fishstick` should be deleted by the owner. devcontainer memory requirement lowered 8gb→4gb so 2-core machines are offered (8gb excluded them).
 - ~~BLOCKER (cloud session network)~~ resolved 20 Oct 2026: owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com`.
