@@ -14,6 +14,7 @@ client's .env with the owner's age public key (<root>/agent/owner.age.pub), snap
 compose.yml and writes status.json. Then (if configured in <root>/clients/<id>/backup.conf)
 copies off-server with rclone, prunes old backups, sends a heartbeat or an alert.
 
+Every run appends one line to <root>/backups/<id>/history.jsonl (complete, local_only, failed, skipped).
 backup.conf keys: BACKUP_REMOTE (rclone remote:path), KEEP_LOCAL_DAYS (14), KEEP_REMOTE_DAYS (30),
 HEARTBEAT_URL (Uptime Kuma push URL), HEARTBEAT_CACERT (practice hosts: Caddy's local root CA).
 Alerts: alert.sh next to this script.
@@ -154,9 +155,24 @@ heartbeat() {
   fi
 }
 
-# finish <exit code> <reason>: heartbeat on success, alert otherwise, then exit
+# record_history <result> <reason>: one line per run in backups/<id>/history.jsonl (never pruned; the care
+# report counts nights with a complete backup from it)
+record_history() {
+  local name=""
+  [ -z "${BACKUP_DIR:-}" ] || name="$(basename "$BACKUP_DIR")"
+  jq -nc --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg backup "$name" --arg result "$1" --arg reason "${2:0:200}" \
+    '{at: $at, backup: $backup, result: $result} + (if $reason != "" then {reason: $reason} else {} end)' \
+    >> "${ROOT}/backups/${CLIENT}/history.jsonl" || warn "could not write the backup history"
+}
+
+# finish <exit code> <reason>: history line, heartbeat on success, alert otherwise, then exit
 finish() {
   local code="$1" reason="$2"
+  case "$code" in
+    0) record_history complete "" ;;
+    2) record_history local_only "$reason" ;;
+    *) record_history failed "$reason" ;;
+  esac
   case "$code" in
     0)
       if ! heartbeat; then
@@ -242,7 +258,7 @@ main() {
   mkdir -p "${ROOT}/backups/${CLIENT}"
   exec 9> "${ROOT}/backups/${CLIENT}/.lock"
   flock -n 9 || { warn "another backup of ${CLIENT} is running; skipped"; exit 0; }
-  upgrade_running && { warn "an upgrade of ${CLIENT} is running; backup skipped"; exit 0; }
+  upgrade_running && { warn "an upgrade of ${CLIENT} is running; backup skipped"; record_history skipped "upgrade running"; exit 0; }
   find "${ROOT}/backups/${CLIENT}" -maxdepth 1 -name '*.partial' -type d -exec rm -rf {} +
   if ! run_backup; then
     fail "backup of ${CLIENT} failed"

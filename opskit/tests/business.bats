@@ -12,12 +12,13 @@ teardown() {
   rm -rf "$REG"
 }
 
-@test "without a profile the placeholders are used and the owner is warned once" {
-  run bash -c 'OPSKIT_ROOT="$0"; for lib in log registry business; do source "$0/lib/${lib}.sh"; done; business_get business_name; echo; business_get support_email' "$OPSKIT_ROOT"
+@test "without a profile the placeholders are used and the check says so" {
+  [ "$(business_get business_name)" = "YourBrand" ]
+  [ "$(business_get support_email)" = "support@yourbrand.example" ]
+  for lib in schema; do source "${OPSKIT_ROOT}/lib/${lib}.sh"; done
+  run business_check
   [ "$status" -eq 0 ]
-  [[ "$output" == *"YourBrand"* ]]
-  [[ "$output" == *"support@yourbrand.example"* ]]
-  [ "$(grep -c 'owner business profile incomplete' <<< "$output")" = "1" ]
+  [[ "$output" == *"[warn] no owner business profile at ${REG}/owner/business.yaml: placeholders like \"YourBrand\" are used"* ]]
 }
 
 @test "the owner's own values win, missing fields fall back" {

@@ -64,12 +64,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** docker-tagged bats with real Kuma (extend `monitor.bats`).
 - **Result (22 Oct 2026):** `opskit/templates/monitor/uptime.js` (socket: login, find "<id> uptime", `getMonitorBeats`, beats inside the window), `opskit/templates/monitor/uptime-stats.jq` (up/down counts, uptime % with 3 decimals rounded down, down periods with start/end/minutes), `monitor_uptime` in `monitor_sync.sh` (`{"measured": false, …}` without Kuma host or monitor). Tests: `uptime_stats.bats` (4), `monitor.bats` +1 with real Kuma (70 s outage shows as a down period and < 100 %).
 
-### [ ] 7.7 — Report data collector
+### [x] 7.7 — Report data collector
 - **Goal:** backup agent appends one line per run to `<root>/backups/<id>/history.jsonl` (ASSUMPTIONS #31); `report_collect <id> <YYYY-MM>` → one JSON: runs per flow (7.3), uptime + down periods (7.6), backups (nights complete/incomplete from that history, last success, off-server state), last restore test, upgrades and rollbacks (history), incidents (auto + logged), hours used vs included.
 - **Spec refs:** 13
 - **Files likely touched:** `opskit/lib/report.sh`, tests
 - **Acceptance checks:** fixture month (DB + backup folders + restore tests + history + logs) gives exactly the expected JSON.
 - **Tests required:** bats (docker for the DB part).
+- **Result (22 Oct 2026):** backup agent writes `<root>/backups/<id>/history.jsonl` (complete / local_only / failed / skipped, never pruned; `backup_agent.bats` +1). `opskit/lib/report.sh` `report_collect <id> <YYYY-MM>`: runs per flow and totals (7.3), uptime (7.6), backup nights with a complete backup counted per local day from local noon (DST-safe), missing nights, failed runs, last complete; last restore test before the month's end; upgrade events; incidents = down periods + missing nights + rollbacks + owner-logged; hours used vs included. "No record" / "not measured" instead of zeros. `business_get` is silent now; commands warn once through `business_check`. Tests: `report_collect.bats` (3, one exact-match fixture month incl. a backup across the UTC/local date line).
 
 ### [ ] 7.8 — Report rendering `opskit report <id> --month YYYY-MM`
 - **Goal:** HTML (inline CSS, readable in mail clients, prints to PDF), plain-text alternative, saved under `clients/<id>/reports/`; wording a non-technical client understands; white-labelled.

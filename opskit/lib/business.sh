@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The owner's business profile (<registry>/owner/business.yaml) for client-facing documents. Missing file or
-# field → placeholder from opskit/templates/business.example.yaml, with one warning per run.
+# field → placeholder from opskit/templates/business.example.yaml; commands warn once via business_check.
 
 business_file() {
   printf '%s/owner/business.yaml' "$(registry_root)"
@@ -14,10 +14,6 @@ business_get() {
     value="$(yq -r ".${1} // \"\"" "$file" 2>/dev/null || true)"
   fi
   if [ -z "$value" ]; then
-    if [ -z "${BUSINESS_WARNED:-}" ]; then
-      log_warn "owner business profile incomplete (${file}): using placeholders like \"YourBrand\"; copy opskit/templates/business.example.yaml there" >&2
-      BUSINESS_WARNED=1
-    fi
     value="$(yq -r ".${1} // \"\"" "${OPSKIT_ROOT}/templates/business.example.yaml")"
   fi
   printf '%s' "$value"
@@ -27,7 +23,7 @@ business_get() {
 business_check() {
   local file
   file="$(business_file)"
-  [ -f "$file" ] || { log_warn "no owner business profile at ${file} (placeholders will be used)"; return 0; }
+  [ -f "$file" ] || { log_warn "no owner business profile at ${file}: placeholders like \"YourBrand\" are used; copy opskit/templates/business.example.yaml there"; return 0; }
   validate_against_schema "${OPSKIT_ROOT}/schema/business.schema.json" "$file" >/dev/null || {
     log_fail "owner business profile ${file} is invalid: opskit/bin/opskit validate ${file}"
     return 1

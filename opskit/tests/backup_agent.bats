@@ -190,3 +190,25 @@ setup_remote() {
   [ "$(find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l)" = "1" ]
   rm -rf "$REMOTE_DIR"
 }
+
+@test "every run leaves one history line: complete, local only, failed, skipped during an upgrade" {
+  local history="${ROOT}/backups/acme/history.jsonl"
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 2 ]
+  sleep 1
+  FAKE_PG_DOWN=1 run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 1 ]
+  mkdir -p "${ROOT}/state/acme/upgrade.lock"
+  run "$AGENT" acme --root "$ROOT"
+  rm -rf "${ROOT}/state/acme/upgrade.lock"
+  setup_remote
+  sleep 1
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r '.result' "$history" | paste -sd' ')" = "local_only failed skipped complete" ]
+  [ "$(jq -r 'select(.result == "failed") | .reason' "$history")" = "dump or encryption step failed" ]
+  [ "$(jq -r 'select(.result == "complete") | .backup' "$history")" = "$(cat "${ROOT}/backups/acme/latest")" ]
+  [ "$(jq -r 'select(.result == "skipped") | .reason' "$history")" = "upgrade running" ]
+  [ "$(jq -r '.at' "$history" | grep -cvE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$' || true)" = "0" ]
+  rm -rf "$REMOTE_DIR"
+}
