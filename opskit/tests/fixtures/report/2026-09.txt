@@ -1,0 +1,37 @@
+Care report — September 2026
+Acme Dental, prepared by YourBrand
+
+Availability: 99.976 %
+Flow runs: 70
+Failed runs: 2
+Nightly backups: 28 of 30
+Incidents: 3
+Support hours: 1.5 of 3
+
+Your flows
+70 runs in total: 68 succeeded, 2 failed.
+Failed runs are usually caused by unexpected data (for example an invalid email address in a form). Each one alerted us; nothing failed silently.
+  Lead capture: 40 runs, 38 succeeded, 2 failed
+  Invoice reminder: 30 runs, 30 succeeded, 0 failed
+Availability
+Your system answered 99.976 % of the time (checked every minute).
+Interruptions:
+• 12 Sep: 10 minutes
+Planned update windows are not counted.
+Backups
+28 of 30 nights had a complete backup. Missing: 10 Sep, 11 Sep. We were alerted and checked each one.
+Latest restore test: 2 Sep — your backup was restored into a test copy and worked.
+Updates
+• 5 Sep: Updated to version 0.92.3
+• 20 Sep: Update to version 0.93.0 tried and stopped
+• 20 Sep: Returned to version 0.92.3 automatically
+Incidents
+• 10 Sep: No complete backup that night
+• 12 Sep: Your system did not answer for 10 minute(s)
+• 15 Sep: Gmail outage, flows retried
+Support hours
+1.5 of 3 included hour(s) used.
+• 3 Sep: 1.5 h — changed reminder text
+
+Questions? support@yourbrand.example
+Thanks for working with us. — YourBrand

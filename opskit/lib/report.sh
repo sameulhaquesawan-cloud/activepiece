@@ -81,11 +81,39 @@ report_collect() {
       upgrades: $events,
       incidents: (
         [($uptime.down_periods // [])[] | {at: .start, what: "Your system did not answer for \(.minutes) minute(s)", source: "uptime"}]
-        + [$backups.missing[] | {at: (. + "T12:00:00Z"), what: "No complete backup on the night of \(.)", source: "backup"}]
+        + [$backups.missing[] | {at: (. + "T12:00:00Z"), what: "No complete backup that night", source: "backup"}]
         + [$events[] | select(.event == "rolled_back") | {at, what: "An upgrade was rolled back to \(.tag) automatically", source: "upgrade"}]
         + [$logged[] | {at, what, source}]
         | sort_by(.at)
       ),
       hours: {used: $hours.total, included: $client.included_hours, entries: [$hours.entries[] | {date, hours, note}]}
     }'
+}
+
+# report_render <data json> <html|text>: run in the client's time zone so dates are local
+report_render() {
+  TZ="$(jq -r '.timezone' <<< "$1")" jq -r --arg mode "$2" -f "${OPSKIT_ROOT}/templates/report/report.jq" <<< "$1"
+}
+
+# report_build <id> <YYYY-MM>: writes clients/<id>/reports/<month>.{json,html,txt}
+report_build() {
+  local id="$1" month="$2" data dir
+  data="$(report_collect "$id" "$month")" || return 1
+  dir="$(client_dir "$id")/reports"
+  mkdir -p "$dir"
+  printf '%s\n' "$data" > "${dir}/${month}.json"
+  report_render "$data" html > "${dir}/${month}.html" || { log_fail "rendering the report failed"; return 1; }
+  report_render "$data" text > "${dir}/${month}.txt" || { log_fail "rendering the report failed"; return 1; }
+  if grep -qE '\{\{|\$\{|undefined' "${dir}/${month}.html" "${dir}/${month}.txt"; then
+    log_fail "report of ${id} for ${month} has unfilled values; not kept"
+    rm -f "${dir}/${month}".*
+    return 1
+  fi
+  log_ok "care report ${id} ${month}: $(jq -r '"\(.runs.total) runs (\(.runs.failed) failed), availability \(if .uptime.measured then "\(.uptime.uptime) %" else "not measured" end), backups \(if .backups.history then "\(.backups.complete)/\(.backups.nights)" else "no record" end), \(.incidents | length) incident(s), \(.hours.used)/\(.hours.included) h"' <<< "$data")"
+  log_info "  ${dir}/${month}.html"
+}
+
+# report_last_month <time zone>: YYYY-MM of the previous month there
+report_last_month() {
+  TZ="$1" date -d "$(TZ="$1" date +%Y-%m-01) -1 month" +%Y-%m
 }

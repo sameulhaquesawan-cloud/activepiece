@@ -72,12 +72,13 @@ SPEC: Section 13 (`opskit docs`, `opskit report`), 5 (actors), 6 (`report`, `sup
 - **Tests required:** bats (docker for the DB part).
 - **Result (22 Oct 2026):** backup agent writes `<root>/backups/<id>/history.jsonl` (complete / local_only / failed / skipped, never pruned; `backup_agent.bats` +1). `opskit/lib/report.sh` `report_collect <id> <YYYY-MM>`: runs per flow and totals (7.3), uptime (7.6), backup nights with a complete backup counted per local day from local noon (DST-safe), missing nights, failed runs, last complete; last restore test before the month's end; upgrade events; incidents = down periods + missing nights + rollbacks + owner-logged; hours used vs included. "No record" / "not measured" instead of zeros. `business_get` is silent now; commands warn once through `business_check`. Tests: `report_collect.bats` (3, one exact-match fixture month incl. a backup across the UTC/local date line).
 
-### [ ] 7.8 — Report rendering `opskit report <id> --month YYYY-MM`
+### [x] 7.8 — Report rendering `opskit report <id> --month YYYY-MM`
 - **Goal:** HTML (inline CSS, readable in mail clients, prints to PDF), plain-text alternative, saved under `clients/<id>/reports/`; wording a non-technical client understands; white-labelled.
 - **Spec refs:** 13
 - **Files likely touched:** `opskit/lib/commands/report.sh`, `opskit/templates/report/`, tests
 - **Acceptance checks:** golden-file test of the fixture month; no error texts or personal data; numbers identical to 7.7.
 - **Tests required:** bats golden files; html check.
+- **Result (22 Oct 2026):** `opskit report <id> [--month YYYY-MM]` (default last month in the client's time zone) writes `clients/<id>/reports/<month>.{html,txt,json}`; `opskit/templates/report/report.jq` renders both versions from the same data (six headline numbers, flows table, availability + interruptions, backups + restore test, updates, incidents, support hours; local dates; inline styles for mail clients). html-validate clean apart from the deliberate inline styles; screenshot checked. Tests: `report_render.bats` (4, golden text file `opskit/tests/fixtures/report/2026-09.txt`), `report_collect.bats` +2.
 
 ### [ ] 7.9 — Sending the report
 - **Goal:** `opskit report --all --send [--month]` (default: last month): one email per client to `report.recipients`, copy to you, through your SMTP (curl, like alerts); sent log so a month is never sent twice; a cron line example for an always-on machine.

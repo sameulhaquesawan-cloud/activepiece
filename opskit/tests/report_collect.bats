@@ -60,8 +60,8 @@ teardown() {
  "restore_test":{"at":"2026-09-02T03:00:00Z","result":"pass"},
  "upgrades":[{"at":"2026-09-05T01:00:00Z","event":"upgraded","tag":"0.92.3"},{"at":"2026-09-20T01:00:00Z","event":"upgrade_failed","tag":"0.93.0"},{"at":"2026-09-20T01:05:00Z","event":"rolled_back","tag":"0.92.3"}],
  "incidents":[
-   {"at":"2026-09-10T12:00:00Z","what":"No complete backup on the night of 2026-09-10","source":"backup"},
-   {"at":"2026-09-11T12:00:00Z","what":"No complete backup on the night of 2026-09-11","source":"backup"},
+   {"at":"2026-09-10T12:00:00Z","what":"No complete backup that night","source":"backup"},
+   {"at":"2026-09-11T12:00:00Z","what":"No complete backup that night","source":"backup"},
    {"at":"2026-09-12T03:00:00Z","what":"Your system did not answer for 10 minute(s)","source":"uptime"},
    {"at":"2026-09-15T08:00:00Z","what":"Gmail outage, flows retried","source":"owner"},
    {"at":"2026-09-20T01:05:00Z","what":"An upgrade was rolled back to 0.92.3 automatically","source":"upgrade"}],
@@ -86,4 +86,24 @@ JSON
   run report_collect acme 2026-09
   [ "$status" -eq 1 ]
   [[ "$output" == *"could not read acme's runs"* ]]
+}
+
+@test "report_build writes the month's html, text and data, numbers taken from the data" {
+  run report_build acme 2026-09
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] care report acme 2026-09: 70 runs (2 failed), availability 99.976 %, backups 28/30, 5 incident(s), 1.5/3 h"* ]]
+  [ -s "${REG}/clients/acme/reports/2026-09.html" ]
+  [ "$(jq -r '.runs.total' "${REG}/clients/acme/reports/2026-09.json")" = "70" ]
+  grep -q "^Flow runs: 70$" "${REG}/clients/acme/reports/2026-09.txt"
+  grep -q "Acme Dental" "${REG}/clients/acme/reports/2026-09.html"
+}
+
+@test "opskit report: usage and unknown client" {
+  run "$OPSKIT" report
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Usage: opskit report"* ]]
+  run "$OPSKIT" report nobody --month 2026-09
+  [ "$status" -eq 1 ]
+  run "$OPSKIT" report acme --month 2026-09 extra
+  [ "$status" -eq 1 ]
 }

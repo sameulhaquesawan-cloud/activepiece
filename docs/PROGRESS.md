@@ -2,11 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 7 — Handover docs & care report
-- **Current task:** 7.8 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** 7.9 (Phase 7 plan approved 22 Oct 2026; Phase 6 signed off; see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: 7.8 report rendering `opskit report <id> --month YYYY-MM` (HTML email/page + plain text, saved in `clients/<id>/reports/`), then 7.9 sending. Owner (when convenient): set `location:` (e.g. "Germany (Falkenstein)") in each host yaml; it appears in handover packs. Owner (when convenient): copy `opskit/templates/business.example.yaml` to `opskit/owner/business.yaml` with your business name and support email. Owner: merge Phase 6 to `main` by PR when convenient.
+1. Agent: 7.9 sending (`opskit report <id> --send`, `opskit report --all --send`; owner SMTP from `owner/alerts.conf`, copy to the owner, once per month), then 7.10 selftest round. Owner (when convenient): set `location:` (e.g. "Germany (Falkenstein)") in each host yaml; it appears in handover packs. Owner (when convenient): copy `opskit/templates/business.example.yaml` to `opskit/owner/business.yaml` with your business name and support email. Owner: merge Phase 6 to `main` by PR when convenient.
 3. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
@@ -27,6 +27,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 7.8 report rendering.** `opskit report <id> [--month]` writes the month's report as HTML (email/printable), text and JSON in `opskit/clients/<id>/reports/`. Files: `opskit/lib/report.sh`, `opskit/lib/commands/report.sh`, `opskit/templates/report/report.jq`; tests `report_render.bats` (golden file), `report_collect.bats`. Verify: `opskit/bin/opskit report <client>` and open the HTML.
 - **2026-10-22 — 7.7 report data.** The backup agent now keeps a per-run history on the host (`backups/<id>/history.jsonl`); `report_collect` gathers one client-month (runs per flow, uptime and interruptions, backup nights, restore test, updates, incidents, hours). Files: `opskit/agent/backup.sh`, `opskit/lib/report.sh`, `opskit/lib/business.sh`; tests `report_collect.bats` (3), `backup_agent.bats` +1, `business.bats`. Hosts get the new agent with the next `opskit deploy`.
 - **2026-10-22 — 7.6 monthly uptime from Uptime Kuma.** `monitor_uptime <id> <from> <to>` reads the client's uptime monitor's raw heartbeats over Kuma's socket API and computes uptime % (rounded down) and down periods; "not measured" without Kuma. Files: `opskit/templates/monitor/uptime.js`, `uptime-stats.jq`, `opskit/lib/monitor_sync.sh`; tests `uptime_stats.bats` (4), `monitor.bats` +1 (real Kuma outage).
 - **2026-10-22 — 7.5 hours and incident log.** `opskit hours <id> add 1.5 "…" [--date]` / `list [--month]` (used vs `support.included_hours`) and `opskit incident <id> add "…" [--at]` / `list`; JSON lines in the client registry; notes checked for key-like text. Files: `opskit/lib/worklog.sh`, `commands/hours.sh`, `commands/incident.sh`, `opskit/tests/worklog.bats` (4).
