@@ -5,7 +5,7 @@ your own server, watch it around the clock, back it up every night and fix it wh
 fixed monthly fee and no per-task charges.*
 
 Brand placeholder: **YourBrand** (`yourbrand.com`). Prices: see `pricing.md`. Every promise below is something
-the kit does today (Phases 1–4); items marked *coming* are planned (Phases 5–7) and must not be sold as ready.
+the kit does today (Phases 1–6); items marked *coming* are planned (Phase 7) and must not be sold as ready.
 
 ## Who it is for
 - Small agencies and online stores that already pay for Zapier or Make and want lower, predictable costs
@@ -35,7 +35,7 @@ the kit does today (Phases 1–4); items marked *coming* are planned (Phases 5�
 | Alerts to you **and** to us; we act on them | ✓ | ✓ |
 | Fixes and small changes included | 1 hour / month | 3 hours / month |
 | Response time (business days) | 12 h normal, 4 h if everything is down | same, handled first |
-| Activepieces version updates (backup first, checked after) | quarterly | monthly or on request |
+| Activepieces version updates (tried on a copy first, checked after, automatic rollback) | quarterly | monthly or on request |
 | New flows | billed per flow or hourly | 1 small flow / month included in the hours |
 | Monthly care report | *coming* (Phase 7) | *coming* (Phase 7) |
 

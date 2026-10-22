@@ -2,13 +2,13 @@
 
 ## Current status
 - **Current phase:** Phase 6 — Safe upgrades
-- **Current task:** 6.12 (see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current task:** Phase 6 done — waiting for the owner's sign-off (see `docs/tasks/phase-6.md`; owner accepted all defaults 22 Oct 2026). Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
 - **Last updated:** 2026-10-21 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
-1. Agent: confirm CI green for the upgrade rounds (run after commit `test(opskit): upgrade and rollback rounds in selftest`); then 6.12 (runbook `docs/runbooks/upgrade.md`, ADR-018, phase verification report, go-to-market wording) and Phase 6 sign-off request to the owner. Owner: object to ASSUMPTIONS #24 (rollback restores the pre-switch dump) if you disagree.
-2. Owner: bring `main` up to date after each signed-off phase (Pull request: base `main` ← `claude/funny-keller-x6sgy1` → Merge).
-3. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
+1. Owner: sign off Phase 6 (summary in chat; try `docs/runbooks/upgrade.md` on the Codespace demo client when convenient), then merge to `main` by PR (base `main` ← `claude/funny-keller-x6sgy1`).
+2. Agent after sign-off: Phase 7 (handover docs & care report) — `/opskit-start-phase` to break it into tasks and ask the owner's questions first.
+3. Owner (not blocking): real-account tests — 2-step verification on the Google test account and Sheets T1/T2; one SMTP account for the Tables variants (`docs/testing/phase5-browser-test.md`).
 4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
@@ -21,13 +21,14 @@
 | 4 | Monitoring & alerts | Done (owner said go Phase 4b, 21 Oct 2026) | `check` (incl. docker, fresh clone, non-root monitor tests) + CI with pieces required, 21 Oct 2026 |
 | 4b | Go to market (owner-led) | Done — owner signed off 21 Oct 2026 | offer, pricing, site, demo script, outreach, EU templates in `docs/go-to-market/` |
 | 5 | Flow template library | Done — owner signed off 21 Oct 2026 (5 templates; Elmo dropped by the owner) | `check` + CI runs 33–34 with pieces required (real imports + stub runs of every template), 21 Oct 2026; real-account CHECKLISTs pending |
-| 6 | Safe upgrades | In progress (plan approved by the owner, 22 Oct 2026) | — |
+| 6 | Safe upgrades | Done — owner sign-off pending | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
 | 7 | Handover docs & care report | Not started | — |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
 | 9 | Field readiness | Not started | — |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-22 — 6.12 runbook, ADR-018, phase close.** `docs/runbooks/upgrade.md` (owner: plan → upgrade → follow-ups, rollback, interrupted runs), checklist, ADR-018, verification report below, go-to-market (site: upgrades moved from "coming soon" to included; offer: Phases 1–6 real, update row says copy-first + automatic rollback; demo script). CI: runs 48–50 found the template step-check bug and two selftest timing issues (fixed, see below); run 51 green with both upgrade rounds and the staging flow checks.
 - **2026-10-22 — 6.11 fork-sync rehearsal.** Upstream has no tag newer than 0.92.3. Commands and timings: `git fetch upstream main --no-tags` 13 s (512 commits since 0.92.3); `git worktree add -b sync/rehearsal-main <scratch> HEAD` 7 s; `git merge --no-commit --no-ff upstream/main` 1 s → 22 conflicts (14 workflows we deleted, `benchmark/setup.sh` deleted upstream, `package.json`, `bun.lock`, `docker-compose.yml`, `deploy/activepieces-helm/Chart.yaml`, `brain/knowledge/engineering/ci-pr-review-hygiene.md`) — all release-branch-vs-main differences (release tags are not on `main`), none in our paths; resolved by rule in 1 s; `opskit sync-check --tree <worktree>` 17/17 facts hold; merge aborted, worktree and branch removed, nothing pushed. New `opskit sync-check` (step 7 automated) + `opskit/tests/sync_check.bats`; `docs/UPSTREAM_SYNC.md` updated (tags only, conflict rules, sync-check, selftest round versions). Check/selftest/upgrade-demo for the current pin: green locally, CI pending.
 - **2026-10-22 — 6.10 upgrade rounds in selftest (CI pending).** `opskit/lib/e2e_upgrade.sh` as the last selftest step: `<id>-up` 0.92.2 → pinned must pass staging, switch, checks, history `upgraded`, follow-ups and keep its data; `<id>-rb` 0.91.4 → pinned with `OPSKIT_SMOKE_FAIL=production:counts` must roll back (restore path) to 0.91.4 with schema + data intact, history `upgrade_failed` + `rolled_back` and exactly one owner alert (mock Telegram). Round clients and the `-rt` copy are removed early; cleanup trap covers them. CI timeout 40 → 60 min. Local selftest green (pieces offline).
 - **2026-10-22 — Fix found by CI run 48 (Phase 5 / 6.4 code).** (1) The templates e2e `ran`/`not_ran` step check never ran: its yq expression did not parse (stderr only) and an empty result passed. Now the run is read with yq and checked with jq; unit test in `flows_stub.bats`. CI may now surface real step mismatches. (2) The selftest smoke step looked for a worker poll in the last 10 minutes on a stack busy with template runs; it now restarts the worker and checks from then (production checks always start after a fresh start, unaffected).
@@ -136,6 +137,16 @@
 
 ## Phase verification reports
 <!-- Output of /opskit-verify-phase goes here. -->
+### Phase 6 — 22 Oct 2026
+| Acceptance (SPEC 17 Phase 6) | Evidence |
+|---|---|
+| Upgrading a demo client from the previous to the pinned release passes staging and production smoke tests | selftest round `<id>-up`: 0.92.2 → 0.92.3 through plan gates, lock, pull (same digest), staging copy (smoke set + webhook and 1-minute schedule flows, pieces required), switch, production smoke; client on 0.92.3, data intact; CI run 51 green. Live on a kept stack: 65 s total, ~15 s downtime |
+| An injected smoke-test failure triggers rollback; client back on the old tag with data intact | selftest round `<id>-rb`: 0.91.4 → 0.92.3 (11 migrations, one not undoable) with `OPSKIT_SMOKE_FAIL=production:counts` → pre-switch dump restored, 0.91.4 deployed, schema check passes, sign-in + flows + connection intact, exactly 1 owner alert; CI run 51. "Restart" path (failure before the dump) and manual `--rollback` verified live |
+| Upgrade history recorded | client.yaml `upgraded` / `upgrade_failed` / `rolled_back` (schema + tests; both rounds assert the sequence) and `clients/<id>/upgrades/<run>/state.json` |
+| Breaking changes shown, checklist, confirmation (SPEC 12.1) | `--plan` lists the target's breaking-change headings and migrations that cannot be undone; `docs/runbooks/upgrade-checklist.md`; `--yes` + typed id + quiet hours |
+| `opskit/bin/check` passes | quick check after every task; full check incl. docker locally (pieces offline) and CI run 51 |
+Not verified here: an upgrade on a real client server over SSH (all rounds used local practice hosts); a release newer than 0.92.3 (none exists; the sync rehearsal used upstream `main`).
+
 ### Phase 5 — 21 Oct 2026
 | Acceptance (SPEC 17 Phase 5) | Evidence |
 |---|---|
@@ -145,6 +156,7 @@
 | `flows validate` catches malformed JSON and missing placeholders | `flows_validate.bats`: malformed JSON, non-export JSON, undeclared/unused/malformed placeholders, piece pin mismatch, old-style step references, leaked emails/URLs/keys/ids/connection refs, fail-run violations, missing files/payloads/stubs, custom piece archive checksum |
 | `opskit/bin/check` passes | quick check locally after every task; full check incl. docker locally (templates e2e skipped offline, as designed) and in CI |
 Not verified here: any step against a real third-party account (CHECKLISTs); Meta development-mode limits; Sheets `get-many-rows` output shape (code accepts both shapes).
+**Correction (22 Oct 2026):** the "steps run/not run" check above did not actually run until it was fixed in Phase 6 (its yq expression never parsed and an empty result passed). CI run 49 is the first run with the check active; every template passes it.
 
 ### Phase 4 — 21 Oct 2026
 | Acceptance (SPEC 17 Phase 4) | Evidence |
