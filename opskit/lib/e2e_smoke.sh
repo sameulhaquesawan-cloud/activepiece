@@ -25,7 +25,7 @@ e2e_smoke_wrong_key_connection() {
 
 # e2e_smoke <host> <id> <domain> <https port>: needs RT_EMAIL/RT_PASSWORD from rt_seed
 e2e_smoke() {
-  local host="$1" id="$2" domain="$3" port="$4" baseline since lowered auth token project
+  local host="$1" id="$2" domain="$3" port="$4" baseline since lowered auth token project restarted
   stack_compose "$host" "$id" restart worker >/dev/null 2>&1 || { log_fail "smoke e2e: could not restart the worker"; return 1; }
   since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   baseline="$(smoke_baseline "$host" "$id")" || { log_fail "smoke e2e: no baseline"; return 1; }
@@ -35,6 +35,7 @@ e2e_smoke() {
   e2e_smoke_expect_fail "a lowered flow count" smoke_counts "$host" "$id" "$lowered" || return 1
   stack_compose "$host" "$id" stop worker >/dev/null 2>&1
   e2e_smoke_expect_fail "a stopped worker" smoke_containers "$host" "$id" || return 1
+  restarted="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   stack_compose "$host" "$id" start worker >/dev/null 2>&1
   e2e_smoke_wrong_key_connection "$host" "$id" || { log_fail "smoke e2e: could not store the wrong-key connection"; return 1; }
   e2e_smoke_expect_fail "a connection stored with another key" smoke_connections_decrypt "$host" "$id" || return 1
@@ -42,7 +43,7 @@ e2e_smoke() {
   stack_psql "$host" "$id" "insert into migrations (timestamp, name) values (1999999999999, 'OpskitSmokeProbe1999999999999')" >/dev/null
   e2e_smoke_expect_fail "a database newer than the image" smoke_schema "$host" "$id" || return 1
   stack_psql "$host" "$id" "delete from migrations where name = 'OpskitSmokeProbe1999999999999'" >/dev/null
-  smoke_production "$host" "$id" "$baseline" "$since" >/dev/null || { log_fail "smoke e2e: ${id} not back to healthy"; return 1; }
+  smoke_production "$host" "$id" "$baseline" "$restarted" >/dev/null || { log_fail "smoke e2e: ${id} not back to healthy"; return 1; }
   log_ok "smoke e2e: ${id} healthy again after the broken-condition checks"
   auth="$(rt_sign_in "$domain" "$port")"
   token="$(jq -r '.token // empty' <<< "$auth")"

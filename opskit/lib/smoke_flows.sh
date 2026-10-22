@@ -22,14 +22,20 @@ smoke_piece_version() {
 
 # smoke_flow <domain> <port> <token> <project> <label> <trigger settings json> <fire: webhook|wait>
 smoke_flow() {
-  local domain="$1" port="$2" token="$3" project="$4" label="$5" trigger="$6" fire="$7" flow waited=0 status=""
+  local domain="$1" port="$2" token="$3" project="$4" label="$5" trigger="$6" fire="$7" flow waited=0 status="" answer
   flow="$(rt_api "$domain" "$port" POST /v1/flows "$token" \
     "$(jq -nc --arg n "opskit smoke ${label}" --arg p "$project" '{displayName: $n, projectId: $p}')" | jq -r '.id // empty')"
   [ -n "$flow" ] || { log_fail "smoke ${label} flow: could not create it"; return 1; }
-  if ! rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" "$(smoke_flow_json "opskit smoke ${label}" "$trigger")" | jq -e '.id' >/dev/null \
-    || ! rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}' | jq -e '.id' >/dev/null; then
+  answer="$(rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" "$(smoke_flow_json "opskit smoke ${label}" "$trigger")")"
+  if ! jq -e '.id' >/dev/null 2>&1 <<< "$answer"; then
     smoke_flow_delete "$domain" "$port" "$token" "$flow"
-    log_fail "smoke ${label} flow: could not import or publish it"
+    log_fail "smoke ${label} flow: import refused: $(jq -r '.message // .code // .' <<< "$answer" 2>/dev/null | head -c 300)"
+    return 1
+  fi
+  answer="$(rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}')"
+  if ! jq -e '.id' >/dev/null 2>&1 <<< "$answer"; then
+    smoke_flow_delete "$domain" "$port" "$token" "$flow"
+    log_fail "smoke ${label} flow: publish refused: $(jq -r '.message // .code // .' <<< "$answer" 2>/dev/null | head -c 300)"
     return 1
   fi
   [ "$fire" != "webhook" ] || rt_api "$domain" "$port" POST "/v1/webhooks/${flow}" "" '{"smoke":true}' >/dev/null || true
