@@ -8,14 +8,22 @@
 E2E_REPORT_OK=3
 E2E_REPORT_FAIL=2
 
-# e2e_report_flow <domain> <port> <token> <project> <name> <IMPORT_FLOW json>: prints the flow id
+# e2e_report_flow <domain> <port> <token> <project> <name> <IMPORT_FLOW json>: prints the flow id; on failure
+# names the step and the API's answer (≤ 300 chars)
 e2e_report_flow() {
-  local domain="$1" port="$2" token="$3" project="$4" name="$5" body="$6" flow
-  flow="$(rt_api "$domain" "$port" POST /v1/flows "$token" "$(jq -nc --arg n "$name" --arg p "$project" '{displayName: $n, projectId: $p}')" | jq -r '.id // empty')"
-  [ -n "$flow" ] || return 1
-  rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" "$(jq -c --arg n "$name" '.request.displayName = $n' <<< "$body")" | jq -e '.id' >/dev/null || return 1
-  RT_API_TIMEOUT=120 rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}' | jq -e '.id' >/dev/null || return 1
+  local domain="$1" port="$2" token="$3" project="$4" name="$5" body="$6" flow answer
+  answer="$(rt_api "$domain" "$port" POST /v1/flows "$token" "$(jq -nc --arg n "$name" --arg p "$project" '{displayName: $n, projectId: $p}')" || true)"
+  flow="$(jq -r '.id // empty' <<< "$answer" 2>/dev/null || true)"
+  [ -n "$flow" ] || { e2e_report_refused "$name" create "$answer"; return 1; }
+  answer="$(rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" "$(jq -c --arg n "$name" '.request.displayName = $n' <<< "$body")" || true)"
+  jq -e '.id' >/dev/null 2>&1 <<< "$answer" || { e2e_report_refused "$name" import "$answer"; return 1; }
+  answer="$(RT_API_TIMEOUT="$SMOKE_PUBLISH_TIMEOUT" rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}' || true)"
+  jq -e '.id' >/dev/null 2>&1 <<< "$answer" || { e2e_report_refused "$name" publish "$answer"; return 1; }
   printf '%s' "$flow"
+}
+
+e2e_report_refused() {
+  log_fail "report e2e: ${1}: ${2} refused: $( (jq -r '.message // .code // .' <<< "$3" 2>/dev/null || printf '%s' "${3:-no answer}") | tr '\n' ' ' | head -c 300)"
 }
 
 # e2e_report_wait <domain> <port> <token> <project> <flow id> <count>: all runs of the flow finished
