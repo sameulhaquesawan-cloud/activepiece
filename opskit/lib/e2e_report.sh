@@ -23,7 +23,9 @@ e2e_report_flow() {
 }
 
 e2e_report_refused() {
-  log_fail "report e2e: ${1}: ${2} refused: $( (jq -r '.message // .code // .' <<< "$3" 2>/dev/null || printf '%s' "${3:-no answer}") | tr '\n' ' ' | head -c 300)"
+  local why="no answer (timeout or connection refused)"
+  [ -z "$3" ] || why="$( (jq -r '.message // .code // .' <<< "$3" 2>/dev/null || printf '%s' "$3") | tr '\n' ' ' | head -c 300)"
+  log_fail "report e2e: ${1}: ${2} refused: ${why}"
 }
 
 # e2e_report_wait <domain> <port> <token> <project> <flow id> <count>: all runs of the flow finished
