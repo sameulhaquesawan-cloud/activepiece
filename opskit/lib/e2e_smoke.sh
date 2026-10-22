@@ -3,7 +3,8 @@
 # it may be busy and its earlier poll lines rotated away), every check passes on the throwaway stack, then each
 # fails with its own message when its condition is broken (lowered baseline, stopped worker, a connection
 # stored with another key, a migration the image does not know), and the stack is put back each time.
-# The flow checks (webhook, schedule) need piece metadata: skipped offline unless OPSKIT_REQUIRE_PIECES=1.
+# The flow checks (webhook, schedule) run first, on the warm worker; they need piece metadata: skipped
+# offline unless OPSKIT_REQUIRE_PIECES=1.
 
 # e2e_smoke_expect_fail <label> <check command...>: the check must fail and say why
 e2e_smoke_expect_fail() {
@@ -26,6 +27,16 @@ e2e_smoke_wrong_key_connection() {
 # e2e_smoke <host> <id> <domain> <https port>: needs RT_EMAIL/RT_PASSWORD from rt_seed
 e2e_smoke() {
   local host="$1" id="$2" domain="$3" port="$4" baseline since lowered auth token project restarted
+  auth="$(rt_sign_in "$domain" "$port")"
+  token="$(jq -r '.token // empty' <<< "$auth")"
+  project="$(jq -r '.projectId // empty' <<< "$auth")"
+  [ -n "$token" ] || { log_fail "smoke e2e: cannot sign in"; return 1; }
+  if [ -n "$(smoke_piece_version "$domain" "$port" "$token" "$project" @activepieces/piece-webhook)" ]; then
+    smoke_webhook_flow "$domain" "$port" "$token" "$project" || return 1
+    smoke_schedule_dry_run "$domain" "$port" "$token" "$project" || return 1
+  else
+    e2e_skip "piece metadata is not available (no internet for the app)" "smoke flow checks" || return 1
+  fi
   stack_compose "$host" "$id" restart worker >/dev/null 2>&1 || { log_fail "smoke e2e: could not restart the worker"; return 1; }
   since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   baseline="$(smoke_baseline "$host" "$id")" || { log_fail "smoke e2e: no baseline"; return 1; }
@@ -45,12 +56,4 @@ e2e_smoke() {
   stack_psql "$host" "$id" "delete from migrations where name = 'OpskitSmokeProbe1999999999999'" >/dev/null
   smoke_production "$host" "$id" "$baseline" "$restarted" >/dev/null || { log_fail "smoke e2e: ${id} not back to healthy"; return 1; }
   log_ok "smoke e2e: ${id} healthy again after the broken-condition checks"
-  auth="$(rt_sign_in "$domain" "$port")"
-  token="$(jq -r '.token // empty' <<< "$auth")"
-  project="$(jq -r '.projectId // empty' <<< "$auth")"
-  [ -n "$token" ] || { log_fail "smoke e2e: cannot sign in"; return 1; }
-  [ -n "$(smoke_piece_version "$domain" "$port" "$token" "$project" @activepieces/piece-webhook)" ] \
-    || { e2e_skip "piece metadata is not available (no internet for the app)" "smoke flow checks"; return; }
-  smoke_webhook_flow "$domain" "$port" "$token" "$project" || return 1
-  smoke_schedule_dry_run "$domain" "$port" "$token" "$project" || return 1
 }

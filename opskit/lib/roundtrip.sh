@@ -25,10 +25,10 @@ const value = JSON.parse(d.update(data, "hex", "utf8") + d.final("utf8"));
 console.log(value.secret_text === process.env.RT_MARKER ? "match" : "mismatch");
 '
 
-# rt_api <domain> <https port> <method> <path> [token] [json body]
+# rt_api <domain> <https port> <method> <path> [token] [json body]; RT_API_TIMEOUT seconds (default 30)
 rt_api() {
   local domain="$1" port="$2" method="$3" path="$4" token="${5:-}" body="${6:-}" args
-  args=(-sk -m 30 --resolve "${domain}:${port}:127.0.0.1" -X "$method" -H 'content-type: application/json')
+  args=(-sk -m "${RT_API_TIMEOUT:-30}" --resolve "${domain}:${port}:127.0.0.1" -X "$method" -H 'content-type: application/json')
   [ -z "$token" ] || args+=(-H "authorization: Bearer ${token}")
   [ -z "$body" ] || args+=(--data "$body")
   curl "${args[@]}" "https://${domain}:${port}/api${path}"

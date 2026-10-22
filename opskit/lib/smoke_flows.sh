@@ -4,6 +4,7 @@
 # Needs roundtrip.sh (rt_api) and e2e.sh (e2e_webhook_piece_version) and smoke.sh.
 
 SMOKE_FLOW_TIMEOUT="${OPSKIT_SMOKE_FLOW_TIMEOUT:-180}"
+SMOKE_PUBLISH_TIMEOUT=120
 
 # smoke_flow_json <name> <trigger settings json>: IMPORT_FLOW with the trigger and one code step
 smoke_flow_json() {
@@ -21,6 +22,8 @@ smoke_piece_version() {
 }
 
 # smoke_flow <domain> <port> <token> <project> <label> <trigger settings json> <fire: webhook|wait>
+# Publishing runs the trigger's enable step on the worker; a cold worker (fresh stack, restart) can take
+# well over the usual 30 s API timeout, so the publish call waits up to SMOKE_PUBLISH_TIMEOUT.
 smoke_flow() {
   local domain="$1" port="$2" token="$3" project="$4" label="$5" trigger="$6" fire="$7" flow waited=0 status="" answer
   flow="$(rt_api "$domain" "$port" POST /v1/flows "$token" \
@@ -32,10 +35,11 @@ smoke_flow() {
     log_fail "smoke ${label} flow: import refused: $(jq -r '.message // .code // .' <<< "$answer" 2>/dev/null | head -c 300)"
     return 1
   fi
-  answer="$(rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}')"
+  answer="$(RT_API_TIMEOUT="$SMOKE_PUBLISH_TIMEOUT" rt_api "$domain" "$port" POST "/v1/flows/${flow}" "$token" '{"type":"LOCK_AND_PUBLISH","request":{"status":"ENABLED"}}')"
   if ! jq -e '.id' >/dev/null 2>&1 <<< "$answer"; then
     smoke_flow_delete "$domain" "$port" "$token" "$flow"
-    log_fail "smoke ${label} flow: publish refused: $(jq -r '.message // .code // .' <<< "$answer" 2>/dev/null | head -c 300)"
+    [ -n "$answer" ] || answer="no answer in ${SMOKE_PUBLISH_TIMEOUT} s (the worker runs the trigger's enable step)"
+    log_fail "smoke ${label} flow: publish refused: $(jq -r '.message // .code // .' <<< "$answer" 2>/dev/null || printf '%s' "$answer" | head -c 300)"
     return 1
   fi
   [ "$fire" != "webhook" ] || rt_api "$domain" "$port" POST "/v1/webhooks/${flow}" "" '{"smoke":true}' >/dev/null || true
