@@ -122,6 +122,17 @@ host_installs_cron() {
   yaml_get "$(host_file "$1")" .install_cron "$default"
 }
 
+# deploy_check_scheduler <host>: hosts that get cron schedules need crontab (Ubuntu Minimal ships without it)
+deploy_check_scheduler() {
+  local host="$1"
+  [ "$(host_installs_cron "$host")" = "true" ] || return 0
+  if ! host_run "$host" sh -c 'command -v crontab' >/dev/null 2>&1; then
+    log_fail "crontab not found on ${host} (Ubuntu Minimal has no cron): run opskit host bootstrap ${host}"
+    return 1
+  fi
+  log_ok "cron available on ${host}"
+}
+
 # deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists
 deploy_install_agents() {
   local host="$1" id="$2" root out owner script template backups="true" cron
@@ -201,6 +212,7 @@ deploy_client() {
   status="$(yaml_get "$(client_file "$id")" .status)"
   [ "$status" != "offboarded" ] || { log_fail "client ${id} is offboarded; refusing to deploy"; return 1; }
   host="$(yaml_get "$(client_file "$id")" .host.name)"
+  deploy_check_scheduler "$host" || return 1
   stack_render "$id" || return 1
   deploy_push_files "$host" "$id" || return 1
   since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

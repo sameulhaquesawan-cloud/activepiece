@@ -109,7 +109,7 @@ RULES
   [[ "$output" == *"[ok] docker: existing install kept"* ]]
   [[ "$output" != *"docker.io"* ]]
   [[ "$output" != *"docker-compose-v2"* ]]
-  [[ "$output" == *"ufw unattended-upgrades curl age rclone"* ]]
+  [[ "$output" == *"ufw unattended-upgrades cron curl age rclone"* ]]
 }
 
 @test "firewall keep: iptables with ssh, 80, 443 and a final reject is accepted, no ufw" {
@@ -190,4 +190,11 @@ R"
   yq -i '.firewall = "keep" | .swap = "2 GB"' "${REG}/hosts/vps-acme.yaml"
   run "$OPSKIT" host bootstrap vps-acme --dry-run
   [ "$status" -ne 0 ]
+}
+
+@test "bootstrap installs cron (Ubuntu Minimal images ship without it)" {
+  stub_tool docker 'exit 0'
+  PATH="${WORK}/stub:${PATH}" run bash "$BOOTSTRAP" --ssh-user ops --dry-run
+  [[ "$output" == *"unattended-upgrades cron curl age rclone"* ]]
+  [[ "$output" == *"[plan] systemctl enable --now cron"* ]]
 }

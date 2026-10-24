@@ -121,10 +121,11 @@ install_packages() {
     packages+=(docker.io docker-compose-v2)
   fi
   [ "$FIREWALL" = "keep" ] || packages+=(ufw)
-  packages+=(unattended-upgrades curl age rclone)
+  packages+=(unattended-upgrades cron curl age rclone)
   run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
   run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}"
   run systemctl enable --now docker
+  run systemctl enable --now cron
   run usermod -aG docker "$SSH_USER"
   local IFS=' '
   ok "packages: ${packages[*]} (user ${SSH_USER} in docker group)"

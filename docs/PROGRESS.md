@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1–S4 done (opskit edge serves mychat since 24 Oct 2026 11:32 UTC); S5 prepared (owner age key pair made, client `autonyx-practice` rendered: 0.92.2, app 640m + worker 576m + postgres 1g + redis 256m, with Kuma 512m = 2.9 GiB); waiting for the owner to copy the private key, then deploy; S6 after the owner's go
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1–S4 done (opskit edge serves mychat since 24 Oct 2026 11:32 UTC); S5 done (Activepieces 0.92.2 live, admin created, backup local only until B2); S6 Uptime Kuma waits for the owner's go
 - **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -29,6 +29,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-24 — S5 Activepieces on the Oracle host.** `autonyx-practice` deployed (0.92.2, `[ok] deployed` 12:05 UTC). Fixes: bootstrap installs `cron` (Ubuntu Minimal lacks it) and deploy refuses early without `crontab` (`deploy.bats` +2, `bootstrap.bats` +1). App memory 640m was too small (JS heap out of memory, see phase-9 S5); limits app 960m / worker 512m / Kuma 256m. First backup encrypted and decryptable, local only. Files: `opskit/agent/bootstrap.sh`, `opskit/lib/deploy.sh`, tests, `opskit/keys/owner.age.pub`.
 - **2026-10-24 — Shared-server edge switch (S3a/S3b/S4).** Oracle host: `age` + `rclone` installed, 2 GB swap; opskit-caddy (2.10.0) took over 80/443 from AnythingLLM's Caddy with the copied cert (mychat down ~12 s), rollback tested both ways, old Caddy disabled by compose profile, sshd hardened and checked from a second session. Details in `docs/tasks/phase-9.md` S3b. Rollback any time: `docker stop opskit-caddy && docker start anythingllm-caddy`.
 - **2026-10-24 — Field server inspected (read-only) and shared-server plan approved.** Findings and the six steps S1–S6 in `docs/tasks/phase-9.md` "Shared-server run"; ASSUMPTIONS #32, ADR-020. Nothing changed on the server.
 - **2026-10-22 — Report round green in CI (run 64).** Runs 61 and 63 ran the round for the first time: the demo flow's publish got no answer when the round ran after the smoke step's worker restarts (logged under Known issues); it now runs before them. Diagnostics name the refused step and the API's answer.
@@ -140,6 +141,8 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- 2026-10-24: **Activepieces app memory floor:** at a 640m limit Node picks a 368 MiB heap and 0.92.2 ran out of it ~2 min after the first start (`FATAL ERROR: Reached heap limit`); the process then spins at 100 % CPU instead of exiting, so Docker never restarts it and the container just shows `unhealthy`. The template default (1g) is fine; the schema still allows smaller values. Candidate: `client.schema.json` minimum for `app.memory_limit` (≥ 896m) and a health-based restart (opskit health alert already fires on `unhealthy`).
+- 2026-10-24: upstream 0.92.2 logs `Unhandled exception … Invalid URL` from its request logger (`evlog` fastify plugin, `extractRequest`) for malformed request URLs (likely internet scanners); 2 lines on the first public minute, no effect seen. Upstream issue, not ours.
 - 2026-10-24: because of the Codespace umask issue, `opskit render` left `clients/<id>/rendered/alerts.conf` and `backup.conf` at mode 666 on the operator machine (on the host, deploy sets 600). Render should `chmod 600` what it writes instead of relying on umask (Phase 9 fix candidate, with the four mode tests).
 - 2026-10-24: on the Oracle host, the next `docker compose up -d` in `/opt/anything-llm/deploy/oracle` will **recreate** the `anythingllm` container (short restart): its config hash differs from the one it was created with 6 weeks ago, with the original override file too (not caused by the profile change). Harmless, but tell the AnythingLLM owner it is not a no-op. Also: that override file had no final newline; anything appended to it must start with one.
 - 2026-10-24: in the current Codespace, new files ignore the umask (kernel umask 0077, `: > f` and Python `open()` still create mode 646; `chmod`/`install -m` work). Four bats tests that expect mode 600 fail there on unchanged HEAD too (`backup_agent` "successful backup…", `backup_install` "render writes backup.conf…", `flows_import` "--print-steps…", `restore` "the encrypted dump is decrypted…"); CI is the reference. Check on each real host before relying on umask for secret files.
