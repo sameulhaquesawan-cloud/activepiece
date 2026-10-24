@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1–S4 done (opskit edge serves mychat since 24 Oct 2026 11:32 UTC); next S5 Activepieces `autonyx-practice`, then S6 Uptime Kuma
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1–S4 done (opskit edge serves mychat since 24 Oct 2026 11:32 UTC); S5 prepared (owner age key pair made, client `autonyx-practice` rendered: 0.92.2, app 640m + worker 576m + postgres 1g + redis 256m, with Kuma 512m = 2.9 GiB); waiting for the owner to copy the private key, then deploy; S6 after the owner's go
 - **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -140,6 +140,7 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- 2026-10-24: because of the Codespace umask issue, `opskit render` left `clients/<id>/rendered/alerts.conf` and `backup.conf` at mode 666 on the operator machine (on the host, deploy sets 600). Render should `chmod 600` what it writes instead of relying on umask (Phase 9 fix candidate, with the four mode tests).
 - 2026-10-24: on the Oracle host, the next `docker compose up -d` in `/opt/anything-llm/deploy/oracle` will **recreate** the `anythingllm` container (short restart): its config hash differs from the one it was created with 6 weeks ago, with the original override file too (not caused by the profile change). Harmless, but tell the AnythingLLM owner it is not a no-op. Also: that override file had no final newline; anything appended to it must start with one.
 - 2026-10-24: in the current Codespace, new files ignore the umask (kernel umask 0077, `: > f` and Python `open()` still create mode 646; `chmod`/`install -m` work). Four bats tests that expect mode 600 fail there on unchanged HEAD too (`backup_agent` "successful backup…", `backup_install` "render writes backup.conf…", `flows_import` "--print-steps…", `restore` "the encrypted dump is decrypted…"); CI is the reference. Check on each real host before relying on umask for secret files.
 - 2026-10-24: on the Oracle field server `/opt/anything-llm` is mode 777 (any local user can change AnythingLLM's code and compose files, which run as root through Docker). Not ours; owner said leave it, tighten it with the AnythingLLM owner later.
