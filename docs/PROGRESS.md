@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1 and S2 done; S3 (edge switch, touches AnythingLLM) waits for the owner's "go"
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1, S2, S3a (packages + swap) done; S3b (Caddy window, touches AnythingLLM) waits for the owner's "window" after CI run 65 is green
 - **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
