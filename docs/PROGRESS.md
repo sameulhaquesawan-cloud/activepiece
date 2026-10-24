@@ -2,10 +2,11 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 planned (`docs/tasks/phase-9.md`, 12 tasks, questions Q1–Q9) — waiting for the owner's answers / "ok". Phase 7 signed off 22 Oct 2026; its report round green in CI run 64
-- **Last updated:** 2026-10-22 · **Branch:** `claude/funny-keller-x6sgy1`
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1 opskit code in progress; S3 (edge switch, touches AnythingLLM) waits for the owner
+- **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
+0. Shared-server run on the Oracle instance: after S1 (code) and S2 (safety copy), show the owner the S3 commands and wait for "go" before touching AnythingLLM. SSH from the Codespace: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22` (key from the Codespaces secret `ORACLE_SSH_KEY_PRIVATE`).
 1. Owner (optional): re-run T1, T3, T4 of the Phases 6+7 Codespace test (now with the demo flows); merge to `main` by PR when convenient.
 2. Owner: answer Phase 9 Q1–Q9 (or "ok" for the defaults) and start the prep list in `docs/tasks/phase-9.md`. Agent then starts 9.1–9.6 (facts, two known-issue fixes, cloud-init + preflight, B2 setup, operator guide); 9.7–9.9 are owner/Cowork runs on the real server.
 3. Owner (not blocking, from the runbooks): `opskit/owner/business.yaml`, SMTP keys in `opskit/owner/alerts.conf`, `location:` in each host yaml.
@@ -28,6 +29,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-24 — Field server inspected (read-only) and shared-server plan approved.** Findings and the six steps S1–S6 in `docs/tasks/phase-9.md` "Shared-server run"; ASSUMPTIONS #32, ADR-020. Nothing changed on the server.
 - **2026-10-22 — Report round green in CI (run 64).** Runs 61 and 63 ran the round for the first time: the demo flow's publish got no answer when the round ran after the smoke step's worker restarts (logged under Known issues); it now runs before them. Diagnostics name the refused step and the API's answer.
 - **2026-10-22 — Phase 9 planned (no code).** `docs/tasks/phase-9.md`: 12 tasks (field facts, deploy-keeps-backup fix, log rotation, `host cloud-init` + `host preflight` with a DNS gate before deploy, B2 setup, operator guide, three field runs, costs, demo script, close) and nine owner questions with defaults. This session cannot open SSH (port 22 blocked), so field runs are done by the owner/Cowork from a Codespace.
 - **2026-10-22 — Phase 7 signed off by the owner.** Next: Phase 9 on the owner's go (Phase 8 stays V2).
@@ -137,6 +139,8 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- 2026-10-24: in the current Codespace, new files ignore the umask (kernel umask 0077, `: > f` and Python `open()` still create mode 646; `chmod`/`install -m` work). Four bats tests that expect mode 600 fail there on unchanged HEAD too (`backup_agent` "successful backup…", `backup_install` "render writes backup.conf…", `flows_import` "--print-steps…", `restore` "the encrypted dump is decrypted…"); CI is the reference. Check on each real host before relying on umask for secret files.
+- 2026-10-24: on the Oracle field server `/opt/anything-llm` is mode 777 (any local user can change AnythingLLM's code and compose files, which run as root through Docker). Not ours; owner said leave it, tighten it with the AnythingLLM owner later.
 - 2026-10-22: in CI, publishing a webhook flow right after the selftest smoke step's broken-condition checks (worker stopped and restarted, fake newer migration, wrong-key connection) got no answer within 120 s (runs 50 and 63); on a fresh stack it takes seconds. Selftest now publishes before those checks. Check on the Phase 9 server whether a plain worker restart alone delays publishing (a client editing flows right after an upgrade or reboot would see it).
 - 2026-10-22: `opskit deploy` on a machine without the owner public key (`opskit/keys/owner.age.pub` or `OPSKIT_OWNER_AGE_PUB`) re-installs the client's cron **without** the nightly backup line, even if backups ran before (warns only). The upgrade now refuses in that case (plan gate); plain `deploy` still does it. Proposed fix: refuse (or keep the existing backup line) when the host already has `agent/backup.sh` installed.
 - Codespace `verbose-trout` (4-core) runs the explore stack; an older broken codespace `symmetrical-fishstick` should be deleted by the owner. devcontainer memory requirement lowered 8gb→4gb so 2-core machines are offered (8gb excluded them).

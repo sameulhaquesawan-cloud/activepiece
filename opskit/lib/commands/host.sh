@@ -19,6 +19,8 @@ Usage: opskit host bootstrap <host> [--dry-run] [--harden-ssh]
 Runs opskit/agent/bootstrap.sh for opskit/hosts/<host>.yaml:
   ssh hosts   full setup over SSH with sudo (Docker, ufw 22/80/443, unattended upgrades,
               swap if RAM <= 4 GB, ssh key-only check) + Caddy edge
+              shared host: firewall: keep (host iptables), swap: 2G, edge.join_networks
+              (an existing Docker install is always kept)
   local hosts edge only (directories + Caddy) — practice machine, selftest
 USAGE
 }
@@ -34,6 +36,13 @@ bootstrap_args() {
   local email
   email="$(yaml_get "$file" .edge.acme_email)"
   [ -z "$email" ] || printf '%s\n' --email "$email"
+  printf '%s\n' --firewall "$(yaml_get "$file" .firewall ufw)"
+  local swap net
+  swap="$(yaml_get "$file" .swap)"
+  [ -z "$swap" ] || printf '%s\n' --swap "$swap"
+  while IFS= read -r net; do
+    [ -z "$net" ] || printf '%s\n' --edge-join "$net"
+  done < <(yq -r '.edge.join_networks // [] | .[]' "$file")
 }
 
 host_bootstrap() {
