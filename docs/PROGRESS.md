@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1, S2, S3a (packages + swap) done; S3b (Caddy window, touches AnythingLLM) waits for the owner's "window" after CI run 65 is green
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1–S4 done (opskit edge serves mychat since 24 Oct 2026 11:32 UTC); next S5 Activepieces `autonyx-practice`, then S6 Uptime Kuma
 - **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
@@ -29,6 +29,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-10-24 — Shared-server edge switch (S3a/S3b/S4).** Oracle host: `age` + `rclone` installed, 2 GB swap; opskit-caddy (2.10.0) took over 80/443 from AnythingLLM's Caddy with the copied cert (mychat down ~12 s), rollback tested both ways, old Caddy disabled by compose profile, sshd hardened and checked from a second session. Details in `docs/tasks/phase-9.md` S3b. Rollback any time: `docker stop opskit-caddy && docker start anythingllm-caddy`.
 - **2026-10-24 — Field server inspected (read-only) and shared-server plan approved.** Findings and the six steps S1–S6 in `docs/tasks/phase-9.md` "Shared-server run"; ASSUMPTIONS #32, ADR-020. Nothing changed on the server.
 - **2026-10-22 — Report round green in CI (run 64).** Runs 61 and 63 ran the round for the first time: the demo flow's publish got no answer when the round ran after the smoke step's worker restarts (logged under Known issues); it now runs before them. Diagnostics name the refused step and the API's answer.
 - **2026-10-22 — Phase 9 planned (no code).** `docs/tasks/phase-9.md`: 12 tasks (field facts, deploy-keeps-backup fix, log rotation, `host cloud-init` + `host preflight` with a DNS gate before deploy, B2 setup, operator guide, three field runs, costs, demo script, close) and nine owner questions with defaults. This session cannot open SSH (port 22 blocked), so field runs are done by the owner/Cowork from a Codespace.
@@ -139,6 +140,7 @@
 
 ## Known issues
 <!-- Bugs or gaps found outside current task scope. -->
+- 2026-10-24: on the Oracle host, the next `docker compose up -d` in `/opt/anything-llm/deploy/oracle` will **recreate** the `anythingllm` container (short restart): its config hash differs from the one it was created with 6 weeks ago, with the original override file too (not caused by the profile change). Harmless, but tell the AnythingLLM owner it is not a no-op. Also: that override file had no final newline; anything appended to it must start with one.
 - 2026-10-24: in the current Codespace, new files ignore the umask (kernel umask 0077, `: > f` and Python `open()` still create mode 646; `chmod`/`install -m` work). Four bats tests that expect mode 600 fail there on unchanged HEAD too (`backup_agent` "successful backup…", `backup_install` "render writes backup.conf…", `flows_import` "--print-steps…", `restore` "the encrypted dump is decrypted…"); CI is the reference. Check on each real host before relying on umask for secret files.
 - 2026-10-24: on the Oracle field server `/opt/anything-llm` is mode 777 (any local user can change AnythingLLM's code and compose files, which run as root through Docker). Not ours; owner said leave it, tighten it with the AnythingLLM owner later.
 - 2026-10-22: in CI, publishing a webhook flow right after the selftest smoke step's broken-condition checks (worker stopped and restarted, fake newer migration, wrong-key connection) got no answer within 120 s (runs 50 and 63); on a fresh stack it takes seconds. Selftest now publishes before those checks. Check on the Phase 9 server whether a plain worker restart alone delays publishing (a client editing flows right after an upgrade or reboot would see it).
