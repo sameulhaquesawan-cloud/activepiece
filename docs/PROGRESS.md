@@ -2,7 +2,7 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1 opskit code in progress; S3 (edge switch, touches AnythingLLM) waits for the owner
+- **Current task:** Phase 9 shared-server run (`docs/tasks/phase-9.md` "Shared-server run"): S1 and S2 done; S3 (edge switch, touches AnythingLLM) waits for the owner's "go"
 - **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
 
 ## Next steps
