@@ -63,20 +63,21 @@ teardown() {
   yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
   OPSKIT_OWNER_AGE_PUB="${KEYDIR}/missing.pub" run deploy_install_agents local-practice demo
   [ "$status" -eq 0 ]
-  [[ "$output" == *"monitoring agents installed (failed runs every 5 min, health hourly, daily digest)"* ]]
+  [[ "$output" == *"monitoring agents installed (failed runs every 5 min, health hourly, daily digest, watchdog every 2 min)"* ]]
   local script
-  for script in alert.sh detect-failed-runs.sh health.sh digest.sh; do
+  for script in alert.sh detect-failed-runs.sh health.sh digest.sh watchdog.sh; do
     [ "$(stat -c %a "${HOSTROOT}/agent/${script}")" = "755" ]
   done
-  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "3" ]
+  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "4" ]
   ! grep -q 'agent/backup.sh' "$CRONTAB_DATA"
 }
 
-@test "rendered cron schedules backup nightly, detector every 5 min, health and digest hourly" {
+@test "rendered cron schedules backup nightly, detector every 5 min, health and digest hourly, watchdog every 2 min" {
   "$OPSKIT" render demo >/dev/null
   local cron="${REG}/clients/demo/rendered/cron" root
   root="$(yq -r .opskit_root "${REG}/hosts/local-practice.yaml")"
-  [ "$(grep -c . "$cron")" = "4" ]
+  [ "$(grep -c . "$cron")" = "5" ]
+  grep -qx "\*/2 \* \* \* \* ${root}/agent/watchdog.sh demo --root ${root} >> ${root}/logs/demo-watchdog.log 2>&1 # opskit:demo" "$cron"
   grep -qx "30 2 \* \* \* ${root}/agent/backup.sh demo --root ${root} >> ${root}/logs/demo-backup.log 2>&1 # opskit:demo" "$cron"
   grep -qx "\*/5 \* \* \* \* ${root}/agent/detect-failed-runs.sh demo --root ${root} >> ${root}/logs/demo-detector.log 2>&1 # opskit:demo" "$cron"
   grep -qx "17 \* \* \* \* ${root}/agent/health.sh demo --root ${root} >> ${root}/logs/demo-health.log 2>&1 # opskit:demo" "$cron"
@@ -133,7 +134,7 @@ teardown() {
   [[ "$output" == *"monitoring + backup agents installed; nightly backup (30 2 * * *)"* ]]
   OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" deploy_install_agents local-practice demo >/dev/null
   grep -qx '0 5 \* \* \* /usr/local/bin/someone-elses-job' "$CRONTAB_DATA"
-  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "4" ]
+  [ "$(grep -c '# opskit:demo$' "$CRONTAB_DATA")" = "5" ]
   rm "${HOSTROOT}/clients/demo/cron"
   "${HOSTROOT}/agent/cron-sync.sh" --root "$HOSTROOT"
   [ "$(grep -c '# opskit:' "$CRONTAB_DATA")" = "0" ]

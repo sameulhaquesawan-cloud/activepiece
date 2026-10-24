@@ -143,7 +143,7 @@ deploy_install_agents() {
     backups="false"
     log_warn "backups NOT installed for ${id}: no owner age public key ($(owner_age_pubkey)); see docs/runbooks/backup-restore.md"
   fi
-  for script in alert.sh cron-sync.sh detect-failed-runs.sh health.sh digest.sh; do
+  for script in alert.sh cron-sync.sh detect-failed-runs.sh health.sh digest.sh watchdog.sh; do
     host_put "$host" "${OPSKIT_ROOT}/agent/${script}" "${root}/agent/${script}" 755 || return 1
   done
   for template in "${OPSKIT_ROOT}"/templates/alerts/*.jq; do
@@ -174,7 +174,7 @@ deploy_install_agents() {
     if [ "$backups" = "true" ]; then
       log_ok "monitoring + backup agents installed; nightly backup ($(yaml_get "$(client_file "$id")" .backup.schedule "30 2 * * *"))"
     else
-      log_ok "monitoring agents installed (failed runs every 5 min, health hourly, daily digest)"
+      log_ok "monitoring agents installed (failed runs every 5 min, health hourly, daily digest, watchdog every 2 min)"
     fi
   else
     log_ok "agents installed (no cron on practice host ${host}: run opskit backup ${id}; monitoring scripts by hand)"

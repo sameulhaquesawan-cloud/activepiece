@@ -12,6 +12,7 @@ schema_errors_to_lines() {
     elif .keyword == "additionalProperties" then at(.params.additionalProperty) + ": unknown field"
     elif .keyword == "enum" then $path + ": must be one of: " + (.params.allowedValues | map(tostring) | join(", "))
     elif .keyword == "not" then $path + ": this value is not allowed"
+    elif .keyword == "pattern" and $path == "app.memory_limit" then $path + ": must be at least 896m (less runs the app out of JavaScript heap)"
     elif .keyword == "pattern" then $path + ": has an invalid format"
     else $path + ": " + .message end' | sort -u
 }

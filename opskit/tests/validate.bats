@@ -203,3 +203,13 @@ expect_template_error() {
   [ "$status" -eq 0 ]
   expect_client_error '.support.included_hours = 41' "support.included_hours"
 }
+
+@test "app memory below 896m is refused with the reason; 896m, 1g and 1536m pass" {
+  expect_client_error '.app.memory_limit = "640m"' "app.memory_limit: must be at least 896m (less runs the app out of JavaScript heap)"
+  local value
+  for value in 896m 1g 1536m; do
+    broken_client ".app.memory_limit = \"${value}\""
+    run "$OPSKIT" validate "${WORK}/client.yaml"
+    [ "$status" -eq 0 ]
+  done
+}
