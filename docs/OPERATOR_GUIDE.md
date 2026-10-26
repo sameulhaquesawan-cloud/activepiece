@@ -25,7 +25,13 @@ Secrets and where they live (never in chat, never in git):
 
 **Codespace warning:** stopping a Codespace keeps its files; **deleting** it loses the files above that
 are not in git (`opskit/clients/`, `opskit/hosts/`, `opskit/owner/`, your keys). Keep the password-manager
-copies, and before deleting a Codespace copy those folders somewhere safe.
+copies, and back the folders up (encrypted to your owner key) after every change and monthly:
+```bash
+opskit/bin/opskit registry backup --to b2:<your bucket>/registry
+```
+On a new Codespace or laptop: put the owner key back in `~/.config/opskit/owner.key`, create
+`opskit/owner/rclone.conf` again (or download the newest `registry-*.tar.gz.age` from Backblaze), then
+`opskit/bin/opskit registry restore b2:<your bucket>/registry/<file>` (or the downloaded file).
 
 ## 2. What runs on its own
 | What | When | You hear about it when |
@@ -50,6 +56,7 @@ on the server.
   opskit/bin/opskit restore-test --all          # proves last night's backups really restore
   opskit/bin/opskit report --all                # builds last month's care reports; read them
   opskit/bin/opskit report --all --send         # emails them (needs SMTP, §4)
+  opskit/bin/opskit registry backup --to b2:<your bucket>/registry   # your own settings, encrypted
   ```
 - **During the month:** log work you do for a client (it shows in their report):
   `opskit/bin/opskit hours <client> add 1.5 "changed the reply text"` and

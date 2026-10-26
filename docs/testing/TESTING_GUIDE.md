@@ -104,6 +104,11 @@ Follow `docs/ACTIVEPIECES_GUIDE.md` §3.
 - [ ] **5.5 Owner key copy.** Your password manager holds the 3-line owner key (without it no backup can
   be restored).
 
+- [ ] **5.6 Your own settings backup.** `opskit registry backup --to b2:<your bucket>/registry` →
+  "encrypted, checked with your private key" and "copied off this machine"; the file shows in Backblaze.
+  Practice restore without touching your real folders:
+  `OPSKIT_REGISTRY=$(mktemp -d) opskit registry restore latest` → "registry restored into /tmp/…".
+
 ## Part 6 — Safe upgrade (0.92.2 → 0.92.3)
 - [ ] **6.1 Plan.** `opskit upgrade autonyx-practice --to 0.92.3 --plan` → "Plan only: nothing was
   changed", no `[fail]` (needs a complete backup < 26 h and a passed restore test ≤ 35 days: Part 5).
