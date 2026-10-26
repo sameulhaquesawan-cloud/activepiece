@@ -72,6 +72,19 @@ teardown() {
   ! grep -q 'agent/backup.sh' "$CRONTAB_DATA"
 }
 
+@test "a client that already has nightly backups is not re-deployed without the owner key (backup line kept)" {
+  "$OPSKIT" render demo >/dev/null
+  yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/owner.age.pub" run deploy_install_agents local-practice demo
+  [ "$status" -eq 0 ]
+  grep -q 'agent/backup.sh demo' "$CRONTAB_DATA"
+  OPSKIT_OWNER_AGE_PUB="${KEYDIR}/missing.pub" run deploy_install_agents local-practice demo
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"demo already has nightly backups on local-practice: refusing to deploy without the owner public key"* ]]
+  grep -q 'agent/backup.sh demo' "$CRONTAB_DATA"
+  [ -s "${HOSTROOT}/clients/demo/backup.conf" ]
+}
+
 @test "rendered cron schedules backup nightly, detector every 5 min, health and digest hourly, watchdog every 2 min" {
   "$OPSKIT" render demo >/dev/null
   local cron="${REG}/clients/demo/rendered/cron" root

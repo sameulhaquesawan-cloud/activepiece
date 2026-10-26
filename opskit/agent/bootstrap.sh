@@ -121,7 +121,7 @@ install_packages() {
     packages+=(docker.io docker-compose-v2)
   fi
   [ "$FIREWALL" = "keep" ] || packages+=(ufw)
-  packages+=(unattended-upgrades cron curl age rclone)
+  packages+=(unattended-upgrades cron logrotate curl age rclone)
   run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
   run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}"
   run systemctl enable --now docker
@@ -184,6 +184,21 @@ setup_unattended_upgrades() {
     printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' > /etc/apt/apt.conf.d/20auto-upgrades
   fi
   ok "unattended security upgrades enabled"
+}
+
+logrotate_rule() {
+  printf '%s/logs/*.log {\n  weekly\n  rotate 8\n  compress\n  delaycompress\n  missingok\n  notifempty\n  copytruncate\n}\n' "$ROOT"
+}
+
+setup_logrotate() {
+  if [ "$DRY_RUN" = "true" ]; then
+    printf '[plan] write /etc/logrotate.d/opskit:\n'
+    logrotate_rule | sed 's/^/[plan]   /'
+  else
+    logrotate_rule > /etc/logrotate.d/opskit
+    chmod 644 /etc/logrotate.d/opskit
+  fi
+  ok "log rotation: ${ROOT}/logs/*.log weekly, 8 kept, compressed"
 }
 
 setup_swap() {
@@ -323,6 +338,7 @@ main() {
     install_packages
     [ -n "${PLAN_PROBLEM:-}" ] || setup_firewall
     setup_unattended_upgrades
+    setup_logrotate
     setup_swap
     if ! check_ssh; then
       [ "$DRY_RUN" = "true" ] || exit 1

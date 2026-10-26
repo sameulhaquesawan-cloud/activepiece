@@ -133,13 +133,18 @@ deploy_check_scheduler() {
   log_ok "cron available on ${host}"
 }
 
-# deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists
+# deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists (and never
+# removed from a client that has them)
 deploy_install_agents() {
   local host="$1" id="$2" root out owner script template backups="true" cron
   root="$(host_root "$host")"
   out="$(rendered_dir "$id")"
   owner="$(registry_root)/owner"
   if [ ! -s "$(owner_age_pubkey)" ]; then
+    if host_run "$host" test -s "${root}/clients/${id}/backup.conf" 2>/dev/null; then
+      log_fail "${id} already has nightly backups on ${host}: refusing to deploy without the owner public key ($(owner_age_pubkey)), it would drop the backup schedule; see docs/runbooks/backup-restore.md §A"
+      return 1
+    fi
     backups="false"
     log_warn "backups NOT installed for ${id}: no owner age public key ($(owner_age_pubkey)); see docs/runbooks/backup-restore.md"
   fi

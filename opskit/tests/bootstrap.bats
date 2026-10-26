@@ -109,7 +109,7 @@ RULES
   [[ "$output" == *"[ok] docker: existing install kept"* ]]
   [[ "$output" != *"docker.io"* ]]
   [[ "$output" != *"docker-compose-v2"* ]]
-  [[ "$output" == *"ufw unattended-upgrades cron curl age rclone"* ]]
+  [[ "$output" == *"ufw unattended-upgrades cron logrotate curl age rclone"* ]]
 }
 
 @test "firewall keep: iptables with ssh, 80, 443 and a final reject is accepted, no ufw" {
@@ -195,6 +195,22 @@ R"
 @test "bootstrap installs cron (Ubuntu Minimal images ship without it)" {
   stub_tool docker 'exit 0'
   PATH="${WORK}/stub:${PATH}" run bash "$BOOTSTRAP" --ssh-user ops --dry-run
-  [[ "$output" == *"unattended-upgrades cron curl age rclone"* ]]
+  [[ "$output" == *"unattended-upgrades cron logrotate curl age rclone"* ]]
   [[ "$output" == *"[plan] systemctl enable --now cron"* ]]
+}
+
+@test "agent logs are rotated weekly, 8 kept, compressed, without stopping the writers" {
+  stub_tool docker 'exit 0'
+  PATH="${WORK}/stub:${PATH}" run bash "$BOOTSTRAP" --ssh-user ops --root /opt/opskit --firewall keep --dry-run
+  [[ "$output" == *"[plan] write /etc/logrotate.d/opskit:"* ]]
+  [[ "$output" == *"[plan]   /opt/opskit/logs/*.log {"* ]]
+  local key
+  for key in weekly "rotate 8" compress missingok notifempty copytruncate; do
+    [[ "$output" == *"[plan]     ${key}"* ]]
+  done
+  [[ "$output" == *"[ok] log rotation: /opt/opskit/logs/*.log weekly, 8 kept, compressed"* ]]
+  if command -v logrotate >/dev/null; then
+    sed -n 's/^\[plan\]   //p' <<< "$output" > "${WORK}/rule"
+    logrotate -d "${WORK}/rule" 2>&1 | grep -q "rotating pattern: /opt/opskit/logs/\*.log"
+  fi
 }

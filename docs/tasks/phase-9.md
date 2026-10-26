@@ -52,7 +52,7 @@ Read-only inspection 24 Oct 2026 (agent, SSH as `ubuntu`): Ubuntu 24.04.4 aarch6
 - **Tests required:** none (facts).
 - **Manual verification:** owner reads the price table and confirms the server type.
 
-### [ ] 9.2 — Fix: deploy never drops an installed nightly backup
+### [x] 9.2 — Fix: deploy never drops an installed nightly backup
 - **Goal:** Known issue (22 Oct): `opskit deploy` without the owner public key re-installs the client's cron without the backup line. When the host already has `agent/backup.sh` for the client, deploy refuses with a clear message instead (or keeps the existing key/line); first deploys without a key still warn as today.
 - **Spec refs:** 9.1–9.2, reliability rules
 - **Files likely touched:** `opskit/lib/deploy.sh`, `opskit/tests/backup_install.bats`
@@ -60,7 +60,7 @@ Read-only inspection 24 Oct 2026 (agent, SSH as `ubuntu`): Ubuntu 24.04.4 aarch6
 - **Tests required:** failing test first in `backup_install.bats`.
 - **Manual verification:** `bats opskit/tests/backup_install.bats`.
 
-### [ ] 9.3 — Log rotation for host agent logs
+### [x] 9.3 — Log rotation for host agent logs
 - **Goal:** Known issue: `<root>/logs/<id>-*.log` grow forever. Bootstrap installs a logrotate rule (weekly, keep 8, compress, `copytruncate`) for `<root>/logs/*.log`; idempotent; `--dry-run` shows it.
 - **Spec refs:** 7.3, ops script rules
 - **Files likely touched:** `opskit/agent/bootstrap.sh`, `opskit/templates/host/` (logrotate file), `opskit/tests/bootstrap.bats`
