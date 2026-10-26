@@ -78,9 +78,10 @@ on the server.
 Plan per client: a domain or subdomain (e.g. `auto.clientname.com`, or `client.autonyxai.shop`), and
 which flows they want. A paying client should get **their own server** (≥ 2 CPU / 4 GB; Hetzner or
 DigitalOcean ~€6–24/month — billed to them); your free Oracle server is for you and demos.
-1. **Server (once):** buy an Ubuntu 24.04 server with your SSH key; DNS A record → its IP; describe it in
-   `opskit/hosts/<host>.yaml`; `opskit/bin/opskit host bootstrap <host> --dry-run`, then without
-   `--dry-run`. Details and the shared-server options (`firewall: keep`, `edge.join_networks`) in
+1. **Server (once):** print the server setup text with `opskit/bin/opskit host cloud-init --user ops --key ~/.ssh/id_ed25519.pub`
+   and paste it into the provider's "cloud config" box when creating an Ubuntu 24.04 server; DNS A record →
+   its IP; describe it in `opskit/hosts/<host>.yaml`; `opskit/bin/opskit host preflight <host>` (read-only
+   check), then `opskit/bin/opskit host bootstrap <host> --dry-run`, then without `--dry-run`. Details and the shared-server options (`firewall: keep`, `edge.join_networks`) in
    `docs/runbooks/deploy-client.md` and ADR-020.
 2. **Client:**
    ```bash

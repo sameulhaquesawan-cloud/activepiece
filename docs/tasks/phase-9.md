@@ -68,7 +68,7 @@ Read-only inspection 24 Oct 2026 (agent, SSH as `ubuntu`): Ubuntu 24.04.4 aarch6
 - **Tests required:** `bootstrap.bats` case.
 - **Manual verification:** on the VPS in 9.7: `sudo logrotate -d /etc/logrotate.d/opskit`.
 
-### [ ] 9.4 — `opskit host cloud-init` and `opskit host preflight`
+### [x] 9.4 — `opskit host cloud-init` and `opskit host preflight`
 - **Goal:** (a) `opskit host cloud-init --user ops --key ~/.ssh/id_ed25519.pub` prints the user-data to paste into the provider's "Cloud config" box (user with key, passwordless sudo, no root password login) — removes the manual first-login step. (b) `opskit host preflight <host>` (read-only): SSH as `ssh_user` works, sudo without password, Ubuntu 24.04, CPU/RAM/disk vs the host yaml, IPv6 not disabled in the kernel, outbound HTTPS to the image registry / `cloud.activepieces.com` / npm, and for each client on the host: the domain's A record points at the host IP. `opskit deploy` runs the DNS part first and stops before touching anything when it is wrong (protects Let's Encrypt rate limits).
 - **Spec refs:** 7.3–7.4, 15
 - **Files likely touched:** `opskit/lib/commands/host.sh`, `opskit/lib/host.sh` or new `opskit/lib/preflight.sh`, `opskit/templates/host/cloud-init.yaml.tmpl`, `opskit/lib/deploy.sh`, tests
