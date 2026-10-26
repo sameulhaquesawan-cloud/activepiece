@@ -9,7 +9,7 @@ pieces:
   - name: "@activepieces/piece-hubspot"
     version: 0.13.1
   - name: "@activepieces/piece-gmail"
-    version: 0.18.1
+    version: 0.18.3
 placeholders:
   - key: SALES_EMAIL
     description: Who gets each new lead

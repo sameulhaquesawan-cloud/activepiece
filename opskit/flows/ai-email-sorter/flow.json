@@ -24,7 +24,7 @@
         "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
         "settings": {
           "pieceName": "@activepieces/piece-gmail",
-          "pieceVersion": "0.18.1",
+          "pieceVersion": "0.18.3",
           "triggerName": "gmail_new_email_received",
           "propertySettings": {},
           "input": {
@@ -193,7 +193,7 @@
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
-                      "pieceVersion": "0.18.1",
+                      "pieceVersion": "0.18.3",
                       "actionName": "gmail_add_label_to_email",
                       "propertySettings": {},
                       "input": {
@@ -247,7 +247,7 @@
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
-                      "pieceVersion": "0.18.1",
+                      "pieceVersion": "0.18.3",
                       "actionName": "gmail_add_label_to_email",
                       "propertySettings": {},
                       "input": {
@@ -271,7 +271,7 @@
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
-                      "pieceVersion": "0.18.1",
+                      "pieceVersion": "0.18.3",
                       "actionName": "gmail_add_label_to_email",
                       "propertySettings": {},
                       "input": {
@@ -295,7 +295,7 @@
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
-                      "pieceVersion": "0.18.1",
+                      "pieceVersion": "0.18.3",
                       "actionName": "gmail_add_label_to_email",
                       "propertySettings": {},
                       "input": {
@@ -319,7 +319,7 @@
                     "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                     "settings": {
                       "pieceName": "@activepieces/piece-gmail",
-                      "pieceVersion": "0.18.1",
+                      "pieceVersion": "0.18.3",
                       "actionName": "gmail_add_label_to_email",
                       "propertySettings": {},
                       "input": {

@@ -7,9 +7,9 @@ pieces:
   - name: "@activepieces/piece-webhook"
     version: 0.1.42
   - name: "@activepieces/piece-google-sheets"
-    version: 0.18.2
+    version: 0.19.3
   - name: "@activepieces/piece-gmail"
-    version: 0.18.1
+    version: 0.18.3
 placeholders:
   - key: OWNER_EMAIL
     description: Who gets each new lead (and receives replies to the auto-reply)

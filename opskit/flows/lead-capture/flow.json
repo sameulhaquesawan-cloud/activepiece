@@ -63,7 +63,7 @@
             "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
             "settings": {
               "pieceName": "@activepieces/piece-google-sheets",
-              "pieceVersion": "0.18.2",
+              "pieceVersion": "0.19.3",
               "actionName": "insert_row",
               "propertySettings": {},
               "input": {
@@ -98,7 +98,7 @@
               "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
               "settings": {
                 "pieceName": "@activepieces/piece-gmail",
-                "pieceVersion": "0.18.1",
+                "pieceVersion": "0.18.3",
                 "actionName": "send_email",
                 "propertySettings": {},
                 "input": {
@@ -134,7 +134,7 @@
                 "lastUpdatedDate": "2026-10-21T00:00:00.000Z",
                 "settings": {
                   "pieceName": "@activepieces/piece-gmail",
-                  "pieceVersion": "0.18.1",
+                  "pieceVersion": "0.18.3",
                   "actionName": "send_email",
                   "propertySettings": {},
                   "input": {
