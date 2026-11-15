@@ -15,33 +15,12 @@ e2e_upgrade_client() {
   yq -i ".image.tag = \"${tag}\" | .ap_version = \"${tag}\" | .backup.remote = \"offsite:${offsite}\"" "$(client_file "$id")"
   "${OPSKIT_ROOT}/bin/opskit" deploy "$id" >/dev/null || { log_fail "upgrade e2e: deploy of ${id} on ${tag} failed"; return 1; }
   rt_seed selftest "$id" "${id}.localhost" "$port" >/dev/null || return 1
-  stack_archive_pieces_ok "$tag" || e2e_upgrade_wait_catalog "$id" "$port" || return 1
   "${OPSKIT_ROOT}/bin/opskit" backup "$id" >/dev/null || { log_fail "upgrade e2e: backup of ${id} failed"; return 1; }
   "${OPSKIT_ROOT}/bin/opskit" restore-test "$id" >/dev/null || { log_fail "upgrade e2e: restore test of ${id} failed"; return 1; }
   log_ok "upgrade e2e: ${id} deployed on ${tag}, seeded, backed up, restore-tested"
 }
 
 # e2e_upgrade_run <id> <to> [env assignments...]: the real command, client id typed at the prompt
-# e2e_upgrade_wait_catalog <id> <https port>: a release before STACK_ARCHIVE_PIECES_MIN_TAG fills Activepieces'
-# catalog in the background; the backup must contain it, because the upgraded copy runs our frozen catalog
-# and never fills it itself (E2E_UPGRADE_CATALOG_WAIT_S, default 300 s)
-e2e_upgrade_wait_catalog() {
-  local id="$1" port="$2" waited=0 limit="${E2E_UPGRADE_CATALOG_WAIT_S:-300}" auth token project
-  auth="$(rt_sign_in "${id}.localhost" "$port")"
-  token="$(jq -r '.token // empty' <<< "$auth" 2>/dev/null || true)"
-  project="$(jq -r '.projectId // empty' <<< "$auth" 2>/dev/null || true)"
-  [ -n "$token" ] || { log_fail "upgrade e2e: cannot sign in to ${id}"; return 1; }
-  until [ -n "$(smoke_piece_version "${id}.localhost" "$port" "$token" "$project" @activepieces/piece-webhook)" ]; do
-    if [ "$waited" -ge "$limit" ]; then
-      OPSKIT_REQUIRE_PIECES="${OPSKIT_REQUIRE_PIECES:-0}" e2e_skip "piece catalog of ${id} not filled after ${limit}s (no internet for the app?)" "upgrade e2e"
-      return
-    fi
-    sleep 10
-    waited=$((waited + 10))
-  done
-  log_ok "upgrade e2e: Activepieces' catalog of ${id} filled (${waited}s)"
-}
-
 e2e_upgrade_run() {
   local id="$1" to="$2"
   shift 2

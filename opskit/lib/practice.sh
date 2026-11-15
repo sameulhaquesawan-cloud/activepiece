@@ -69,6 +69,7 @@ practice_remove_tree() {
 
 # temp_stack_restore <client id> <backup name|latest> <host label> [image tag]: restores the client's
 # backup into a throwaway stack on this machine (optionally on another image tag), in a temp registry.
+# A client still on Activepieces' catalog (release before STACK_ARCHIVE_PIECES_MIN_TAG) keeps it in the copy.
 # Sets TEMP_WORK (registry), TEMP_ROOT, TEMP_EDGE, TEMP_HOST, TEMP_ID, TEMP_PORT, TEMP_LOG, TEMP_REASON.
 # Always call temp_stack_remove afterwards. Needs the owner's age private key.
 temp_stack_restore() {
@@ -85,6 +86,9 @@ temp_stack_restore() {
   TEMP_REASON=""
   mkdir -p "${TEMP_WORK}/clients/${id}" "${TEMP_WORK}/hosts"
   cp "$(client_file "$id")" "${TEMP_WORK}/clients/${id}/client.yaml"
+  if [ -n "$tag" ] && ! stack_archive_pieces_ok "$(yaml_get "$(client_file "$id")" .image.tag)"; then
+    yq -i '.pieces.catalog = "official"' "${TEMP_WORK}/clients/${id}/client.yaml"
+  fi
   [ -z "$tag" ] || yq -i ".image.tag = \"${tag}\"" "${TEMP_WORK}/clients/${id}/client.yaml"
   cp "$(host_file "$host")" "${TEMP_WORK}/hosts/"
   if [ -f "${real}/owner/rclone.conf" ]; then
