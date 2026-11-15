@@ -1,15 +1,16 @@
 # Progress
 
 ## Current status
-- **Current phase:** Phase 5 — Flow template library
-- **Current task:** Phase 6 planned (`docs/tasks/phase-6.md`); waiting for the owner's answers to its 6 questions. Phase 5: signed off; real-account Sheets/T2 test and Tables-variant SMTP test pending
+- **Current phase:** Launch week (15–21 Nov 2026, `docs/go-to-market/launch-plan.md`); Phase 6 still waits for the owner's answers
+- **Current task:** Chrome log T1 (read-only Oracle/DNS inventory) and T2 (payout research, Payoneer signup), then staging deploy `autonyx-staging`
 - **Last updated:** 2026-11-15 · **Branch:** `claude/ecstatic-keller-dxgivp`
 
 ## Next steps
-1. Owner: read `docs/tasks/phase-6.md`, answer its 6 questions (or say "ok" to accept the defaults) → agent starts 6.1.
-2. Browser tasks in the owner's Chrome go through `docs/CHROME_LOG.md` (local session on the owner's laptop; protocol inside).
-3. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
-4. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
+1. Local session: do Chrome log T1 + T2 and push; cloud session then plans the staging deploy (WSL setup, `host bootstrap`, DNS, `client new autonyx-staging`, `deploy`) from the T1 facts.
+2. Owner: read `docs/tasks/phase-6.md`, answer its 6 questions (or say "ok" to accept the defaults) → agent starts 6.1.
+3. Browser tasks in the owner's Chrome go through `docs/CHROME_LOG.md` (local session on the owner's laptop; protocol inside).
+4. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
+5. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -28,6 +29,7 @@
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
+- **2026-11-15 — Launch week planned.** Owner: brand AutonyxAI, both markets, no Payoneer yet, staging stack as client #0 before prod, teach-mode for the owner. Files: `docs/go-to-market/launch-plan.md`, `docs/learn/activepieces-101.md`, `docs/CHROME_LOG.md` (protocol: teach mode, local session = WSL operator; T1, T2), HANDOFF owner context, ASSUMPTIONS #24–25. Verified: image 0.92.3 has arm64; cloud session cannot SSH out.
 - **2026-11-15 — Two-session split set up.** `docs/CHROME_LOG.md` (task/report file for a local Claude session with Claude in Chrome on the owner's Windows 10 laptop; it writes only that file), pointer in `docs/HANDOFF.md`. T0 round trip passed (local clone, Chrome connected, push received). `main` already exists on GitHub (PR #1 merged), so that next step is done.
 - **2026-10-22 — Phase 6 planned (no code).** `docs/tasks/phase-6.md`: 12 tasks — verify facts (image tags, upstream `npm run rollback`), `upgrade --plan` with breaking-change notes and pre-flight gates, image pre-pull + lock/state, smoke-test library, staging on the operator machine, production switch, automatic rollback (migration rollback first, backup restore as fallback), history + monitoring hooks, post-upgrade pieces/templates check, selftest/CI round with an injected failure, fork-sync rehearsal, runbook + ADR-018. Six owner questions with recommended defaults.
 - **2026-10-22 — Built-in Tables variants (owner request: no Google needed, Google/other clouds as alternatives).** `opskit/flows/lead-capture-tables/` and `invoice-reminder-tables/`: data in an Activepieces table, mail by SMTP, no Google and no sign-in service. Template manifests gained `tables` (id/name/columns) and sample runs gained `seed`/`rows`/`filled`; `flows import` creates missing tables (fixed ids, refuses an existing one lacking a column); `flows validate` checks table use and written column names (the piece drops unknown names silently); selftest seeds rows and checks them with the Tables steps running for real. Verified on a real local stack: table/field/record API calls, record shape (cells by internal id + `fieldName`), the new check functions and `flows_ensure_tables`. Tests: +10 bats (code steps, validate, import, stub). Docs: README "Where the client's data lives" (Tables default; Sheets; Airtable/Excel 365/Notion as half-day add-ons, not built), CONVENTIONS, CONNECTIONS, runbook, ASSUMPTIONS #23. CI run 38 green (real imports, rows written/checked, sample runs). Pending: real SMTP test.

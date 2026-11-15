@@ -1,17 +1,48 @@
-# Chrome log — tasks for the local browser session
+# Chrome log — tasks for the local session
 
 Two sessions share the branch named in `docs/PROGRESS.md`:
-- **Cloud session**: code, Bash, Docker, tests. Writes tasks here, owns every other file.
-- **Local session** (owner's Windows laptop, Claude in Chrome): browser work only. Writes **only this file**.
+- **Cloud session**: code, tests, docs. Writes tasks here, owns every other tracked file. Cannot SSH out.
+- **Local session** (owner's Windows laptop): Claude in Chrome **and** the opskit operator inside WSL2 Ubuntu
+  (SSH to hosts, `opskit` commands). In git it writes **only this file**. The plan behind the tasks:
+  `docs/go-to-market/launch-plan.md`.
 
 ## Protocol
 1. Before work: `git pull`. After work: commit only this file, `git pull --rebase`, `git push`.
 2. Cloud adds a task under **Open tasks** (`### T<n> — title`, steps, report format).
-3. Local does it in Chrome, moves it to **Done** with a report: what was done, results, problems, screenshots described in words.
-4. **Never write secrets here** (passwords, API keys, tokens, private keys, `.env` values). Write `[stored by owner]` instead. IPs, hostnames, record names and error text are fine.
-5. Stop and ask the owner before anything destructive, paid, or that changes a live client system.
+3. Local does it, moves it to **Done** with a report: what was done, results, problems.
+4. **Never write secrets here or in chat** (passwords, API keys, tokens, private keys, `.env` values, full
+   contents of `opskit/clients/` or `opskit/hosts/`). Write `[stored by owner]`. IPs, hostnames, record names,
+   versions and error text are fine.
+5. Stop and ask the owner before anything destructive, paid, account-creating, message-sending, or that changes
+   a live server, firewall or DNS. Read-only work needs no approval.
+6. **Teach mode (always):** the owner is learning. Before each action, say in one plain sentence what you are
+   about to do and why; after each page or command, one sentence on what it showed. When a task says
+   *Owner tries*, stop and let the owner do that part while you guide.
+7. Opskit commands run in WSL (`wsl -d Ubuntu-24.04 -- bash -lc '...'`) from the clone inside Ubuntu, never
+   against the AnythingLLM containers. The registry (`opskit/clients/`, `opskit/hosts/`) exists only there.
 
 ## Open tasks
+
+### T1 — Read-only inventory of the Oracle server and DNS
+No changes anywhere. Report every item; "unknown" is a valid answer.
+1. Oracle Cloud console (Chrome): instance name, shape (e.g. VM.Standard.A1.Flex / E2.1.Micro), OCPUs, RAM,
+   boot volume size, OS image, region, public IP. VCN → security list / NSG: list the ingress rules (port, source).
+2. Spaceship (Chrome): DNS records of `autonyxai.shop` — type, host, value (no account details).
+3. SSH (from Windows PowerShell or WSL, with the owner's existing key). Run only these and report output:
+   `uname -m; lsb_release -ds; nproc; free -h; df -h /; docker --version; docker compose version;
+   docker ps --format '{{.Names}}  {{.Image}}  {{.Ports}}'; sudo ss -tlnp | grep -E ':(80|443|22)\b';
+   sudo ufw status; sudo iptables -S INPUT | head -20; id -un`
+   Do not open or print any `.env` or config file.
+4. Laptop: `wsl --status` and `wsl -l -v` in PowerShell (is WSL2 + Ubuntu installed?), free disk on C:.
+5. *Owner tries:* open AnythingLLM in the browser and note its URL (does it use a domain, port 3001, or 80/443?).
+Report format: a short table per item, then "Blockers I see".
+
+### T2 — Getting paid from Bangladesh (research, then Payoneer signup start)
+1. Using official pages only (payoneer.com, upwork.com, fiverr.com, wise.com, paypal.com, stripe.com), check for a
+   seller living in Bangladesh: can they receive and withdraw to a BD bank? Fees for receiving USD and withdrawing to BDT.
+   Report a table: provider · works in BD (yes/no/partly) · fee · source URL · date checked.
+2. Payoneer: open the signup page and walk the owner through it. *Owner tries:* the owner fills and submits
+   every field and document. You only explain fields. Report which documents were asked for and the status shown.
 
 ## Done
 

@@ -5,6 +5,12 @@ Works for Claude Code, Codex, Cursor, Kilo, Gemini, Copilot or a human. Nothing 
 ## Prompt to paste into a new chat
 > This repo is my Activepieces fork + "opskit". Read `README-START-HERE.md`, then `docs/HANDOFF.md`, and follow them. Continue from "Next steps" in `docs/PROGRESS.md`. Work on the git branch named there, commit and push after each task. I'm semi-technical: when I must do something, give me short numbered steps.
 
+## Owner context (read first, every new account or AI)
+- **Goal:** start earning with AutonyxAI (`autonyxai.shop`) — setup + hosting + care of Activepieces for clients, international + Bangladesh. Plan and week schedule: `docs/go-to-market/launch-plan.md`.
+- **Owner is new to Activepieces and semi-technical.** Explain each step in plain words while doing it; give short numbered steps; practise on staging. Learning track: `docs/learn/activepieces-101.md`.
+- **Two sessions:** cloud (code, docs) + local on the owner's laptop (Claude in Chrome + opskit operator in WSL). Tasks and reports go through `docs/CHROME_LOG.md`.
+- **Environments:** `staging-activepiece.autonyxai.shop` (client #0, test every change here first) → `activepiece.autonyxai.shop` (our prod/demo) · `status.autonyxai.shop` (Uptime Kuma).
+
 ## Read in this order
 1. `docs/HANDOFF.md` (this file).
 2. `.claude/CLAUDE.md` — **the working rules for every AI**, not only Claude (the folder name is historical). Rules there win over your own defaults.
