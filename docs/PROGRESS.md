@@ -3,7 +3,7 @@
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
 - **Current task:** Phase 9 — build work done (9.2–9.4, 9.6 guides + `operator_guide.bats`, demo script, testing guide) and the shared-server run S1–S6 on the Oracle instance done (24 Oct 2026). Remaining: owner setup (Telegram, Backblaze, SMTP, business.yaml), then the manual test `docs/testing/TESTING_GUIDE.md` (covers 9.5, 9.7–9.9), then 9.10 costs + 9.12 close
-- **Last updated:** 2026-11-15 · **Branch:** `claude/ecstatic-keller-dxgivp` (contains all of `claude/blissful-lovelace-ltnlm9` as of 15 Nov 2026 plus the launch-week plan)
+- **Last updated:** 2026-11-15 · **Branch:** `claude/ecstatic-keller-dxgivp` → merged into `main` 15 Nov 2026; next session starts from `main` (`docs/BRANCHES.md`)
 
 ## Next steps
 - **Launch week (owner, 15 Nov 2026):** `docs/go-to-market/launch-plan.md` — staging `autonyx-staging` (client #0 Threadline BD, `docs/practice/threadline-bd.md`) before prod, then outreach. Chrome tasks: `docs/CHROME_LOG.md` (T4 open). The items below still apply.
@@ -12,7 +12,7 @@
 2. Owner, in the Codespace (has SSH: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22`): re-run `opskit host bootstrap oracle-mumbai` once (installs log rotation, 9.3) and, if not done yet, `opskit monitor sync autonyx-practice` (Kuma login in `opskit/hosts/oracle-mumbai.monitor/admin.env`).
 3. Owner: the manual test `docs/testing/TESTING_GUIDE.md` on the Oracle server; every deviation goes back to the agent as a guide or code fix.
 4. Agent, after the test: finish 9.1 facts, fold findings into the guide (9.6), 9.10 costs and timings, 9.11 demo script check, 9.12 verification report.
-5. Owner: merge this branch into `main` by PR when convenient (the agent may not push `main`). `claude/funny-keller-x6sgy1` is superseded and can be deleted.
+5. Done 15 Nov 2026: all branches merged into `main` (`docs/BRANCHES.md`); `claude/funny-keller-x6sgy1` and `claude/blissful-lovelace-ltnlm9` can be deleted.
 6. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants) and the template CHECKLISTs once more after the Gmail 0.18.3 / Sheets 0.19.3 re-pin; Meta app per lead-ad client; lawyer/accountant review.
 
 ## Phases

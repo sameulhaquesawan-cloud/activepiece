@@ -10,7 +10,7 @@ Works for Claude Code, Codex, Cursor, Kilo, Gemini, Copilot or a human. Nothing 
 - **Owner is new to Activepieces and semi-technical.** Explain each step in plain words while doing it; give short numbered steps; practise on staging. Learning: `docs/ACTIVEPIECES_GUIDE.md`, practice ladder `docs/learn/activepieces-101.md`.
 - **Three places:** cloud session (code, docs; no SSH) · **Codespace Claude** = operator (registry + SSH key; `docs/OPERATOR_GUIDE.md`) · local session on the owner's laptop = Claude in Chrome. Chrome tasks and reports go through `docs/CHROME_LOG.md`.
 - **Environments:** `staging-activepiece.autonyxai.shop` (`autonyx-staging`, client #0 Threadline BD, test every change here first) → `activepiece.autonyxai.shop` (`autonyx-practice`, our prod/demo, live) · `status.autonyxai.shop` (Uptime Kuma).
-- **Before starting, check every `claude/*` branch on GitHub**: work has happened on several; merge the newest into yours first.
+- **Git:** `main` is the source of truth. Before starting run `git branch -r --no-merged origin/main` and merge anything listed; end every working day with a PR into `main`. Rules and branch history: `docs/BRANCHES.md`.
 
 ## Read in this order
 1. `docs/HANDOFF.md` (this file).
