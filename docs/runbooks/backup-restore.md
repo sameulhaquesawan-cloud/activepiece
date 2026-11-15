@@ -95,3 +95,10 @@ Optional automation on a machine that is always on (WSL with cron):
 | `pg_restore failed` | the dump is damaged: try the previous backup with `--from` |
 | `stored connections do not decrypt` | the restored `AP_ENCRYPTION_KEY` does not match the data — never use that stack; report it |
 | `[WARN] … local only` alert | off-server copy failed: check `opskit backups <id>` and the rclone remote |
+
+## Your own registry (clients/, hosts/, owner/)
+These folders are git-ignored and exist only on your operator machine. Back them up encrypted to your
+owner key: `opskit registry backup --to b2:<bucket>/registry` (last 10 kept in `~/opskit-registry-backups`,
+last 30 on the remote). Restore on a new machine (owner key in `~/.config/opskit/owner.key` first):
+`opskit registry restore <latest|file|remote:path/file>`; existing folders are only replaced with
+`--overwrite --yes` (type `registry`) and are moved to `.registry-before-<time>/`, never deleted.

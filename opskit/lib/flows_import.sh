@@ -130,13 +130,33 @@ flows_custom_archive() {
   fi
 }
 
+flows_piece_known() {
+  flows_api GET "/v1/pieces/${1}?version=${2}&projectId=${FLOWS_PROJECT}" >/dev/null
+  [ "$(flows_status)" = "200" ] && [ "$(jq -r '.version // empty' "${FLOWS_TMP}/response")" = "$2" ]
+}
+
+# flows_wait_piece <name> <version>: a fresh stack fills its piece catalog in the background; wait while the
+# answer is "not found" (FLOWS_PIECE_WAIT_S, default 120 s), stop at once on any other error
+flows_wait_piece() {
+  local waited=0 limit="${FLOWS_PIECE_WAIT_S:-120}"
+  while [ "$(flows_status)" = "404" ] && [ "$waited" -lt "$limit" ]; do
+    [ "$waited" -gt 0 ] || log_info "waiting for ${1} ${2} (the stack may still be syncing its piece catalog)"
+    sleep 10
+    waited=$((waited + 10))
+    flows_piece_known "$1" "$2" && return 0
+  done
+  return 1
+}
+
 # flows_ensure_pieces <template dir>: install our custom pieces, check every pinned version is known
 flows_ensure_pieces() {
   local dir="$1" name version custom archive
   while IFS=$'\t' read -r name version custom; do
     [ -n "$name" ] || continue
-    flows_api GET "/v1/pieces/${name}?version=${version}&projectId=${FLOWS_PROJECT}" >/dev/null
-    if [ "$(flows_status)" = "200" ] && [ "$(jq -r '.version // empty' "${FLOWS_TMP}/response")" = "$version" ]; then
+    if flows_piece_known "$name" "$version"; then
+      continue
+    fi
+    if [ -z "$custom" ] && flows_wait_piece "$name" "$version"; then
       continue
     fi
     if [ -z "$custom" ]; then

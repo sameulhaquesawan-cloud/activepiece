@@ -1,0 +1,111 @@
+{
+  "month": "2026-09",
+  "label": "September 2026",
+  "timezone": "Europe/Berlin",
+  "generated": "2026-10-01",
+  "client": {
+    "name": "Acme Dental",
+    "domain": "acme.example.com",
+    "included_hours": 3
+  },
+  "business": {
+    "name": "YourBrand",
+    "email": "support@yourbrand.example",
+    "signature": "Thanks for working with us. — YourBrand"
+  },
+  "runs": {
+    "flows": [
+      {
+        "name": "Lead capture",
+        "total": 40,
+        "succeeded": 38,
+        "failed": 2,
+        "other": 0
+      },
+      {
+        "name": "Invoice reminder",
+        "total": 30,
+        "succeeded": 30,
+        "failed": 0,
+        "other": 0
+      }
+    ],
+    "total": 70,
+    "succeeded": 68,
+    "failed": 2,
+    "other": 0
+  },
+  "uptime": {
+    "measured": true,
+    "up": 43190,
+    "down": 10,
+    "uptime": 99.976,
+    "down_periods": [
+      {
+        "start": "2026-09-12T03:00:00Z",
+        "end": "2026-09-12T03:10:00Z",
+        "minutes": 10
+      }
+    ]
+  },
+  "backups": {
+    "history": true,
+    "nights": 30,
+    "complete": 28,
+    "missing": [
+      "2026-09-10",
+      "2026-09-11"
+    ],
+    "failed_runs": 1,
+    "last_complete": "2026-09-30T00:30:00Z"
+  },
+  "restore_test": {
+    "at": "2026-09-02T03:00:00Z",
+    "result": "pass"
+  },
+  "upgrades": [
+    {
+      "at": "2026-09-05T01:00:00Z",
+      "event": "upgraded",
+      "tag": "0.92.3"
+    },
+    {
+      "at": "2026-09-20T01:00:00Z",
+      "event": "upgrade_failed",
+      "tag": "0.93.0"
+    },
+    {
+      "at": "2026-09-20T01:05:00Z",
+      "event": "rolled_back",
+      "tag": "0.92.3"
+    }
+  ],
+  "incidents": [
+    {
+      "at": "2026-09-10T12:00:00Z",
+      "what": "No complete backup that night",
+      "source": "backup"
+    },
+    {
+      "at": "2026-09-12T03:00:00Z",
+      "what": "Your system did not answer for 10 minute(s)",
+      "source": "uptime"
+    },
+    {
+      "at": "2026-09-15T08:00:00Z",
+      "what": "Gmail outage, flows retried",
+      "source": "owner"
+    }
+  ],
+  "hours": {
+    "used": 1.5,
+    "included": 3,
+    "entries": [
+      {
+        "date": "2026-09-03",
+        "hours": 1.5,
+        "note": "changed reminder text"
+      }
+    ]
+  }
+}

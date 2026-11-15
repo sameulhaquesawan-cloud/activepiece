@@ -1,6 +1,7 @@
 /clients/
 /hosts/
 /owner/
+/.registry-before-*/
 *.env
 .env
 *.age

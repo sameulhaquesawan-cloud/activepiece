@@ -13,7 +13,8 @@ IFS=$'\n\t'
 usage() {
   cat <<'EOF'
 Usage: alert.sh --client <id> --severity info|warn|critical --what <text> --action <text>
-                [--link <url>] [--body <text>] [--dedupe-key <key> [--window <minutes>]] [--no-quiet] [--root <dir>]
+                [--link <url>] [--body <text>] [--dedupe-key <key> [--window <minutes>]] [--no-quiet]
+                [--owner-only] [--root <dir>]
 
 Message: [SEVERITY] <client> on <host>: <what> — First action: <action> (+ link)
 Texts are cut to 300 characters (--body, extra lines for summaries: 1500). Never pass secrets or personal data.
@@ -21,6 +22,7 @@ Texts are cut to 300 characters (--body, extra lines for summaries: 1500). Never
 Quiet hours (client alerts.conf): info/warn for the client's channels are held in
 state/<id>/held.jsonl for the daily digest; critical and the owner's channels always go out.
 --no-quiet: ignore quiet hours (the digest itself).
+--owner-only: the owner's channels only (operator events such as a rolled-back upgrade).
 Exit: 0 delivered everywhere, 1 nothing reached the owner or a channel failed.
 EOF
 }
@@ -36,6 +38,7 @@ DEDUPE_KEY=""
 DEDUPE_FILE=""
 WINDOW=30
 NO_QUIET="false"
+OWNER_ONLY="false"
 TELEGRAM_API="${OPSKIT_TELEGRAM_API:-https://api.telegram.org}"
 
 parse_args() {
@@ -51,6 +54,7 @@ parse_args() {
       --dedupe-key) DEDUPE_KEY="$2"; shift 2 ;;
       --window) WINDOW="$2"; shift 2 ;;
       --no-quiet) NO_QUIET="true"; shift ;;
+      --owner-only) OWNER_ONLY="true"; shift ;;
       -h|--help) usage; exit 0 ;;
       *) usage >&2; exit 1 ;;
     esac
@@ -232,7 +236,9 @@ main() {
     failed=1
   fi
   [ "$failed" -eq 0 ] || [ -z "$DEDUPE_FILE" ] || rm -f "$DEDUPE_FILE"
-  if in_quiet_hours "$client"; then
+  if [ "$OWNER_ONLY" = "true" ]; then
+    return "$failed"
+  elif in_quiet_hours "$client"; then
     mkdir -p "$state"
     printf '%s\n' "$ALERT" >> "${state}/held.jsonl"
     echo "[ok] quiet hours: client channels get this in the next digest"

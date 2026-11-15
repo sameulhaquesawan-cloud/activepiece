@@ -105,3 +105,34 @@ Sources: pinned 0.92.3 source (paths below), the live piece API `https://cloud.a
 - **Facebook Lead Ads** (`new_lead` is an `APP_WEBHOOK` trigger; `app-event-routing.module.ts`, `execute-webhook.ts`, upstream `docs/install/configure-operate/setup-app-webhooks.mdx`): needs the client's (or our) own Meta app, its webhook pointed at `https://<domain>/api/v1/app-events/facebook-leads` with verify token `activepieces`, and `AP_APP_WEBHOOK_SECRETS={"@activepieces/piece-facebook-leads":{"webhookSecret":"<Meta app secret>"}}` on the app container (read by the app, passed to workers). One Meta app per stack (one webhook URL per app). Meta app review may be needed for `leads_retrieval` outside development mode.
 
 **Custom piece install** (`community-piece-module.ts`, `AddPieceRequestBody`): `POST /api/v1/pieces` multipart, platform admin, `packageType=ARCHIVE scope=PLATFORM pieceName pieceVersion pieceArchive` — done live in Phase 1 (piece README). The archive (`dist/*.tgz`, 96 KB, git-ignored) is built with the upstream CLI; CI does not build it yet.
+
+## 9. Addendum — Phase 6 upgrade facts (task 6.1, 22 Oct 2026)
+Sources: pinned 0.92.3 source (`packages/server/api/src/rollback.ts`, `app/database/rollback-migrations.ts`, `migration/postgres/*`), the published images, and a real upgrade + rollback on a local practice stack (opskit deploy, round-trip data: 3 flows, 1 stored connection).
+
+| Fact | Evidence |
+|---|---|
+| Image tags before the pin: …, 0.91.4, 0.92.0, 0.92.1, **0.92.2**, 0.92.3 on ghcr.io and Docker Hub | registry tag lists |
+| 0.92.2 → 0.92.3: **no schema change** (same 427 named migrations in `dist/src/migration-manifest.json`) | both images' manifests |
+| 0.91.4 → 0.92.3: **11 new migrations**, one marked `breaking` (`NullOrphanFolderReferences1846000000000`) | `migrations` table before/after |
+| Upgrade = change the image tag + `opskit deploy`: 0.91.4 → 0.92.3 took **15 s** incl. health/worker/HTTPS waits (image pre-pulled); data intact (flows, sign-in, connection decrypt) | experiment |
+| **The old image starts and reports healthy on the newer schema** (no check, no error) | experiment: 0.91.4 on a 0.92.3 database |
+| Upstream rollback: `node dist/src/rollback.js --to <version>` or `--manifest '<json names>'`, run with the **newer** image (`/usr/src/app/packages/server/api`), reverts migrations one by one, refuses breaking ones without `--force` (exit 1) | source + experiment |
+| `--to <version>` selects by each migration's `release` label, and labels are unreliable: 3 migrations shipped since ≤0.92.0 say `0.103.0`, migrations first shipped in 0.92.x say `0.91.0`/`0.88.4` → wrong set; its order check then aborts | source + experiment |
+| `--manifest` (list of migration names of the old version) selects exactly the right 11 | experiment |
+| **`--force` rollback 0.92.3 → 0.91.4 fails half way**: reverted 5 of 11, then `DROP INDEX CONCURRENTLY cannot run inside a transaction block` (`IndexWaitpointLookups1847000000000` down) → database left between versions | experiment |
+| Each image carries its migration list in `/usr/src/app/packages/server/api/dist/src/migration-manifest.json` (unnamed migrations are `null`) | images |
+
+**Consequences for the design (6.7):** upstream's undo is not dependable across releases, and an old image hides a too-new schema. The automatic rollback therefore restores a database dump taken **right before the switch with the app and worker stopped** (nothing is lost but what arrived on the new version during the upgrade window), then starts the old tag. The migration undo stays a documented manual tool (`--manifest`, never automatic `--force`). The production smoke test must compare the `migrations` table with the running image's manifest so a mismatch is caught.
+
+## 10. Addendum — Phase 7 report facts (task 7.1, 22 Oct 2026)
+| Fact | Finding | Source |
+|---|---|---|
+| Run rows | `flow_run`: `projectId`, `flowId`, `flowVersionId`, `environment` (`PRODUCTION` / test runs), `status`, `created`, `startTime`, `finishTime`, `archivedAt` (set by "archive" in the Runs page; the row stays), `parentRunId` | `packages/server/api/src/app/flows/flow-run/flow-run-entity.ts` |
+| Run retention | `AP_EXECUTION_DATA_RETENTION_DAYS` (default 30) deletes the run **log files** only; run rows stay | `system.ts`, `file/file.service.ts` (`deleteStaleBulk`) |
+| Deleted flows | `flow_run.flowId` and `flowVersionId` are `ON DELETE CASCADE`: deleting a flow deletes its runs | `flow-run-entity.ts` relations |
+| Statuses | `SUCCEEDED`; failed = `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED`, `QUOTA_EXCEEDED`, `LOG_SIZE_EXCEEDED`; other = `CANCELED`, `PAUSED`, `RUNNING`, `QUEUED` | `packages/core/execution/.../flow-execution.ts` |
+| Active flows | `flow.status = 'ENABLED'`, published version via `flow.publishedVersionId` → `flow_version.displayName`, `flow_version.trigger` (JSON: `settings.pieceName`, `triggerName`, nested actions' `pieceName`) | `flow.entity.ts`, `packages/core/piece-types/src/lib/flow-contracts.ts` |
+| Read-only role | `opskit_ro` reads `flow`, `flow_version`, `flow_run`, `project` only (no connections, no users) | `opskit/templates/readonly-role.sql` |
+| Uptime source | Uptime Kuma 2.5.5 keeps raw heartbeats (`heartbeat` table: time UTC, status 0 down / 1 up / 2 pending / 3 maintenance) for `keepDataPeriodDays` (default 365); socket `getMonitorBeats(monitorID, hours)` returns them. `getMonitorChartData` only gives UTC-day buckets beyond 720 h, so month edges in the client's time zone would be blurred. A paused monitor writes no beats (planned upgrade downtime is not counted) | `/app/server/server.js`, `socket-handlers/chart-socket-handler.js`, `uptime-calculator.js`, `jobs/clear-old-data.js` in the image |
+| Backups | Each backup's `status.json` lives only as long as the backup (14 days local, 30 remote); a failed night leaves nothing. A month report needs an append-only per-run history on the host | `opskit/agent/backup.sh` |
+| Restore tests, upgrades | `clients/<id>/restore-tests.jsonl`; client.yaml `history` (`upgraded`, `upgrade_failed`, `rolled_back`, `deployed`) | Phases 3, 6 |

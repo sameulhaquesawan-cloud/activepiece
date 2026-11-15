@@ -217,9 +217,11 @@ import_leads() {
 
 @test "a pinned piece the stack does not know stops the import" {
   responses '."GET /api/v1/pieces/@activepieces/piece-webhook?*" = {status: 404, body: {message: "piece_metadata_not_found"}}'
-  PW="$PASSWORD" import example acme
+  FLOWS_PIECE_WAIT_S=10 PW="$PASSWORD" import example acme
   [ "$status" -eq 1 ]
+  [[ "$output" == *"waiting for @activepieces/piece-webhook 0.1.42 (the stack may still be syncing its piece catalog)"* ]]
   [[ "$output" == *"piece @activepieces/piece-webhook 0.1.42 is not available on this stack"*"may still be syncing"* ]]
+  [ "$(requests_to GET '/api/v1/pieces/@activepieces/piece-webhook' | grep -c .)" -ge 2 ]
   [ -z "$(requests_to POST /api/v1/flows)" ]
 }
 

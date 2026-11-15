@@ -48,6 +48,8 @@ stack_render_backup() {
   cfile="$(client_file "$id")"
   out="$(rendered_dir "$id")"
   channels="$(yq -r '.alerts.channels[]' "$cfile")"
+  install -m 600 /dev/null "${out}/backup.conf"
+  install -m 600 /dev/null "${out}/alerts.conf"
   (
     umask 077
     {
@@ -84,6 +86,7 @@ stack_render_backup() {
       fi
     } > "${out}/alerts.conf"
   )
+  chmod 600 "${out}/backup.conf" "${out}/alerts.conf"
 }
 
 # stack_render <id>: requires a valid client + host; generates secrets on first use
