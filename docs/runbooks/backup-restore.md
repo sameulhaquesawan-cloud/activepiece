@@ -42,6 +42,11 @@ Pick one rclone remote (Backblaze B2 recommended, 10 GB free). On your machine:
 `client.yaml`: `backup.remote: b2:<bucket>/clients`. `opskit deploy` copies the rclone config to
 the server (mode 600). `opskit/owner/` is git-ignored.
 
+Check the remote before the first backup: `opskit doctor --remote b2:<bucket>/clients` (read-only:
+remote defined, key accepted, bucket exists; never prints rclone's output). Add `--write-test` to
+also write and delete one small file: backups need **writeFiles**, pruning needs **deleteFiles** on
+the B2 application key (`[warn] … cannot delete it` means old backups will pile up).
+
 ### C. Alerts
 `opskit/owner/alerts.conf` (git-ignored, mode 600):
 ```

@@ -70,8 +70,10 @@ on the server.
 2. **Off-server backups — Backblaze B2 (15 min, free 10 GB):** create an account, a **private** bucket
    (e.g. `autonyx-backups`) and an **application key limited to that bucket**. Then
    `rclone config --config opskit/owner/rclone.conf` → new remote `b2`, type `b2`, paste the key id
-   and key yourself. Set `backup.remote: b2:autonyx-backups/clients` in the client's `client.yaml`,
-   redeploy, run `opskit backup <client>` → it must say "complete". Runbook:
+   and key yourself. Check it before the first backup:
+   `opskit/bin/opskit doctor --remote b2:autonyx-backups/clients --write-test` → every line `[ok]`
+   (a `[fail]` names the problem: wrong key, unknown bucket, network). Set
+   `backup.remote: b2:autonyx-backups/clients` in the client's `client.yaml`, redeploy, run `opskit backup <client>` → it must say "complete". Runbook:
    `docs/runbooks/backup-restore.md` §B.
 3. **Email (10 min):** Brevo free (300 mails/day) or a Gmail app password → `SMTP_*` lines in
    `opskit/owner/alerts.conf` (`docs/runbooks/monitoring.md` §B). Needed for email alerts and care reports.

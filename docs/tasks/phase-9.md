@@ -77,6 +77,7 @@ Read-only inspection 24 Oct 2026 (agent, SSH as `ubuntu`): Ubuntu 24.04.4 aarch6
 - **Manual verification:** `opskit host cloud-init --user ops --key <pub>`; preflight against the practice host.
 
 ### [ ] 9.5 — Off-server backups to Backblaze B2: guided setup
+- **Built (15 Nov 2026):** `opskit doctor --remote <remote>:<bucket>[/path] [--write-test]` (`opskit/lib/remote_check.sh`, `opskit/tests/doctor_remote.bats`), guide + runbook §B. Left: the real bucket check in 9.8.
 - **Goal:** The guide's B2 path works without guessing: documented bucket + key settings (private, EU, key limited to the bucket, no delete-files capability if rclone retention allows — verify), the exact `opskit/owner/rclone.conf` `b2` section, and a read-only check (`opskit backups <id>` lists the remote; `opskit doctor --remote <name>` or similar lists the bucket) before the first backup.
 - **Spec refs:** 9.3, security rules (rclone config never printed)
 - **Files likely touched:** `docs/runbooks/backup-restore.md`, possibly `opskit/lib/commands/doctor.sh`, tests if code changes
