@@ -155,7 +155,12 @@ fake_run() {
   local holder
   flock "${HOSTROOT}/backups/acme/.lock" sleep 5 3>&- &
   holder=$!
-  sleep 0.5
+  local tries=0
+  while flock -n "${HOSTROOT}/backups/acme/.lock" true; do
+    tries=$((tries + 1))
+    [ "$tries" -lt 50 ] || { kill "$holder"; false; }
+    sleep 0.1
+  done
   OPSKIT_UPGRADE_BACKUP_WAIT_S=1 go --to 0.92.3 --yes --now
   kill "$holder" 2>/dev/null || true
   [ "$status" -eq 1 ]
