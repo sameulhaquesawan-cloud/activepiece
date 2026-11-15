@@ -10,7 +10,7 @@
 2. Owner: read `docs/tasks/phase-6.md`, answer its 6 questions (or say "ok" to accept the defaults) → agent starts 6.1.
 3. Browser tasks in the owner's Chrome go through `docs/CHROME_LOG.md` (local session on the owner's laptop; protocol inside).
 4. Owner (not blocking): real-account tests — turn on 2-step verification on the Google test account and re-run Sheets T1/T2; test the Tables variants with one SMTP account (`docs/testing/phase5-browser-test.md`).
-5. Owner (not blocking): Meta app per lead-ad client; business name/domain, Telegram bot, age key + off-server storage, lawyer/accountant review.
+5. Owner (not blocking): Meta app per lead-ad client; Telegram bot, age key + off-server storage, lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
