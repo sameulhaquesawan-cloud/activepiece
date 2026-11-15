@@ -39,12 +39,9 @@ Registry with secrets (`opskit/clients/`, `opskit/hosts/`) lives only on the lap
 | Sat 21 (long) | our own lead-capture flow live on prod (site form → table → Telegram) | 20 warm messages, 10 Upwork proposals, 20 LinkedIn messages | run a mock discovery call with the agent |
 
 ## Week 1 detail
-**Role-play client #0:** staging plays *GreenCart BD*, a fictional small online shop in Dhaka (website form,
-B2B invoices, order-paid webhook). Every client document is filled for it as if real: brief from the discovery
-questions, proposal, `client.yaml`, handover. Templates on staging: `lead-capture-tables`,
-`invoice-reminder-tables`, `review-request` (all SMTP, no Google) + one flow the owner builds (webhook → Telegram).
-Skipped: `lead-ad-alert` (needs a Meta app), Google Sheets variants, `ai-email-sorter` (optional Sat, needs an AI key).
-SMTP account for tests: Gmail app password (needs 2-step verification) or a free SMTP relay — decided on Wed.
+**Role-play client #0: GreenCart BD** (online shop, COD + couriers + bKash + café invoices). Scenario, pain-point
+research, 17-flow catalog and the launch-week build list: `docs/practice/greencart-bd.md` (status: proposed until
+the owner approves).
 
 | Day | Role-play step | Teach topics |
 |---|---|---|
