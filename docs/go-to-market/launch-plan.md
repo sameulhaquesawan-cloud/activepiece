@@ -33,27 +33,26 @@ Registry with secrets (`opskit/clients/`, `opskit/hosts/`) lives only on the lap
 | Sun 15 | T1 read-only inventory of server, Oracle firewall, DNS | T2 payout research; start Payoneer signup | what a flow, trigger, step, connection, run are (`docs/learn/activepieces-101.md`) |
 | Mon 16 | WSL2 + `opskit/bin/dev-env` on laptop; `host bootstrap` on Oracle (with approval) | Payoneer documents | watch the server setup, read the step summaries |
 | Tue 17 | DNS records; `client new autonyx-staging`; `deploy`; Uptime Kuma at `status.` | brand basics: email on the domain, LinkedIn headline | first login, tour of the builder |
-| Wed 18 | import 3 templates into staging; run with real Gmail/SMTP; backup + restore-test | Upwork + Fiverr profile drafts | build a 3-step flow yourself in staging |
-| Thu 19 | fix what the real deploy broke; record findings | website with real brand on Cloudflare Pages | read run logs, find a failed step, re-run it |
+| Wed 18 | Threadline flows 1 + 9 on staging (real SMTP account) | Upwork + Fiverr profile drafts | build a 3-step flow yourself in staging |
+| Thu 19 | Threadline flow 2 + incident drill; backup + restore-test; fix what the real deploy broke | website with real brand on Cloudflare Pages | read run logs, find a failed step, re-run it |
 | Fri 20 (long) | `autonyx-prod` deploy; promote templates staging → prod; record 3-min demo video | profiles live; prospect list (40 names) | do the demo out loud twice |
 | Sat 21 (long) | our own lead-capture flow live on prod (site form → table → Telegram) | 20 warm messages, 10 Upwork proposals, 20 LinkedIn messages | run a mock discovery call with the agent |
 
 ## Week 1 detail
-**Role-play client #0: GreenCart BD** (online shop, COD + couriers + bKash + café invoices). Scenario, pain-point
-research, 17-flow catalog and the launch-week build list: `docs/practice/greencart-bd.md` (status: proposed until
-the owner approves).
+**Role-play client #0: Threadline BD** (men's and women's clothing; COD, couriers, bKash, size exchanges). Scenario,
+pain-point research, the 10 flows and their build order: `docs/practice/threadline-bd.md` (owner approved 15 Nov 2026).
 
 | Day | Role-play step | Teach topics |
 |---|---|---|
-| Sun | client brief for GreenCart (discovery answers) | flow, trigger, step, piece, connection, run; what a VPS, DNS record, firewall are |
-| Mon | proposal for GreenCart; server preparation (`host bootstrap`) | SSH keys, Docker containers, why each client gets its own stack |
+| Sun | client brief for Threadline (discovery answers) | flow, trigger, step, piece, connection, run; what a VPS, DNS record, firewall are |
+| Mon | proposal for Threadline; server preparation (`host bootstrap`) | SSH keys, Docker containers, why each client gets its own stack |
 | Tue | onboarding: DNS, `client new`, `deploy` | HTTPS/Caddy, `.env` and the encryption key, Uptime Kuma |
-| Wed | delivery: import + test the 3 templates with test data | data selector, publish, run log, connections |
-| Thu | incident drill: break a flow → alert → fix; backup + restore test | failed runs, alerts, why tested backups sell |
+| Wed | delivery: flows 1 (order intake) + 9 (review request) with test data | data selector, publish, run log, connections |
+| Thu | flow 2 (COD confirmation); incident drill on it → alert → fix; backup + restore test | failed runs, alerts, why tested backups sell |
 | Fri | handover call role-play; promote to prod | demo script, handover, Care plan |
 | Sat | mock discovery call (agent plays a hard prospect); first outreach | objections, pricing talk, proposal |
 
-**Practice niche (owner, 15 Nov 2026): online shops** — GreenCart BD on staging. International outreach still
+**Practice niche (owner, 15 Nov 2026): online clothing shop** — Threadline BD on staging. International outreach still
 targets small agencies too.
 
 **Scenario B — AutonyxAI's own sales system on prod** (owner approved, 15 Nov 2026):
