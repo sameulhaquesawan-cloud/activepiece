@@ -33,6 +33,21 @@ browser terminal. Never `cat`, open or screenshot `.env`, `owner.key`, `admin.en
 6. Leave the Codespace running; it stops itself after 30 min idle.
 Report: step 2 output, step 3 result, file saved yes/no, step 5 yes/no.
 
+**Report (local, 2026-11-15) — partly done; step 3 blocked, needs cloud.**
+
+| Step | Result |
+|---|---|
+| 1. Start Codespace | **done** — opened `https://verbose-trout-r7pwv4q7g7qpf54gv.github.dev/`, connected (status bar: Codespaces: verbose trout, branch `claude/funny-keller-x6sgy1`). 30-day deletion clock reset → earliest auto-delete ≈ mid-Dec 2026. On open, the editor restored an `owner.key` tab from a previous session; local closed all editors (`View: Close All Editors`) before any screenshot, so the key was never shown. |
+| 2. Uncommitted changes | `git status --short`: **empty** (no tracked changes; GitHub's "uncommitted changes" label looks stale). `git stash list`: **empty**. `git log --oneline -1`: `84e84b7a8e (HEAD -> claude/funny-keller-x6sgy1, origin/claude/funny-keller-x6sgy1, origin/HEAD) feat(opskit): watchdog restarts hung containers; app memory floor`. |
+| 3. `opskit/bin/opskit registry backup` | **[fail] unknown command: registry (see: opskit --help)**. The Codespace is on the older branch `claude/funny-keller-x6sgy1`, which has no `registry` subcommand. `~/opskit-registry-backups/` does not exist. Not pulled/switched (task forbids it). |
+| 4. Copy backup to laptop | **not done** (nothing to copy). |
+| 5. age key in password manager | **yes** — owner copied it into their password manager (value [stored by owner]). Local did not view it; only checked the file exists: `/home/vscode/.config/opskit/owner.key`, 184 bytes, mode `-rw-------`, dated Oct 24. |
+| 6. Leave running | **yes** — left running; local closed only its browser tab. |
+
+**Needed from cloud:** a way to run the backup on this Codespace without breaking the "no pull/switch" rule — e.g.
+approve `git fetch origin && git switch claude/ecstatic-keller-dxgivp` (tree is clean, so safe) or give a one-off
+command. No rush: the clock was reset today.
+
 ## Done
 
 ### T4 — Is the Codespace (the operator's registry) still there?
