@@ -2,15 +2,16 @@
 
 ## Current status
 - **Current phase:** Phase 9 — Field readiness
-- **Current task:** Phase 9 — build work done (9.2–9.4, 9.6 guides, demo script, testing guide); remaining: owner setup (Telegram, Backblaze, SMTP, business.yaml) and the manual test `docs/testing/TESTING_GUIDE.md` (covers 9.5, 9.7–9.9), then 9.10 costs + 9.12 close
-- **Last updated:** 2026-10-24 · **Branch:** `claude/funny-keller-x6sgy1`
+- **Current task:** Phase 9 — build work done (9.2–9.4, 9.6 guides + `operator_guide.bats`, demo script, testing guide) and the shared-server run S1–S6 on the Oracle instance done (24 Oct 2026). Remaining: owner setup (Telegram, Backblaze, SMTP, business.yaml), then the manual test `docs/testing/TESTING_GUIDE.md` (covers 9.5, 9.7–9.9), then 9.10 costs + 9.12 close
+- **Last updated:** 2026-11-15 · **Branch:** `claude/blissful-lovelace-ltnlm9` (contains all of `claude/funny-keller-x6sgy1`; `main` is still at 22 Oct 2026)
 
 ## Next steps
-0. Shared-server run on the Oracle instance: after S1 (code) and S2 (safety copy), show the owner the S3 commands and wait for "go" before touching AnythingLLM. SSH from the Codespace: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22` (key from the Codespaces secret `ORACLE_SSH_KEY_PRIVATE`).
-1. Owner (optional): re-run T1, T3, T4 of the Phases 6+7 Codespace test (now with the demo flows); merge to `main` by PR when convenient.
-2. Owner: answer Phase 9 Q1–Q9 (or "ok" for the defaults) and start the prep list in `docs/tasks/phase-9.md`. Agent then starts 9.1–9.6 (facts, two known-issue fixes, cloud-init + preflight, B2 setup, operator guide); 9.7–9.9 are owner/Cowork runs on the real server.
-3. Owner (not blocking, from the runbooks): `opskit/owner/business.yaml`, SMTP keys in `opskit/owner/alerts.conf`, `location:` in each host yaml.
-4. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants); Meta app per lead-ad client; lawyer/accountant review.
+1. Owner: setup from `docs/OPERATOR_GUIDE.md` — Telegram bot + chat id, Backblaze B2 bucket + bucket-only key into `opskit/owner/rclone.conf` (9.5), SMTP (Brevo free or Gmail app password) in `opskit/owner/alerts.conf`, `opskit/owner/business.yaml`, `location:` in `opskit/hosts/oracle-mumbai.yaml`. Secrets typed by the owner only, never in chat.
+2. Owner, in the Codespace (has SSH: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22`): re-run `opskit host bootstrap oracle-mumbai` once (installs log rotation, 9.3) and, if not done yet, `opskit monitor sync autonyx-practice` (Kuma login in `opskit/hosts/oracle-mumbai.monitor/admin.env`).
+3. Owner: the manual test `docs/testing/TESTING_GUIDE.md` on the Oracle server; every deviation goes back to the agent as a guide or code fix.
+4. Agent, after the test: finish 9.1 facts, fold findings into the guide (9.6), 9.10 costs and timings, 9.11 demo script check, 9.12 verification report.
+5. Owner: merge this branch into `main` by PR when convenient (the agent may not push `main`). `claude/funny-keller-x6sgy1` is superseded and can be deleted.
+6. Owner (not blocking): real-account tests (Google 2-step verification, Sheets T1/T2; SMTP for the Tables variants) and the template CHECKLISTs once more after the Gmail 0.18.3 / Sheets 0.19.3 re-pin; Meta app per lead-ad client; lawyer/accountant review.
 
 ## Phases
 | Phase | Name | Status | Verified |
@@ -25,7 +26,7 @@
 | 6 | Safe upgrades | Done — owner signed off 22 Oct 2026 | `check` + CI run 51 (selftest upgrade rounds with pieces required), 22 Oct 2026 |
 | 7 | Handover docs & care report | Done — owner signed off 22 Oct 2026 | `check`; owner Codespace test 22 Oct 2026 (upgrade/rollback by hand pass); CI run 64 green with the selftest report round required (exact demo counts, pack, email in mock inbox) |
 | 8 | Custom pieces & own image | Moved to V2 (owner, 20 Oct 2026) | — |
-| 9 | Field readiness | Planned — owner answers pending | — |
+| 9 | Field readiness | In progress — owner answered 22–24 Oct 2026; build work and shared-server run S1–S6 done; owner setup + manual field test pending | CI run 74 green, 26 Oct 2026 |
 
 ## Task log
 <!-- Newest first. For each task: date, task, files changed, how to verify manually, notes. -->
@@ -160,12 +161,12 @@
 - ~~2026-10-22: `opskit deploy` on a machine without the owner public key (`opskit/keys/owner.age.pub` or `OPSKIT_OWNER_AGE_PUB`) re-installs the client's cron **without** the nightly backup line, even if backups ran before (warns only). The upgrade now refuses in that case (plan gate); plain `deploy` still does it. Proposed fix: refuse (or keep the existing backup line) when the host already has `agent/backup.sh` installed.~~ fixed 26 Oct 2026 (9.2).
 - Codespace `verbose-trout` (4-core) runs the explore stack; an older broken codespace `symmetrical-fishstick` should be deleted by the owner. devcontainer memory requirement lowered 8gb→4gb so 2-core machines are offered (8gb excluded them).
 - ~~BLOCKER (cloud session network)~~ resolved 20 Oct 2026: owner allowed `cloud.activepieces.com` + `pkg-containers.githubusercontent.com`.
-- **BLOCKER (containers have no internet):** in the cloud session, Docker containers can't resolve or reach the internet (only the host goes through the agent proxy), so the app still can't sync pieces. Giving containers proxy access was denied by the session safety check; needs owner permission.
-- **BLOCKER (session permissions):** auto-mode safety classifier denied `docker` commands and a container→proxy relay. Owner decides whether to allow Docker commands.
+- **BLOCKER (containers have no internet), still true 15 Nov 2026** (`docker run alpine wget cloud.activepieces.com` → bad address): in the cloud session, Docker containers can't resolve or reach the internet (only the host goes through the agent proxy), so the app still can't sync pieces. Giving containers proxy access was denied by the session safety check; needs owner permission.
+- **Session permissions:** plain `docker` commands run in the cloud session (15 Nov 2026); a container→proxy relay was denied earlier and still needs the owner's permission. Pieces-dependent tests run in CI or a Codespace.
 - ~~GitHub Actions disabled repo-wide~~ resolved 20 Oct 2026: upstream workflows deleted (ledger #4), Actions on, opskit-ci green (run 4).
 - Full `bun install` fails: a community piece depends on a GitHub tarball (`dust-tt/typescript-sdk`) blocked by the cloud session network policy (403). Filtered installs work.
 - ~~Session hook starts dockerd without proxy~~ fixed 20 Oct 2026 (`opskit/bin/dev-env`).
-- Cloud session's `yq` reports `0.0.0` (apt package, likely not mikefarah yq v4 that templates expect) → Phase 1 `doctor` must check the yq flavor/version.
+- ~~Cloud session's `yq` reports `0.0.0`~~ resolved: the SessionStart hook installs mikefarah yq v4.44.3 and `doctor`/validate give a fix-it message for the wrong flavor (rechecked 15 Nov 2026).
 - Upstream `main.ts` listens on `::` only; crash-loops on IPv6-less kernels (cloud sandbox). Explore-only shim in `explore/stack`; real hosts unaffected.
 - ~~Host agent logs grow without rotation~~ fixed 26 Oct 2026 (9.3): bootstrap installs `/etc/logrotate.d/opskit`.
 - ~~**Database backups are not encrypted**~~ fixed 21 Oct 2026 (owner approved): `backup.sh` writes `db.dump.age`; restore decrypts with the owner key.
