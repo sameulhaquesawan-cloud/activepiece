@@ -13,7 +13,12 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T0 — Round-trip test
-Local session: add an entry under **Done** with the date, the machine (Windows version), whether Claude in Chrome is connected (yes/no, and how you checked), and the output of `git --version`. Then commit and push.
-
 ## Done
+
+### T0 — Round-trip test
+- **Date:** 2026-11-15
+- **Machine:** owner's Windows laptop, Microsoft Windows 10 Pro 10.0.19045
+- **Claude in Chrome connected:** yes. Checked by opening a new tab in its own tab group, going to https://github.com/sameulhaquesawan-cloud/activepiece and reading the page title: "sameulhaquesawan-cloud/activepiece". The GitHub header showed a signed-in user avatar. Tab closed afterwards; no other tabs touched.
+- **`git --version`:** `git version 2.47.0.windows.1`
+- **Clone:** `%USERPROFILE%\Documents\activepiece`, branch `claude/ecstatic-keller-dxgivp`
+- **Problems:** none.
