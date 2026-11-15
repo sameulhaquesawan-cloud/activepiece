@@ -44,7 +44,21 @@ overwritten; it is git-ignored via `opskit/.gitignore` `/owner/`). Secrets were 
 | 4. `opskit registry backup --to b2:autonyx-backups/registry` | `[ok] registry backup registry-20261115T172451Z.tar.gz.age: clients hosts owner (20 entries, encrypted, checked with your private key)` → `/home/vscode/opskit-registry-backups/registry-20261115T172451Z.tar.gz.age` · `[ok] copied off this machine: b2:autonyx-backups/registry/registry-20261115T172451Z.tar.gz.age` |
 | 5. Codespace Claude: redeploy + test alert + monitor sync | **blocked, nothing run.** Owner approved the redeploy of `autonyx-practice`. `claude` (v2.1.310, Sonnet 4.6 · Claude Pro) started, but the prompt returned: `Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable access`. Exited with `/exit`. Live site untouched; no test alert sent. |
 
-**Needed from cloud/owner:** how to do step 5 without the Codespace Claude — e.g. exact commands local may type in the
+**Cloud answer (15 Nov) — step 5 as plain terminal commands** (owner approved the redeploy; ~1–2 min of the live site restarting):
+```bash
+cd /workspaces/activepiece && git pull
+yq -r '.image.repo + ":" + .image.tag + "  remote=" + (.backup.remote // "none")' opskit/clients/autonyx-practice/client.yaml
+yq -i '.backup.remote = "b2:autonyx-backups/clients"' opskit/clients/autonyx-practice/client.yaml
+opskit/bin/opskit validate opskit/clients/autonyx-practice/client.yaml
+opskit/bin/opskit deploy autonyx-practice
+ROOT="$(yq -r '.opskit_root // "/opt/opskit"' opskit/hosts/oracle-mumbai.yaml)"
+ssh -i ~/.ssh/oracle ubuntu@129.154.225.22 "${ROOT}/agent/alert.sh --client autonyx-practice --severity info --what 'test alert from opskit' --action 'none, this is a test'"
+opskit/bin/opskit monitor sync autonyx-practice
+opskit/bin/opskit backup autonyx-practice
+```
+Expect from deploy: `[warn] autonyx-practice runs 0.92.2: our own piece catalog needs 0.92.3 or newer…` (correct: it keeps Activepieces' catalog until Friday's upgrade) and `[ok] deployed`. The ssh line must make a Telegram message arrive. `backup` must end "complete" (local + off-server). If `alert.sh` says permission denied, retry that line with `sudo ` in front of `${ROOT}`. Report every `[ok]`/`[warn]`/`[fail]` line and whether Telegram got the message.
+
+**Needed from cloud/owner (answered above):** how to do step 5 without the Codespace Claude — e.g. exact commands local may type in the
 Codespace terminal (`opskit/bin/opskit deploy autonyx-practice`, the test-alert command, `opskit/bin/opskit monitor sync
 autonyx-practice`), or the owner gives the Codespace Claude an API key. T9 depends on the same Codespace Claude only
 where it says "ask"; T9's own steps are plain terminal commands.
@@ -53,7 +67,7 @@ where it says "ask"; T9's own steps are plain terminal commands.
 Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
 1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
 2. `opskit/bin/opskit client new autonyx-staging --domain staging-activepiece.autonyxai.shop --host oracle-mumbai --contact <owner's email> --name "Threadline BD (staging)" --timezone Asia/Dhaka` (the owner types the email).
-3. `opskit/bin/opskit deploy autonyx-staging` → report every `[ok]`/`[warn]`/`[fail]` line.
+3. `yq -i '.backup.remote = "b2:autonyx-backups/clients"' opskit/clients/autonyx-staging/client.yaml`, then `opskit/bin/opskit deploy autonyx-staging` → report every `[ok]`/`[warn]`/`[fail]` line.
 4. *Owner tries:* open `https://staging-activepiece.autonyxai.shop` at once and create the admin account (first sign-up becomes admin); password into the password manager.
 5. `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (owner types the password at the prompt).
 6. `opskit/bin/opskit monitor sync autonyx-staging`, then `opskit/bin/opskit backup autonyx-staging` (must end "complete").
