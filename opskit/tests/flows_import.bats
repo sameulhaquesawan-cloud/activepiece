@@ -356,3 +356,16 @@ fake_release() {
   [[ "$output" != *"waiting for"* ]]
   [[ "$(requests_to POST /api/v1/pieces | jq -r .body)" == *'filename="activepieces-piece-webhook-0.1.42.tgz"'* ]]
 }
+
+@test "a client on a release before 0.92.3 waits for Activepieces' catalog instead of installing from our pack" {
+  yq -i '.image.tag = "0.92.2" | .ap_version = "0.92.2"' "${REG}/clients/acme/client.yaml"
+  mkdir -p "${WORK}/pkg/package" "${OPSKIT_PIECES_DIR}/files"
+  printf '{"name": "@activepieces/piece-webhook", "version": "0.1.42", "dependencies": {}}\n' > "${WORK}/pkg/package/package.json"
+  tar -czf "${OPSKIT_PIECES_DIR}/files/activepieces-piece-webhook-0.1.42.tgz" -C "${WORK}/pkg" package
+  printf 'pieces:\n  - name: "@activepieces/piece-webhook"\n    version: 0.1.42\n    sha256: x\n' > "${OPSKIT_PIECES_DIR}/pack.yaml"
+  responses '."GET /api/v1/pieces/@activepieces/piece-webhook?*" = {status: 404, body: {message: "piece_metadata_not_found"}} | ."POST /api/v1/pieces" = {status: 201, body: {}}'
+  FLOWS_PIECE_WAIT_S=0 PW="$PASSWORD" import example acme
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"is not in Activepieces' catalog on this stack (its release cannot take our piece pack; upgrade it to 0.92.3 or newer)"* ]]
+  [ -z "$(requests_to POST /api/v1/pieces)" ]
+}

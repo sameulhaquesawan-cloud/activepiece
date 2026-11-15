@@ -98,6 +98,8 @@ flows_import() {
   flows_validate_one "$template" || return 1
   if [ -n "$id" ]; then
     require_client "$id" || return 1
+    # shellcheck disable=SC2034 # used by flows_ensure_pieces in lib/flows_import.sh
+    stack_archive_pieces_ok "$(yaml_get "$(client_file "$id")" .image.tag)" || FLOWS_ARCHIVE_OK=0
   fi
   flows_target "$id" "$url"
   values="$(flows_values "$dir" "${sets[@]}")" || return 1

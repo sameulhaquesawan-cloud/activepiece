@@ -49,6 +49,10 @@ pieces_install() {
   [ -n "$id" ] || [ -n "$url" ] || { pieces_usage >&2; return 1; }
   pieces_check || return 1
   [ -z "$id" ] || require_client "$id" || return 1
+  if [ -n "$id" ] && ! stack_archive_pieces_ok "$(yaml_get "$(client_file "$id")" .image.tag)"; then
+    log_fail "${id} runs $(yaml_get "$(client_file "$id")" .image.tag): our piece pack needs Activepieces ${STACK_ARCHIVE_PIECES_MIN_TAG} or newer (upgrade first: opskit upgrade ${id})"
+    return 1
+  fi
   flows_target "$id" "$url" || return 1
   FLOWS_TMP="$(mktemp -d)"
   chmod 700 "$FLOWS_TMP"

@@ -184,7 +184,8 @@ flows_install_archive() {
 }
 
 # flows_ensure_pieces <template dir>: every pinned version is on the stack; missing ones come from our
-# custom pieces or the piece pack (opskit/pieces), never from Activepieces' catalog
+# custom pieces or the piece pack (opskit/pieces), never from Activepieces' catalog; a release before
+# STACK_ARCHIVE_PIECES_MIN_TAG (FLOWS_ARCHIVE_OK=0) still waits for Activepieces' catalog instead of the pack
 flows_ensure_pieces() {
   local dir="$1" name version custom archive
   while IFS=$'\t' read -r name version custom; do
@@ -195,11 +196,14 @@ flows_ensure_pieces() {
     if [ -n "$custom" ]; then
       archive="$(flows_custom_archive "$custom" "$name" "$version")"
       [ -f "$archive" ] || { log_fail "piece archive not built: ${archive} (see ${custom}/README.md, 'Build the archive')"; return 1; }
-    elif pieces_in_pack "$name" "$version"; then
+    elif [ "${FLOWS_ARCHIVE_OK:-1}" = "1" ] && pieces_in_pack "$name" "$version"; then
       archive="$(pieces_file "$name" "$version")"
       [ -f "$archive" ] || { log_fail "piece pack file missing: ${archive} (opskit pieces check)"; return 1; }
     elif flows_wait_piece "$name" "$version"; then
       continue
+    elif [ "${FLOWS_ARCHIVE_OK:-1}" != "1" ]; then
+      log_fail "piece ${name} ${version} is not in Activepieces' catalog on this stack (its release cannot take our piece pack; upgrade it to ${STACK_ARCHIVE_PIECES_MIN_TAG} or newer)"
+      return 1
     else
       log_fail "piece ${name} ${version} is not on this stack and not in our piece pack: opskit pieces add ${name} ${version}"
       return 1

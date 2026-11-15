@@ -43,6 +43,14 @@ teardown() {
   ! mock_requests | jq -r .body | grep -q 'piece-webhook-1.0.0.tgz'
 }
 
+@test "install refuses a client on a release before 0.92.3 before signing in" {
+  yq -i '.image.tag = "0.92.2" | .ap_version = "0.92.2"' "${REG}/clients/acme/client.yaml"
+  run bash -c 'printf "pw\n" | "$@"' _ "$OPSKIT" pieces install acme --email admin@example.com
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"acme runs 0.92.2: our piece pack needs Activepieces 0.92.3 or newer (upgrade first: opskit upgrade acme)"* ]]
+  [ -z "$(mock_requests)" ]
+}
+
 @test "install refuses a damaged pack before signing in" {
   printf 'x' >> "${OPSKIT_PIECES_DIR}/files/activepieces-piece-tables-1.0.0.tgz"
   run bash -c 'printf "pw\n" | "$@"' _ "$OPSKIT" pieces install acme --url "$MOCK_URL" --email admin@example.com

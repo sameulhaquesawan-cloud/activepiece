@@ -5,9 +5,17 @@ POSTGRES_IMAGE_PINNED="pgvector/pgvector:0.8.0-pg14"
 REDIS_IMAGE_PINNED="redis:7.0.7"
 POSTGRES_MEMORY_DEFAULT="1g"
 REDIS_MEMORY_DEFAULT="256m"
+STACK_ARCHIVE_PIECES_MIN_TAG="0.92.3"
 
 rendered_dir() {
   printf '%s/rendered' "$(client_dir "$1")"
+}
+
+# stack_archive_pieces_ok <image tag>: our own piece pack (archive install) works on this release.
+# Before 0.92.3 the worker downloads an installed piece from the public address, which a stack's own
+# containers often cannot reach; 0.92.3 uses the internal one.
+stack_archive_pieces_ok() {
+  [ "$(printf '%s\n%s\n' "$1" "$STACK_ARCHIVE_PIECES_MIN_TAG" | sort -V | head -n 1)" = "$STACK_ARCHIVE_PIECES_MIN_TAG" ]
 }
 
 stack_frontend_url() {
@@ -118,6 +126,9 @@ stack_render() {
     APP_MEMORY="$(yaml_get "$cfile" .app.memory_limit 1g)"
     export APP_MEMORY
     if [ "$(yaml_get "$cfile" .pieces.catalog ours)" = "official" ]; then
+      export AP_PIECES_SYNC_MODE=OFFICIAL_AUTO
+    elif ! stack_archive_pieces_ok "$(yaml_get "$cfile" .image.tag)"; then
+      log_warn "${id} runs $(yaml_get "$cfile" .image.tag): our own piece catalog needs ${STACK_ARCHIVE_PIECES_MIN_TAG} or newer, so it keeps Activepieces' catalog until it is upgraded" >&2
       export AP_PIECES_SYNC_MODE=OFFICIAL_AUTO
     else
       export AP_PIECES_SYNC_MODE=NONE

@@ -51,6 +51,14 @@ compose_get() {
   [ "$status" -ne 0 ]
 }
 
+@test "a release before 0.92.3 keeps Activepieces' catalog (our pack cannot be installed there) and says so" {
+  yq -i '.image.tag = "0.92.2" | .ap_version = "0.92.2"' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[warn] demo runs 0.92.2: our own piece catalog needs 0.92.3 or newer"* ]]
+  grep -qx 'AP_PIECES_SYNC_MODE=OFFICIAL_AUTO' "${OUT}/.env"
+}
+
 @test "worker talks to the app internally; app uses the public URL" {
   render
   [ "$(compose_get .services.worker.environment.AP_FRONTEND_URL)" = "http://app" ]
