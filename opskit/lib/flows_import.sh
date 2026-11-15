@@ -103,7 +103,8 @@ flows_sign_in() {
   IFS= read -rs -p "Admin password for ${email} (not stored): " password || true
   [ ! -t 0 ] || printf '\n' >&2
   [ -n "$password" ] || { log_fail "no password given"; return 1; }
-  ( umask 077 && jq -nc --arg e "$email" --arg p "$password" '{email: $e, password: $p}' > "${FLOWS_TMP}/sign-in.json" )
+  install -m 600 /dev/null "${FLOWS_TMP}/sign-in.json"
+  jq -nc --arg e "$email" --arg p "$password" '{email: $e, password: $p}' > "${FLOWS_TMP}/sign-in.json"
   password=""
   response="$(flows_api POST /v1/authentication/sign-in "${FLOWS_TMP}/sign-in.json")"
   rm -f "${FLOWS_TMP}/sign-in.json"
@@ -111,7 +112,8 @@ flows_sign_in() {
     log_fail "sign-in to ${FLOWS_BASE_URL} failed: $(flows_api_error)"
     return 1
   fi
-  ( umask 077 && printf 'authorization: Bearer %s\n' "$(jq -r '.token' <<< "$response")" > "${FLOWS_TMP}/auth-header" )
+  install -m 600 /dev/null "${FLOWS_TMP}/auth-header"
+  printf 'authorization: Bearer %s\n' "$(jq -r '.token' <<< "$response")" > "${FLOWS_TMP}/auth-header"
   FLOWS_PROJECT="$(jq -r '.projectId // empty' <<< "$response")"
   FLOWS_PLATFORM_ROLE="$(jq -r '.platformRole // empty' <<< "$response")"
   [ -n "$FLOWS_PROJECT" ] || { log_fail "sign-in worked but the user has no project"; return 1; }
@@ -232,7 +234,7 @@ flows_next_steps() {
 
 flows_print_steps() {
   local dir="$1" filled="$2" out="$3"
-  ( umask 077 && cp "$filled" "$out" )
+  install -m 600 "$filled" "$out"
   log_ok "filled template written to ${out} (contains client settings; do not commit it)"
   printf '\nImport in the builder (%s):\n' "$FLOWS_BASE_URL"
   printf '1. Sign in as the admin, open the flows list (Automations).\n'

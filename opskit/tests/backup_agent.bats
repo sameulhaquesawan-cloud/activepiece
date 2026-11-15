@@ -40,6 +40,18 @@ backups() {
   find "${ROOT}/backups/acme" -mindepth 1 -maxdepth 1 -type d | wc -l
 }
 
+@test "backup files stay private on machines that ignore the umask" {
+  umask() { :; }
+  export -f umask
+  builtin umask 000
+  run "$AGENT" acme --root "$ROOT"
+  [ "$status" -eq 2 ]
+  local dir="${ROOT}/backups/acme/$(cat "${ROOT}/backups/acme/latest")"
+  for f in db.dump.age env.age compose.yml status.json; do
+    [ "$(stat -c %a "${dir}/${f}")" = "600" ]
+  done
+}
+
 @test "successful backup writes encrypted db and env, compose and status, all private" {
   run "$AGENT" acme --root "$ROOT"
   [ "$status" -eq 2 ]

@@ -14,7 +14,7 @@ upgrade_restore_dump() {
   pg="$(stack_service_container "$host" "$id" postgres)"
   [ -n "$pg" ] || { log_fail "postgres of ${id} is not running"; return 1; }
   plain="${dump%.age}.restore"
-  host_run "$host" cat "$dump" | age -d -i "$(owner_age_identity)" | host_run "$host" sh -c 'umask 077 && cat > "$1"' _ "$plain"
+  host_run "$host" cat "$dump" | age -d -i "$(owner_age_identity)" | host_run "$host" sh -c 'umask 077 && : > "$1" && chmod 600 "$1" && cat > "$1"' _ "$plain"
   codes=("${PIPESTATUS[@]}")
   if [ "${codes[0]}" -ne 0 ] || [ "${codes[1]}" -ne 0 ] || [ "${codes[2]}" -ne 0 ]; then
     host_run "$host" rm -f "$plain"

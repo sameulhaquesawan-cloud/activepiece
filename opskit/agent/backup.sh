@@ -247,6 +247,7 @@ run_backup() {
   encrypt_env "${dir}.partial/env.age" || { rm -rf "${dir}.partial"; return 1; }
   cp "${ROOT}/clients/${CLIENT}/compose.yml" "${dir}.partial/compose.yml"
   write_status "${dir}.partial" "$started" "$ts"
+  chmod 600 "${dir}.partial"/*
   mv "${dir}.partial" "$dir"
   ok "backup ${CLIENT}/${ts}: db.dump.age $(stat -c %s "${dir}/db.dump.age") bytes, env.age $(stat -c %s "${dir}/env.age") bytes (both encrypted)"
   BACKUP_DIR="$dir"

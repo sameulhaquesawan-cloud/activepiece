@@ -155,7 +155,7 @@ restore_decrypt_dump() {
   local host="$1" dir="$2" codes
   # shellcheck disable=SC2016
   host_run "$host" cat "${dir}/db.dump.age" | age -d -i "$(owner_age_identity)" \
-    | host_run "$host" sh -c 'umask 077 && cat > "$1"' _ "${dir}/.restore.dump"
+    | host_run "$host" sh -c 'umask 077 && : > "$1" && chmod 600 "$1" && cat > "$1"' _ "${dir}/.restore.dump"
   codes=("${PIPESTATUS[@]}")
   [ "${codes[0]}" -eq 0 ] && [ "${codes[1]}" -eq 0 ] && [ "${codes[2]}" -eq 0 ]
 }

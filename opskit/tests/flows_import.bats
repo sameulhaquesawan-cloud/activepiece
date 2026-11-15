@@ -297,6 +297,15 @@ fake_release() {
   [[ "$output" == *"needs the platform admin account"* ]]
 }
 
+@test "--print-steps keeps the filled flow private on machines that ignore the umask" {
+  umask() { :; }
+  export -f umask
+  builtin umask 000
+  run "$OPSKIT" flows import example acme --set GREETING=Hey --print-steps
+  [ "$status" -eq 0 ]
+  [ "$(stat -c %a "${REG}/clients/acme/flows/example.json")" = "600" ]
+}
+
 @test "--print-steps writes the filled flow privately and makes no request" {
   run "$OPSKIT" flows import example acme --set GREETING=Hey --print-steps
   [ "$status" -eq 0 ]

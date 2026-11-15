@@ -28,7 +28,8 @@ monitor_admin_secrets() {
     local password
     password="Uk-$(openssl rand -hex 16 2>/dev/null || true)"
     [ "${#password}" -eq 35 ] || { log_fail "could not generate the Uptime Kuma admin password"; return 1; }
-    (umask 077 && printf 'UK_ADMIN_USER=opskit\nUK_ADMIN_PASSWORD=%s\n' "$password" > "$file")
+    install -m 600 /dev/null "$file"
+    printf 'UK_ADMIN_USER=opskit\nUK_ADMIN_PASSWORD=%s\n' "$password" > "$file"
   fi
   chmod 600 "$file"
 }
@@ -46,6 +47,7 @@ monitor_render() {
   hfile="$(host_file "$host")"
   dir="$(monitor_dir "$host")"
   (umask 077 && mkdir -p "$dir")
+  chmod 700 "$dir"
   (
     set -e
     export MONITOR_IMAGE MONITOR_TAG MONITOR_MEMORY MONITOR_DOMAIN CADDY_TLS
