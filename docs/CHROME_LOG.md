@@ -24,6 +24,22 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 (none)
 
+### T6 — Monday setup, part 1: Backblaze B2 for off-server backups (Chrome; owner creates, you guide)
+`docs/OPERATOR_GUIDE.md` §4 item 2. Free 10 GB. The owner types every secret; you never read or screenshot a key.
+1. backblaze.com → sign up for B2 Cloud Storage (owner fills the form, region **EU Central or US West** — owner picks; note which).
+2. Buckets → Create a Bucket: name `autonyx-backups` (or the closest free name), **Private**, default encryption on, object lock off.
+3. Application Keys → Add a New Application Key: name `opskit`, **access only to that bucket**, Read and Write. The owner copies `keyID` and `applicationKey` into the password manager at once (shown only once).
+Report: account created, region, bucket name, key created yes/no (`[stored by owner]`).
+
+### T7 — Monday setup, part 2: wire Telegram + Backblaze into the Codespace (Codespace terminal; owner types secrets)
+On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the files below; the owner types the values.
+1. Telegram (`docs/runbooks/monitoring.md` §A): owner creates `opskit/owner/alerts.conf` with `TELEGRAM_BOT_TOKEN=` and `TELEGRAM_CHAT_ID=` (new token from T3's rotation), `chmod 600`.
+2. Backblaze (`docs/runbooks/backup-restore.md` §B): `rclone config --config opskit/owner/rclone.conf` → new remote `b2`, type `b2`, owner pastes keyID and key; `chmod 600 opskit/owner/rclone.conf`.
+3. Check: `opskit/bin/opskit doctor --remote b2:<bucket>/registry --write-test` → report every line.
+4. `opskit/bin/opskit registry backup --to b2:<bucket>/registry` → report the `[ok]`/`[fail]` lines (this makes the online copy T5 warned about).
+5. Ask the Codespace Claude: "redeploy autonyx-practice, send a test alert, then opskit monitor sync autonyx-practice" — report whether the Telegram test alert arrived.
+Report each step's result lines.
+
 ## Done
 
 ### T5 — Rescue the Codespace registry (owner approved starting it, 15 Nov 2026)

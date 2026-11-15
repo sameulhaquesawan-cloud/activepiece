@@ -6,7 +6,7 @@
 - **Last updated:** 2026-11-15 · **Branch:** `claude/ecstatic-keller-dxgivp` → merged into `main` 15 Nov 2026; next session starts from `main` (`docs/BRANCHES.md`)
 
 ## Next steps
-- **Launch week (owner, 15 Nov 2026):** `docs/go-to-market/launch-plan.md` — staging `autonyx-staging` (client #0 Threadline BD, `docs/practice/threadline-bd.md`) before prod, then outreach. Chrome tasks: `docs/CHROME_LOG.md` (T4 open). The items below still apply.
+- **Launch week (owner, 15 Nov 2026):** `docs/go-to-market/launch-plan.md` — staging `autonyx-staging` (client #0 Threadline BD, `docs/practice/threadline-bd.md`) before prod, then outreach. Done 15 Nov: T0–T5 (Codespace kept alive, registry backup on the laptop), all branches merged into `main` (PR #2). **Mon 16 Nov:** Chrome log T6 (Backblaze B2) + T7 (alerts.conf, rclone, online registry backup, test alert), then Threadline client brief. The items below still apply.
 0. **Owner: approve or change `docs/tasks/independence.md`** (stacks keep working whatever Activepieces changes: own image mirror, own piece pack, own sign-in apps). Agent starts I.1 on "ok".
 1. Owner: setup from `docs/OPERATOR_GUIDE.md` — Telegram bot + chat id, Backblaze B2 bucket + bucket-only key into `opskit/owner/rclone.conf` (9.5), SMTP (Brevo free or Gmail app password) in `opskit/owner/alerts.conf`, `opskit/owner/business.yaml`, `location:` in `opskit/hosts/oracle-mumbai.yaml`. Secrets typed by the owner only, never in chat.
 2. Owner, in the Codespace (has SSH: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22`): re-run `opskit host bootstrap oracle-mumbai` once (installs log rotation, 9.3) and, if not done yet, `opskit monitor sync autonyx-practice` (Kuma login in `opskit/hosts/oracle-mumbai.monitor/admin.env`).
