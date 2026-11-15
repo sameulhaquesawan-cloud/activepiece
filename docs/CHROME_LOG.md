@@ -22,6 +22,18 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
+### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)
+Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
+1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
+2. `opskit/bin/opskit client new autonyx-staging --domain staging-activepiece.autonyxai.shop --host oracle-mumbai --contact <owner's email> --name "Threadline BD (staging)" --timezone Asia/Dhaka` (the owner types the email).
+3. `yq -i '.backup.remote = "b2:autonyx-backups/clients"' opskit/clients/autonyx-staging/client.yaml`, then `opskit/bin/opskit deploy autonyx-staging` → report every `[ok]`/`[warn]`/`[fail]` line.
+4. *Owner tries:* open `https://staging-activepiece.autonyxai.shop` at once and create the admin account (first sign-up becomes admin); password into the password manager.
+5. `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (owner types the password at the prompt).
+6. `opskit/bin/opskit monitor sync autonyx-staging`, then `opskit/bin/opskit backup autonyx-staging` (must end "complete").
+Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
+
+## Done
+
 ### T7 — Monday setup, part 2: wire Telegram + Backblaze into the Codespace (Codespace terminal; owner types secrets)
 On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the files below; the owner types the values.
 1. Telegram (`docs/runbooks/monitoring.md` §A): owner creates `opskit/owner/alerts.conf` with `TELEGRAM_BOT_TOKEN=` and `TELEGRAM_CHAT_ID=` (new token from T3's rotation), `chmod 600`.
@@ -63,17 +75,23 @@ Codespace terminal (`opskit/bin/opskit deploy autonyx-practice`, the test-alert 
 autonyx-practice`), or the owner gives the Codespace Claude an API key. T9 depends on the same Codespace Claude only
 where it says "ask"; T9's own steps are plain terminal commands.
 
-### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)
-Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
-1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
-2. `opskit/bin/opskit client new autonyx-staging --domain staging-activepiece.autonyxai.shop --host oracle-mumbai --contact <owner's email> --name "Threadline BD (staging)" --timezone Asia/Dhaka` (the owner types the email).
-3. `yq -i '.backup.remote = "b2:autonyx-backups/clients"' opskit/clients/autonyx-staging/client.yaml`, then `opskit/bin/opskit deploy autonyx-staging` → report every `[ok]`/`[warn]`/`[fail]` line.
-4. *Owner tries:* open `https://staging-activepiece.autonyxai.shop` at once and create the admin account (first sign-up becomes admin); password into the password manager.
-5. `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (owner types the password at the prompt).
-6. `opskit/bin/opskit monitor sync autonyx-staging`, then `opskit/bin/opskit backup autonyx-staging` (must end "complete").
-Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
+**Report 2 (local, 2026-11-15) — step 5 done with the Cloud answer commands; T7 done.** Owner allowed local to run the
+listed commands touching `opskit/clients/autonyx-practice/client.yaml` and `opskit/hosts/oracle-mumbai.yaml` (T7 + T9 only).
 
-## Done
+| Line | Result |
+|---|---|
+| `git pull` | already up to date, `main` at `5c5dd57087`. |
+| `yq -r …` (before) | `ghcr.io/activepieces/activepieces:0.92.2  remote=none` |
+| `yq -i … backup.remote` + `validate` | `[ok] client.yaml: valid` (remote now `b2:autonyx-backups/clients`; registry not yet re-backed-up after this change). |
+| `deploy autonyx-practice` | `[ok] DNS: activepiece.autonyxai.shop → 129.154.225.22` · `[ok] cron available on oracle-mumbai` · `[warn] autonyx-practice runs 0.92.2: our own piece catalog needs 0.92.3 or newer, so it keeps Activepieces' catalog until it is upgraded` (expected) · `[ok] rendered autonyx-practice: compose.yml, .env (600), autonyx-practice.caddy, cron, backup.conf, alerts.conf → …/rendered` · `[ok] files copied to oracle-mumbai:/opt/opskit/clients/autonyx-practice` · `[ok] stack autonyx-practice up on oracle-mumbai` · `[ok] app healthy (15s)` · `[ok] worker registered (polling the app)` · `[ok] read-only database role opskit_ro ready` · `[ok] HTTPS site published via opskit-caddy` · `[ok] HTTPS health OK: https://activepiece.autonyxai.shop` · `[ok] monitoring + backup agents installed; nightly backup (30 2 * * *)` · `[ok] deployed autonyx-practice` |
+| test alert (ssh, `ROOT=/opt/opskit`, no sudo needed) | `[ok] alert sent: telegram <chat id>` · `[warn] email alert for <owner email> skipped: no SMTP_URL/SMTP_FROM in /opt/opskit/agent/alerts.conf` · exit code 1 (from the email warn). **Telegram message arrived on the owner's phone: yes.** |
+| `monitor sync autonyx-practice` | `[ok] monitors for autonyx-practice in Uptime Kuma on oracle-mumbai: uptime every 60 s (https://activepiece.autonyxai.shop/api/v1/health), backup watchdog window 26 h` · `[warn] … runs 0.92.2 …` (same as above) · `[ok] backup heartbeat for autonyx-practice now goes to Uptime Kuma` |
+| `backup autonyx-practice` | `[ok] backup autonyx-practice/20261115T175026Z: db.dump.age 48999199 bytes, env.age 1057 bytes (both encrypted)` · `[ok] copied off-server: b2:autonyx-backups/clients/autonyx-practice/20261115T175026Z (49002074 bytes verified)` · `[ok] local retention 14 days: pruned 0` · `[ok] remote retention 30 days: pruned 0` · `[ok] backup of autonyx-practice complete (local + off-server)` · `[ok] heartbeat sent` · `[ok] backup of autonyx-practice complete` |
+
+**Notes for cloud:** (1) `alert.sh` exits 1 when email is skipped although Telegram succeeded — maybe exit 0 when at
+least one channel worked. (2) Email alerts need SMTP (`monitoring.md` §B) — owner hasn't set it up. (3) `client.yaml`
+for autonyx-practice changed (backup.remote); run `opskit registry backup --to b2:autonyx-backups/registry` again to
+capture it (local will do this at the end of T9).
 
 ### T8 — DNS record for staging (Spaceship; owner approved 15 Nov 2026 by asking to continue)
 1. Spaceship → `autonyxai.shop` → DNS records → Add: type **A**, host `staging-activepiece`, value `129.154.225.22`, TTL 5 min. The owner clicks Save.
