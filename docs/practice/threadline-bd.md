@@ -7,6 +7,8 @@ Staging (`staging-activepiece.autonyxai.shop`, client id `autonyx-staging`) play
 every email/message goes to the owner's own test inboxes and Telegram. The 10 flows double as the menu for real
 clothing/online-shop proposals (Bangladesh and international).
 
+Client brief (discovery answers, decisions for staging): `threadline-brief.md`.
+
 ## The business
 Dhaka clothing brand: men's panjabi, shirts, t-shirts; women's kurti, three-piece, salwar sets; sizes S–XXL.
 ~40 orders/day: 60 % from the Facebook page inbox (staff type them in), 40 % from the website (Shopify dev store,
