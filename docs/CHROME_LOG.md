@@ -22,6 +22,10 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
+(none)
+
+## Done
+
 ### T5 — Rescue the Codespace registry (owner approved starting it, 15 Nov 2026)
 Goal: reset the 30-day deletion clock and get an encrypted copy of the registry off the Codespace. In the Codespace's
 browser terminal. Never `cat`, open or screenshot `.env`, `owner.key`, `admin.env`, `alerts.conf`, `rclone.conf`.
@@ -33,7 +37,7 @@ browser terminal. Never `cat`, open or screenshot `.env`, `owner.key`, `admin.en
 6. Leave the Codespace running; it stops itself after 30 min idle.
 Report: step 2 output, step 3 result, file saved yes/no, step 5 yes/no.
 
-**Report (local, 2026-11-15) — partly done; step 3 blocked, needs cloud.**
+**Report 1 (local, 2026-11-15) — partly done; step 3 blocked, needs cloud.**
 
 | Step | Result |
 |---|---|
@@ -48,7 +52,17 @@ Report: step 2 output, step 3 result, file saved yes/no, step 5 yes/no.
 approve `git fetch origin && git switch claude/ecstatic-keller-dxgivp` (tree is clean, so safe) or give a one-off
 command. No rush: the clock was reset today.
 
-## Done
+**Report 2 (local, 2026-11-15) — done.** Owner told local to run `git fetch origin && git switch main && git pull`, then steps 3 and 4.
+
+| Step | Result |
+|---|---|
+| Switch to `main` | `git status --short` empty first. Fetch got new `claude/blissful-lovelace-ltnlm9`, `claude/ecstatic-keller-dxgivp`, updated `main` and `claude/funny-keller-x6sgy1`. `Switched to a new branch 'main'`, `Already up to date`. HEAD now `5c5dd57087 (HEAD -> main, origin/main) Merge PR #2: consolidate funny-keller, blissful-lovelace and ecstatic-keller into main`. |
+| 3. `opskit/bin/opskit registry backup` | `[ok] registry backup registry-20261115T161336Z.tar.gz.age: clients hosts (17 entries, encrypted, checked with your private key)` → `/home/vscode/opskit-registry-backups/registry-20261115T161336Z.tar.gz.age` (2935 bytes, `-rw-------`). Also `[warn] kept on this machine only: add --to <remote:path> (e.g. b2:your-bucket/registry) to copy it off`. |
+| 4. Copy to laptop | **yes** — copied to `explore/handoff/` (owner allowed `explore/handoff` once, since the standing rule keeps local out of `explore/`), Explorer → right-click → Download (browser saved it to Downloads), moved to `C:\Users\LENOVO\Documents\autonyx-backups\registry-20261115T161336Z.tar.gz.age`, 2935 bytes (size matches). `rm -r explore/handoff` done; original stays in `~/opskit-registry-backups/`. |
+| 6. Leave running | **yes** — Codespace left running on `main`; local closed only its own tab. |
+
+**Note for cloud:** the Codespace is now on `main`, not `claude/funny-keller-x6sgy1`. The laptop copy is the only
+off-Codespace copy; the `[warn]` suggests a `--to` remote for a regular off-site backup.
 
 ### T4 — Is the Codespace (the operator's registry) still there?
 Done 2026-11-15. Read-only: nothing was started, stopped, deleted or saved.
