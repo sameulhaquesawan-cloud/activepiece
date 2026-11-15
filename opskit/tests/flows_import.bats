@@ -11,7 +11,8 @@ setup() {
   new_demo_client acme acme.example.com
   WORK="$(mktemp -d)"
   export OPSKIT_FLOWS_DIR="${WORK}/flows"
-  mkdir -p "$OPSKIT_FLOWS_DIR"
+  export OPSKIT_PIECES_DIR="${WORK}/pieces"
+  mkdir -p "$OPSKIT_FLOWS_DIR" "$OPSKIT_PIECES_DIR"
   cp -r "${OPSKIT_ROOT}/flows/example" "${OPSKIT_FLOWS_DIR}/example"
   export MOCK_RESPONSES="${WORK}/responses.json"
   responses '.'
@@ -220,7 +221,7 @@ import_leads() {
   FLOWS_PIECE_WAIT_S=10 PW="$PASSWORD" import example acme
   [ "$status" -eq 1 ]
   [[ "$output" == *"waiting for @activepieces/piece-webhook 0.1.42 (the stack may still be syncing its piece catalog)"* ]]
-  [[ "$output" == *"piece @activepieces/piece-webhook 0.1.42 is not available on this stack"*"may still be syncing"* ]]
+  [[ "$output" == *"piece @activepieces/piece-webhook 0.1.42 is not on this stack and not in our piece pack"* ]]
   [ "$(requests_to GET '/api/v1/pieces/@activepieces/piece-webhook' | grep -c .)" -ge 2 ]
   [ -z "$(requests_to POST /api/v1/flows)" ]
 }
@@ -260,7 +261,7 @@ fake_release() {
   responses '."POST /api/v1/pieces" = {status: 201, body: {}}'
   PW="$PASSWORD" import example acme
   [ "$status" -eq 0 ]
-  [[ "$output" == *"[ok] installed custom piece @opskit/piece-openai-compatible 0.1.0"* ]]
+  [[ "$output" == *"[ok] installed @opskit/piece-openai-compatible 0.1.0 from our own copy"* ]]
   local body
   body="$(requests_to POST /api/v1/pieces | jq -r .body)"
   [[ "$body" == *'name="packageType"'*ARCHIVE* ]]
@@ -341,4 +342,17 @@ fake_release() {
   PW="$PASSWORD" import example nobody
   [ "$status" -eq 1 ]
   [[ "$output" == *"unknown client: nobody"* ]]
+}
+
+@test "an official piece the stack lacks is installed from our piece pack, without waiting for Activepieces' catalog" {
+  mkdir -p "${WORK}/pkg/package" "${OPSKIT_PIECES_DIR}/files"
+  printf '{"name": "@activepieces/piece-webhook", "version": "0.1.42", "dependencies": {}}\n' > "${WORK}/pkg/package/package.json"
+  tar -czf "${OPSKIT_PIECES_DIR}/files/activepieces-piece-webhook-0.1.42.tgz" -C "${WORK}/pkg" package
+  printf 'pieces:\n  - name: "@activepieces/piece-webhook"\n    version: 0.1.42\n    sha256: x\n' > "${OPSKIT_PIECES_DIR}/pack.yaml"
+  responses '."GET /api/v1/pieces/@activepieces/piece-webhook?*" = {status: 404, body: {message: "piece_metadata_not_found"}} | ."POST /api/v1/pieces" = {status: 201, body: {}}'
+  PW="$PASSWORD" import example acme
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] installed @activepieces/piece-webhook 0.1.42 from our own copy"* ]]
+  [[ "$output" != *"waiting for"* ]]
+  [[ "$(requests_to POST /api/v1/pieces | jq -r .body)" == *'filename="activepieces-piece-webhook-0.1.42.tgz"'* ]]
 }

@@ -117,6 +117,11 @@ stack_render() {
     export WORKER_MEMORY
     APP_MEMORY="$(yaml_get "$cfile" .app.memory_limit 1g)"
     export APP_MEMORY
+    if [ "$(yaml_get "$cfile" .pieces.catalog ours)" = "official" ]; then
+      export AP_PIECES_SYNC_MODE=OFFICIAL_AUTO
+    else
+      export AP_PIECES_SYNC_MODE=NONE
+    fi
     export POSTGRES_IMAGE="$POSTGRES_IMAGE_PINNED" REDIS_IMAGE="$REDIS_IMAGE_PINNED"
     export POSTGRES_MEMORY="$POSTGRES_MEMORY_DEFAULT" REDIS_MEMORY="$REDIS_MEMORY_DEFAULT"
     AP_FRONTEND_URL="$(stack_frontend_url "$CLIENT_DOMAIN" "$(yaml_get "$hfile" .edge.https_port 443)")"

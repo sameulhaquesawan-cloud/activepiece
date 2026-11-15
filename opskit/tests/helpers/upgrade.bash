@@ -31,7 +31,7 @@ Update callers.
 upgrade_setup() {
   make_registry
   new_demo_client acme acme.example.com
-  yq -i '.image.tag = "0.91.4" | .backup.remote = "offsite:acme"' "${REG}/clients/acme/client.yaml"
+  yq -i '.image.repo = "ghcr.io/activepieces/activepieces" | .image.tag = "0.91.4" | .backup.remote = "offsite:acme"' "${REG}/clients/acme/client.yaml"
   HOSTROOT="$(mktemp -d)"
   yq -i ".opskit_root = \"${HOSTROOT}\"" "${REG}/hosts/local-practice.yaml"
   export OPSKIT_UPGRADE_HOST_MIN_FREE_MB=1 OPSKIT_UPGRADE_LOCAL_MIN_FREE_MB=1
@@ -56,6 +56,7 @@ responses() {
   jq -n --arg notes "$NOTES" '{
     "GET /token?*": {body: {token: "t"}},
     "GET /v2/activepieces/activepieces/manifests/0.92.3": {body: {schemaVersion: 2}},
+    "GET /v2/sameulhaquesawan-cloud/activepieces/manifests/0.92.3": {body: {schemaVersion: 2}},
     "GET /0.92.3/docs/install/reference/breaking-changes.mdx": {body: $notes}
   } | '"$1" > "$MOCK_RESPONSES"
 }

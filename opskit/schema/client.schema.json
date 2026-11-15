@@ -85,10 +85,12 @@
       "properties": {
         "repo": {
           "enum": [
+            "ghcr.io/sameulhaquesawan-cloud/activepieces",
             "ghcr.io/activepieces/activepieces",
             "activepieces/activepieces"
           ],
-          "default": "ghcr.io/activepieces/activepieces"
+          "default": "ghcr.io/sameulhaquesawan-cloud/activepieces",
+          "description": "our mirror (opskit/image/mirror.yaml) by default; the official repos stay allowed"
         },
         "tag": {
           "type": "string",
@@ -112,6 +114,17 @@
         },
         "memory_limit": {
           "$ref": "#/$defs/memory"
+        }
+      }
+    },
+    "pieces": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catalog": {
+          "enum": ["ours", "official"],
+          "default": "ours",
+          "description": "ours: frozen catalog (AP_PIECES_SYNC_MODE=NONE), only pieces we install from opskit/pieces; official: Activepieces' hourly sync"
         }
       }
     },

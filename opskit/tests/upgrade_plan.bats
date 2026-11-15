@@ -149,3 +149,14 @@ plan() {
   [ "$status" -eq 1 ]
   [[ "$output" == *"unknown client: nobody"* ]]
 }
+
+@test "the plan checks the tag in our own image mirror for clients that use it" {
+  yq -i '.image.repo = "ghcr.io/sameulhaquesawan-cloud/activepieces"' "${REG}/clients/acme/client.yaml"
+  plan
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] image ghcr.io/sameulhaquesawan-cloud/activepieces:0.92.3 is published"* ]]
+  responses 'del(."GET /v2/sameulhaquesawan-cloud/activepieces/manifests/0.92.3")'
+  plan
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] image ghcr.io/sameulhaquesawan-cloud/activepieces:0.92.3 does not exist"* ]]
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: flow template library: list, validate, import a template into a client's builder
 
-for lib in validate schema registry stack host flows flows_import flows_pieces; do
+for lib in validate schema registry stack host flows flows_import flows_pieces pieces; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -75,25 +75,6 @@ flows_each_with_catalog() {
     "$check" "$id" || failed=1
   done <<< "$ids"
   return "$failed"
-}
-
-# flows_target <client id> <url override>: sets FLOWS_BASE_URL and FLOWS_CURL_ARGS
-flows_target() {
-  local id="$1" url="$2" host port domain tls
-  if [ -n "$url" ]; then
-    FLOWS_BASE_URL="${url%/}"
-    return 0
-  fi
-  host="$(yaml_get "$(client_file "$id")" .host.name)"
-  domain="$(yaml_get "$(client_file "$id")" .domain)"
-  port="$(yaml_get "$(host_file "$host")" .edge.https_port 443)"
-  tls="$(yaml_get "$(host_file "$host")" .edge.tls acme)"
-  FLOWS_BASE_URL="$(stack_frontend_url "$domain" "$port")"
-  if [ "$tls" = "internal" ]; then
-    [ "$(host_transport "$host")" = "local" ] || die "${host} uses a practice certificate over SSH; use --print-steps"
-    # shellcheck disable=SC2034 # used by flows_api in lib/flows_import.sh
-    FLOWS_CURL_ARGS=(--noproxy '*' --resolve "${domain}:${port}:127.0.0.1" --cacert "$(host_root "$host")/caddy/local-root.crt")
-  fi
 }
 
 flows_import() {
