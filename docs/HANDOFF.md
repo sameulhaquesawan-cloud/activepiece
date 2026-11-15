@@ -43,6 +43,7 @@ Then open `http://localhost:8080` (Codespaces: Ports tab) and create the admin a
 - **Write code + run `opskit/bin/check`** (scripts, schema, bats/shellcheck, Docker tests that only need health/worker): any machine, including a Claude cloud session.
 - **Anything needing pieces** (flows, templates, failed-flow alerts, stored connections): a machine whose containers have internet — the Codespace or the laptop. Get the latest code there with `git pull`. A Claude cloud session can drive the Codespace UI only if port 8080 is set to **Public** (set it back to Private afterwards).
 - **Phase 9 real VPS:** owner's accounts; step-by-step with the owner.
+- **Browser work in the owner's own Chrome** (DNS at Spaceship, Oracle console, account settings): a local Claude session on the owner's Windows laptop with Claude in Chrome. Tasks and reports go through `docs/CHROME_LOG.md` (protocol inside); the local session writes only that file.
 
 ## Keep the handoff working
 - At the end of every task, update `docs/PROGRESS.md`: Current status, a dated Task log entry, and **Next steps** precise enough for a stranger to continue.
