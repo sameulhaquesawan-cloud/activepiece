@@ -22,6 +22,17 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
+### T5 — Rescue the Codespace registry (owner approved starting it, 15 Nov 2026)
+Goal: reset the 30-day deletion clock and get an encrypted copy of the registry off the Codespace. In the Codespace's
+browser terminal. Never `cat`, open or screenshot `.env`, `owner.key`, `admin.env`, `alerts.conf`, `rclone.conf`.
+1. github.com/codespaces → `verbose trout` → Open in browser (starting it resets the clock). Wait until the terminal is ready.
+2. Uncommitted changes, names only: `git status --short; git stash list; git log --oneline -1`. Report the output. Do not commit, stash, pull or discard anything.
+3. `opskit/bin/opskit registry backup` — report the `[ok]`/`[fail]` lines and the file name it wrote in `~/opskit-registry-backups/`.
+4. Copy that one file out: `mkdir -p explore/handoff && cp ~/opskit-registry-backups/<that file> explore/handoff/` (`explore/` is git-ignored), then in the Explorer right-click it → Download → save to `Documents\autonyx-backups\` on the laptop. Then `rm -r explore/handoff`. The file is encrypted to the owner's age key, so it is safe on the laptop.
+5. *Owner only, no screenshots by you during this step:* is the age private key (`~/.config/opskit/owner.key`) in the owner's password manager? If not, the owner opens it in the editor, copies it into the password manager and closes the tab. Report yes/no only.
+6. Leave the Codespace running; it stops itself after 30 min idle.
+Report: step 2 output, step 3 result, file saved yes/no, step 5 yes/no.
+
 ## Done
 
 ### T4 — Is the Codespace (the operator's registry) still there?
