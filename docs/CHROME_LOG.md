@@ -23,20 +23,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T1 — Read-only inventory of the Oracle server and DNS
-No changes anywhere. Report every item; "unknown" is a valid answer.
-1. Oracle Cloud console (Chrome): instance name, shape (e.g. VM.Standard.A1.Flex / E2.1.Micro), OCPUs, RAM,
-   boot volume size, OS image, region, public IP. VCN → security list / NSG: list the ingress rules (port, source).
-2. Spaceship (Chrome): DNS records of `autonyxai.shop` — type, host, value (no account details).
-3. SSH (from Windows PowerShell or WSL, with the owner's existing key). Run only these and report output:
-   `uname -m; lsb_release -ds; nproc; free -h; df -h /; docker --version; docker compose version;
-   docker ps --format '{{.Names}}  {{.Image}}  {{.Ports}}'; sudo ss -tlnp | grep -E ':(80|443|22)\b';
-   sudo ufw status; sudo iptables -S INPUT | head -20; id -un`
-   Do not open or print any `.env` or config file.
-4. Laptop: `wsl --status` and `wsl -l -v` in PowerShell (is WSL2 + Ubuntu installed?), free disk on C:.
-5. *Owner tries:* open AnythingLLM in the browser and note its URL (does it use a domain, port 3001, or 80/443?).
-Report format: a short table per item, then "Blockers I see".
-
 ### T2 — Getting paid from Bangladesh (research, then Payoneer signup start)
 1. Using official pages only (payoneer.com, upwork.com, fiverr.com, wise.com, paypal.com, stripe.com), check for a
    seller living in Bangladesh: can they receive and withdraw to a BD bank? Fees for receiving USD and withdrawing to BDT.
@@ -54,6 +40,95 @@ it only needs a bot. *Owner tries* every step; you explain.
 Report: bot created yes/no, chat id found yes/no (write `[stored by owner]` for both values).
 
 ## Done
+
+### T1 — Read-only inventory of the Oracle server and DNS
+Done 2026-11-15. Nothing was changed anywhere (only viewed pages and ran the listed read-only commands).
+
+**1. Oracle Cloud** (Free Tier account, compartment `sameulhaquesawan (root)`)
+
+| Item | Value |
+|---|---|
+| Instance | `anythingllm` — Running, created 2026-09-05 |
+| Shape | VM.Standard.A1.Flex (ARM) — 2 OCPU, 12 GB RAM, 2 Gbps (free allowance is 4 OCPU / 24 GB, so half is unused) |
+| Boot volume | 47 GB, no extra block volumes (free allowance 200 GB total) |
+| OS image | Canonical Ubuntu 24.04 Minimal aarch64 (`Canonical-Ubuntu-24.04-Minimal-aarch64-2026.08.25-0`) |
+| Region / AD | ap-mumbai-1 (India West, Mumbai), AD-1, FD-1 |
+| Public / private IP | 129.154.225.22 / 10.0.0.204 |
+| SSH user | `ubuntu` |
+| VCN / subnet | `sawan` / `public subnet-sawan` (10.0.0.0/24) |
+| Security list | `Default Security List for sawan` (only list on the subnet). NSG on the VNIC: not checked. |
+
+Ingress rules (all stateless = No):
+
+| Source | Protocol | Port | Description |
+|---|---|---|---|
+| 0.0.0.0/0 | TCP | 22 | SSH |
+| 0.0.0.0/0 | ICMP | type 3,4 | default |
+| 10.0.0.0/16 | ICMP | type 3 | default |
+| 0.0.0.0/0 | TCP | 80 | HTTP |
+| 0.0.0.0/0 | TCP | 443 | HTTPS |
+| 0.0.0.0/0 | UDP | 3478 | dograh-ops… |
+| 0.0.0.0/0 | TCP | 3478 | dograh-ops… |
+| 0.0.0.0/0 | UDP | 49152-49200 | dograh-ops… |
+
+**2. Spaceship DNS — `autonyxai.shop`** (nameservers launch1/launch2.spaceship.net, DNSSEC enabled, 7 records)
+
+| Type | Host | Value | TTL |
+|---|---|---|---|
+| A | activepiece | 129.154.225.22 | 5 min |
+| A | mychat | 129.154.225.22 | 30 min |
+| A | status | 129.154.225.22 | 5 min |
+| A | voice | 129.154.225.22 | 30 min |
+| A | youraireceptionist | 129.154.225.22 | 30 min |
+| NS | waas | ns1.vercel-dns.com. | 5 min |
+| NS | waas | ns2.vercel-dns.com. | 5 min |
+
+No `staging-activepiece`, no `@` (apex) and no `www` record.
+
+**3. SSH** (Windows OpenSSH 9.5, key `oracle-anythingllm.key`, user `ubuntu`)
+
+| Command | Output |
+|---|---|
+| `uname -m` | aarch64 |
+| `lsb_release -ds` | Ubuntu 24.04.4 LTS |
+| `nproc` | 2 |
+| `free -h` | Mem 11Gi total, 4.0Gi used, 7.6Gi available; swap 2.0Gi (56Ki used) |
+| `df -h /` | /dev/sda1 45G, 27G used, 18G free (61%) |
+| `docker --version` | 29.8.0 |
+| `docker compose version` | v5.5.1 |
+| `ss -tlnp` 22/80/443 | 22 → sshd; 80 and 443 → docker-proxy (Caddy), IPv4 + IPv6 |
+| `ufw status` | `ufw: command not found` (not installed) |
+| `iptables -S INPUT` | policy ACCEPT, then ESTABLISHED, icmp, lo, NEW tcp 22/80/443, udp+tcp 3478, udp 49152:49200, final `REJECT icmp-host-prohibited` — matches the Oracle list |
+| `id -un` | ubuntu |
+
+Containers (`docker ps`, 18 running):
+
+| Group | Containers (image) | Published ports |
+|---|---|---|
+| Reverse proxy | opskit-caddy (caddy:2.10.0) | 0.0.0.0:80, 0.0.0.0:443 (only public listener) |
+| Activepieces practice | autonyx-practice-app-1, -worker-1 (activepieces:0.92.2), -postgres-1 (pgvector 0.8.0-pg14), -redis-1 (redis 7.0.7) | none |
+| Monitoring | opskit-monitor-uptime-kuma-1 (uptime-kuma:2.5.5) | none |
+| AnythingLLM | anythingllm (local image anythingllm-oracle-anything-llm) | none |
+| Dograh voice | dograh-ops-api, -ui (1.48.0), -callops, -postgres (pg17), -redis, -minio, -site (nginx 1.29), -coturn (4.8.0) | none published in `docker ps` |
+| crw | crw-crw-1 (ghcr.io/us/crw:latest), crw-lightpanda-1, crw-searxng-1 | 127.0.0.1:3000 only |
+
+**4. Laptop**
+
+| Item | Value |
+|---|---|
+| `wsl --status` | Default version 2 |
+| `wsl -l -v` | **No distributions installed** (no Ubuntu) |
+| Free disk C: | 49.2 GB of 232.3 GB |
+| SSH client | Windows OpenSSH 9.5; keys present: `oracle-anythingllm.key`, `oracle_vps.key` (contents [stored by owner]) |
+
+**5. AnythingLLM URL (owner)** — `https://mychat.autonyxai.shop/login`: domain over HTTPS (443) through Caddy, not port 3001.
+
+**Blockers I see**
+1. **No Ubuntu in WSL** — opskit can't run on the laptop until `wsl --install -d Ubuntu-24.04` (owner action; needs a reboot).
+2. **No `staging-activepiece` DNS record** — HANDOFF expects `staging-activepiece.autonyxai.shop`; needs an A record → 129.154.225.22 (DNS change, needs owner approval).
+3. **One small box runs everything** — 18 containers (voice stack, AnythingLLM, crw, Activepieces practice, Kuma) on 2 OCPU / 12 GB with 18 GB disk free. Room for staging is tight on disk; a second free A1 instance (2 OCPU / 12 GB left in the allowance) is an option.
+4. `crw` uses an unpinned `:latest` image (minor; not ours to change without owner).
+5. NSG on the instance VNIC not checked (security list and iptables agree, so low risk).
 
 ### T0 — Round-trip test
 - **Date:** 2026-11-15
