@@ -11,10 +11,16 @@ DOCTOR_URLS=(
 doctor_usage() {
   cat <<'EOF'
 Usage: opskit doctor [--offline]
+       opskit doctor --remote <remote>:<bucket>[/path] [--write-test]
 
 Checks the operator machine: OS, Docker + Compose v2+, required tools
 (incl. mikefarah yq v4) and outbound access. --offline skips network checks.
 Fix missing tools with: opskit/bin/dev-env
+
+--remote checks only an off-server backup remote with opskit/owner/rclone.conf
+(e.g. b2:my-backups/clients): the remote exists, the key is accepted, the bucket
+exists. Read-only. --write-test also writes and deletes one small test file
+(backups need write; pruning old backups needs delete). Secrets are never printed.
 EOF
 }
 
@@ -86,13 +92,25 @@ doctor_network() {
 }
 
 cmd_main() {
-  local offline="false"
-  case "${1:-}" in
-    -h|--help) doctor_usage; return 0 ;;
-    --offline) offline="true" ;;
-    "") ;;
-    *) doctor_usage >&2; return 1 ;;
-  esac
+  local offline="false" remote="" write="false"
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -h|--help) doctor_usage; return 0 ;;
+      --offline) offline="true"; shift ;;
+      --remote) [ -n "${2:-}" ] || { doctor_usage >&2; return 1; }; remote="$2"; shift 2 ;;
+      --write-test) write="true"; shift ;;
+      *) doctor_usage >&2; return 1 ;;
+    esac
+  done
+  if [ -n "$remote" ]; then
+    # shellcheck source=../registry.sh
+    source "${OPSKIT_ROOT}/lib/registry.sh"
+    # shellcheck source=../remote_check.sh
+    source "${OPSKIT_ROOT}/lib/remote_check.sh"
+    remote_check "$remote" "$write"
+    return
+  fi
+  [ "$write" = "false" ] || { doctor_usage >&2; return 1; }
   local failed=0
   doctor_os || failed=1
   doctor_docker || failed=1

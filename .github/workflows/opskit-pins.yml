@@ -1,0 +1,22 @@
+name: opskit-pins
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pins:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install tools
+        run: opskit/bin/dev-env
+      - name: Template pins still offered to new stacks
+        run: opskit/bin/opskit flows check-pins
+      - name: Template inputs match the catalog
+        run: opskit/bin/opskit flows check-pieces

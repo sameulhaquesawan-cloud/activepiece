@@ -24,10 +24,39 @@ compose_get() {
 
 @test "image is pinned to the client's tag and AP_EDITION=ce, telemetry off" {
   render
-  [ "$(compose_get .services.app.image)" = "ghcr.io/activepieces/activepieces:0.92.3" ]
-  [ "$(compose_get .services.worker.image)" = "ghcr.io/activepieces/activepieces:0.92.3" ]
+  [ "$(compose_get .services.app.image)" = "ghcr.io/sameulhaquesawan-cloud/activepieces:0.92.3" ]
+  [ "$(compose_get .services.worker.image)" = "ghcr.io/sameulhaquesawan-cloud/activepieces:0.92.3" ]
   grep -qx 'AP_EDITION=ce' "${OUT}/.env"
   grep -qx 'AP_TELEMETRY_ENABLED=false' "${OUT}/.env"
+}
+
+@test "new clients use our own image mirror; the official repos stay allowed, others are refused" {
+  [ "$(yq -r .image.repo "${REG}/clients/demo/client.yaml")" = "$(yq -r .target "${OPSKIT_ROOT}/image/mirror.yaml")" ]
+  yq -i '.image.repo = "ghcr.io/activepieces/activepieces"' "${REG}/clients/demo/client.yaml"
+  render
+  [ "$(compose_get .services.app.image)" = "ghcr.io/activepieces/activepieces:0.92.3" ]
+  yq -i '.image.repo = "ghcr.io/someone-else/activepieces"' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -ne 0 ]
+}
+
+@test "the piece catalog is frozen by default (only our pieces); official sync only when asked" {
+  render
+  grep -qx 'AP_PIECES_SYNC_MODE=NONE' "${OUT}/.env"
+  yq -i '.pieces.catalog = "official"' "${REG}/clients/demo/client.yaml"
+  render
+  grep -qx 'AP_PIECES_SYNC_MODE=OFFICIAL_AUTO' "${OUT}/.env"
+  yq -i '.pieces.catalog = "everything"' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -ne 0 ]
+}
+
+@test "a release before 0.92.3 keeps Activepieces' catalog (our pack cannot be installed there) and says so" {
+  yq -i '.image.tag = "0.92.2" | .ap_version = "0.92.2"' "${REG}/clients/demo/client.yaml"
+  run "$OPSKIT" render demo
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[warn] demo runs 0.92.2: our own piece catalog needs 0.92.3 or newer"* ]]
+  grep -qx 'AP_PIECES_SYNC_MODE=OFFICIAL_AUTO' "${OUT}/.env"
 }
 
 @test "worker talks to the app internally; app uses the public URL" {

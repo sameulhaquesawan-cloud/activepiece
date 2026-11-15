@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # summary: flow template library: list, validate, import a template into a client's builder
 
-for lib in validate schema registry stack host flows flows_import flows_pieces; do
+for lib in validate schema registry stack host flows flows_import flows_pieces pieces; do
   # shellcheck source=/dev/null
   source "${OPSKIT_ROOT}/lib/${lib}.sh"
 done
@@ -11,6 +11,7 @@ flows_usage() {
 Usage: opskit flows list
        opskit flows validate [<template>]
        opskit flows check-pieces [<template>]
+       opskit flows check-pins [<template>]
        opskit flows import <template> <client id> [--set KEY=value]... [--email <admin email>]
                            [--again] [--print-steps] [--url <https://…>]
        opskit flows import <template> --url <builder address> [--set KEY=value]... [--email …]
@@ -25,6 +26,10 @@ validate [<template>] check one template (or all): flow.json is valid Activepiec
 check-pieces         compare every piece step with the piece's definition in the Activepieces
                      catalog (needs internet): list inputs present, required inputs filled, no
                      unknown inputs. Catches steps the builder would show as "Incomplete".
+check-pins           every pinned official piece version is still in the catalog's list for new
+                     stacks of the template's Activepieces release (needs internet). A fresh stack
+                     only gets the versions on that list, so a dropped pin breaks the import.
+                     Runs weekly in CI (.github/workflows/opskit-pins.yml).
 import               validate, fill the {{OPSKIT:KEY}} placeholders (--set, else the template's
                      default), sign in to the client's builder (admin password asked at the prompt,
                      used once, never stored), install our custom pieces, create the flow switched
@@ -53,33 +58,23 @@ flows_validate() {
 }
 
 flows_check_pieces() {
-  local id failed=0 ids
-  ids="${1:-$(flows_ids)}"
+  flows_each_with_catalog flows_check_pieces_one "${1:-}"
+}
+
+flows_check_pins() {
+  flows_each_with_catalog flows_check_pins_one "${1:-}"
+}
+
+# flows_each_with_catalog <check function> [<template>]: runs the check per template with a shared cache
+flows_each_with_catalog() {
+  local check="$1" id failed=0 ids
+  ids="${2:-$(flows_ids)}"
   FLOWS_META_DIR="$(mktemp -d)"
   trap 'rm -rf "${FLOWS_META_DIR:-}"' EXIT
   while IFS= read -r id; do
-    flows_check_pieces_one "$id" || failed=1
+    "$check" "$id" || failed=1
   done <<< "$ids"
   return "$failed"
-}
-
-# flows_target <client id> <url override>: sets FLOWS_BASE_URL and FLOWS_CURL_ARGS
-flows_target() {
-  local id="$1" url="$2" host port domain tls
-  if [ -n "$url" ]; then
-    FLOWS_BASE_URL="${url%/}"
-    return 0
-  fi
-  host="$(yaml_get "$(client_file "$id")" .host.name)"
-  domain="$(yaml_get "$(client_file "$id")" .domain)"
-  port="$(yaml_get "$(host_file "$host")" .edge.https_port 443)"
-  tls="$(yaml_get "$(host_file "$host")" .edge.tls acme)"
-  FLOWS_BASE_URL="$(stack_frontend_url "$domain" "$port")"
-  if [ "$tls" = "internal" ]; then
-    [ "$(host_transport "$host")" = "local" ] || die "${host} uses a practice certificate over SSH; use --print-steps"
-    # shellcheck disable=SC2034 # used by flows_api in lib/flows_import.sh
-    FLOWS_CURL_ARGS=(--noproxy '*' --resolve "${domain}:${port}:127.0.0.1" --cacert "$(host_root "$host")/caddy/local-root.crt")
-  fi
 }
 
 flows_import() {
@@ -103,6 +98,8 @@ flows_import() {
   flows_validate_one "$template" || return 1
   if [ -n "$id" ]; then
     require_client "$id" || return 1
+    # shellcheck disable=SC2034 # used by flows_ensure_pieces in lib/flows_import.sh
+    stack_archive_pieces_ok "$(yaml_get "$(client_file "$id")" .image.tag)" || FLOWS_ARCHIVE_OK=0
   fi
   flows_target "$id" "$url"
   values="$(flows_values "$dir" "${sets[@]}")" || return 1
@@ -138,6 +135,7 @@ cmd_main() {
     list) flows_list ;;
     validate) flows_validate "${2:-}" ;;
     check-pieces) flows_check_pieces "${2:-}" ;;
+    check-pins) flows_check_pins "${2:-}" ;;
     import) shift; flows_import "$@" ;;
     *) flows_usage >&2; return 1 ;;
   esac

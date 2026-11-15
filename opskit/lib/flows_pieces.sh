@@ -64,3 +64,40 @@ flows_check_pieces_one() {
   fi
   log_ok "${id}: piece inputs match the catalog"
 }
+
+# flows_piece_registry <release>: path of the catalog's piece list for new stacks of that release (ce);
+# OPSKIT_PIECES_REGISTRY_FILE serves a saved list instead (tests)
+flows_piece_registry() {
+  local release="$1" file
+  if [ -n "${OPSKIT_PIECES_REGISTRY_FILE:-}" ]; then
+    printf '%s' "$OPSKIT_PIECES_REGISTRY_FILE"
+    return 0
+  fi
+  file="${FLOWS_META_DIR}/registry-${release}.json"
+  if [ ! -s "$file" ]; then
+    curl -sS -m 60 -o "$file" "${FLOWS_CATALOG_URL}/registry?edition=ce&release=${release}" 2>/dev/null || rm -f "$file"
+  fi
+  printf '%s' "$file"
+}
+
+# flows_check_pins_one <id>: every pinned official piece version is still offered to new stacks
+flows_check_pins_one() {
+  local id="$1" dir release registry name version offered problems=0
+  dir="$(flows_template_dir "$id")"
+  release="$(yq -r '.activepieces' "${dir}/template.yaml")"
+  registry="$(flows_piece_registry "$release")"
+  if ! jq -e 'type == "array" and length > 0' "$registry" >/dev/null 2>&1; then
+    log_fail "${id}: no piece list for Activepieces ${release} from the catalog (offline?)"
+    return 1
+  fi
+  while IFS=$'\t' read -r name version; do
+    if jq -e --arg n "$name" --arg v "$version" 'any(.[]; .name == $n and .version == $v)' "$registry" >/dev/null; then
+      continue
+    fi
+    offered="$(jq -r --arg n "$name" '[.[] | select(.name == $n) | .version] | join(", ")' "$registry")"
+    log_fail "${id}: ${name} ${version} is no longer offered to new ${release} stacks (offered: ${offered:-none}); re-pin flow.json + template.yaml, then flows validate + check-pieces"
+    problems=1
+  done < <(yq -r '.pieces[] | select(.custom == null) | [.name, .version] | @tsv' "${dir}/template.yaml")
+  [ "$problems" -eq 0 ] && log_ok "${id}: pinned pieces are offered to new ${release} stacks"
+  return "$problems"
+}

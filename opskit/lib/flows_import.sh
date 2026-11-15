@@ -97,13 +97,33 @@ flows_api_error() {
   printf 'HTTP %s %s' "$(flows_status)" "${message:0:200}"
 }
 
+# flows_target <client id> <url override>: sets FLOWS_BASE_URL and FLOWS_CURL_ARGS
+flows_target() {
+  local id="$1" url="$2" host port domain tls
+  if [ -n "$url" ]; then
+    FLOWS_BASE_URL="${url%/}"
+    return 0
+  fi
+  host="$(yaml_get "$(client_file "$id")" .host.name)"
+  domain="$(yaml_get "$(client_file "$id")" .domain)"
+  port="$(yaml_get "$(host_file "$host")" .edge.https_port 443)"
+  tls="$(yaml_get "$(host_file "$host")" .edge.tls acme)"
+  FLOWS_BASE_URL="$(stack_frontend_url "$domain" "$port")"
+  if [ "$tls" = "internal" ]; then
+    [ "$(host_transport "$host")" = "local" ] || die "${host} uses a practice certificate over SSH; use --print-steps"
+    # shellcheck disable=SC2034 # used by flows_api in lib/flows_import.sh
+    FLOWS_CURL_ARGS=(--noproxy '*' --resolve "${domain}:${port}:127.0.0.1" --cacert "$(host_root "$host")/caddy/local-root.crt")
+  fi
+}
+
 # flows_sign_in <email>: reads the password from the prompt (stdin), keeps only the session token
 flows_sign_in() {
   local email="$1" password="" response
   IFS= read -rs -p "Admin password for ${email} (not stored): " password || true
   [ ! -t 0 ] || printf '\n' >&2
   [ -n "$password" ] || { log_fail "no password given"; return 1; }
-  ( umask 077 && jq -nc --arg e "$email" --arg p "$password" '{email: $e, password: $p}' > "${FLOWS_TMP}/sign-in.json" )
+  install -m 600 /dev/null "${FLOWS_TMP}/sign-in.json"
+  jq -nc --arg e "$email" --arg p "$password" '{email: $e, password: $p}' > "${FLOWS_TMP}/sign-in.json"
   password=""
   response="$(flows_api POST /v1/authentication/sign-in "${FLOWS_TMP}/sign-in.json")"
   rm -f "${FLOWS_TMP}/sign-in.json"
@@ -111,7 +131,8 @@ flows_sign_in() {
     log_fail "sign-in to ${FLOWS_BASE_URL} failed: $(flows_api_error)"
     return 1
   fi
-  ( umask 077 && printf 'authorization: Bearer %s\n' "$(jq -r '.token' <<< "$response")" > "${FLOWS_TMP}/auth-header" )
+  install -m 600 /dev/null "${FLOWS_TMP}/auth-header"
+  printf 'authorization: Bearer %s\n' "$(jq -r '.token' <<< "$response")" > "${FLOWS_TMP}/auth-header"
   FLOWS_PROJECT="$(jq -r '.projectId // empty' <<< "$response")"
   FLOWS_PLATFORM_ROLE="$(jq -r '.platformRole // empty' <<< "$response")"
   [ -n "$FLOWS_PROJECT" ] || { log_fail "sign-in worked but the user has no project"; return 1; }
@@ -130,30 +151,64 @@ flows_custom_archive() {
   fi
 }
 
-# flows_ensure_pieces <template dir>: install our custom pieces, check every pinned version is known
+flows_piece_known() {
+  flows_api GET "/v1/pieces/${1}?version=${2}&projectId=${FLOWS_PROJECT}" >/dev/null
+  [ "$(flows_status)" = "200" ] && [ "$(jq -r '.version // empty' "${FLOWS_TMP}/response")" = "$2" ]
+}
+
+# flows_wait_piece <name> <version>: a fresh stack fills its piece catalog in the background; wait while the
+# answer is "not found" (FLOWS_PIECE_WAIT_S, default 120 s), stop at once on any other error
+flows_wait_piece() {
+  local waited=0 limit="${FLOWS_PIECE_WAIT_S:-120}"
+  while [ "$(flows_status)" = "404" ] && [ "$waited" -lt "$limit" ]; do
+    [ "$waited" -gt 0 ] || log_info "waiting for ${1} ${2} (the stack may still be syncing its piece catalog)"
+    sleep 10
+    waited=$((waited + 10))
+    flows_piece_known "$1" "$2" && return 0
+  done
+  return 1
+}
+
+# flows_install_archive <name> <version> <archive>: CE archive install for the platform (admin only)
+flows_install_archive() {
+  local name="$1" version="$2" archive="$3"
+  [ "$FLOWS_PLATFORM_ROLE" = "ADMIN" ] || { log_fail "installing ${name} needs the platform admin account"; return 1; }
+  curl -sS -m 120 -o "${FLOWS_TMP}/response" -w '%{http_code}' "${FLOWS_CURL_ARGS[@]}" -H "@${FLOWS_TMP}/auth-header" \
+    -F packageType=ARCHIVE -F scope=PLATFORM --form-string "pieceName=${name}" -F "pieceVersion=${version}" \
+    -F "pieceArchive=@${archive};type=application/gzip" "${FLOWS_BASE_URL}/api/v1/pieces" > "${FLOWS_TMP}/status" 2>"${FLOWS_TMP}/curl-error" \
+    || printf '000' > "${FLOWS_TMP}/status"
+  case "$(flows_status)" in
+    200|201) log_ok "installed ${name} ${version} from our own copy" ;;
+    *) log_fail "could not install ${name} ${version}: $(flows_api_error)"; return 1 ;;
+  esac
+}
+
+# flows_ensure_pieces <template dir>: every pinned version is on the stack; missing ones come from our
+# custom pieces or the piece pack (opskit/pieces), never from Activepieces' catalog; a release before
+# STACK_ARCHIVE_PIECES_MIN_TAG (FLOWS_ARCHIVE_OK=0) still waits for Activepieces' catalog instead of the pack
 flows_ensure_pieces() {
   local dir="$1" name version custom archive
   while IFS=$'\t' read -r name version custom; do
     [ -n "$name" ] || continue
-    flows_api GET "/v1/pieces/${name}?version=${version}&projectId=${FLOWS_PROJECT}" >/dev/null
-    if [ "$(flows_status)" = "200" ] && [ "$(jq -r '.version // empty' "${FLOWS_TMP}/response")" = "$version" ]; then
+    if flows_piece_known "$name" "$version"; then
       continue
     fi
-    if [ -z "$custom" ]; then
-      log_fail "piece ${name} ${version} is not available on this stack ($(flows_api_error)); pieces may still be syncing — retry in a minute, or the template needs re-pinning for this Activepieces version"
+    if [ -n "$custom" ]; then
+      archive="$(flows_custom_archive "$custom" "$name" "$version")"
+      [ -f "$archive" ] || { log_fail "piece archive not built: ${archive} (see ${custom}/README.md, 'Build the archive')"; return 1; }
+    elif [ "${FLOWS_ARCHIVE_OK:-1}" = "1" ] && pieces_in_pack "$name" "$version"; then
+      archive="$(pieces_file "$name" "$version")"
+      [ -f "$archive" ] || { log_fail "piece pack file missing: ${archive} (opskit pieces check)"; return 1; }
+    elif flows_wait_piece "$name" "$version"; then
+      continue
+    elif [ "${FLOWS_ARCHIVE_OK:-1}" != "1" ]; then
+      log_fail "piece ${name} ${version} is not in Activepieces' catalog on this stack (its release cannot take our piece pack; upgrade it to ${STACK_ARCHIVE_PIECES_MIN_TAG} or newer)"
+      return 1
+    else
+      log_fail "piece ${name} ${version} is not on this stack and not in our piece pack: opskit pieces add ${name} ${version}"
       return 1
     fi
-    [ "$FLOWS_PLATFORM_ROLE" = "ADMIN" ] || { log_fail "installing ${name} needs the platform admin account"; return 1; }
-    archive="$(flows_custom_archive "$custom" "$name" "$version")"
-    [ -f "$archive" ] || { log_fail "piece archive not built: ${archive} (see ${custom}/README.md, 'Build the archive')"; return 1; }
-    curl -sS -m 120 -o "${FLOWS_TMP}/response" -w '%{http_code}' "${FLOWS_CURL_ARGS[@]}" -H "@${FLOWS_TMP}/auth-header" \
-      -F packageType=ARCHIVE -F scope=PLATFORM --form-string "pieceName=${name}" -F "pieceVersion=${version}" \
-      -F "pieceArchive=@${archive};type=application/gzip" "${FLOWS_BASE_URL}/api/v1/pieces" > "${FLOWS_TMP}/status" 2>"${FLOWS_TMP}/curl-error" \
-      || printf '000' > "${FLOWS_TMP}/status"
-    case "$(flows_status)" in
-      200|201) log_ok "installed custom piece ${name} ${version}" ;;
-      *) log_fail "could not install ${name} ${version}: $(flows_api_error)"; return 1 ;;
-    esac
+    flows_install_archive "$name" "$version" "$archive" || return 1
   done < <(yq -r '.pieces[] | [.name, .version, .custom // ""] | @tsv' "${dir}/template.yaml")
   log_ok "pieces available: $(yq -r '[.pieces[].name | sub("^@[a-z]+/piece-"; "")] | join(", ")' "${dir}/template.yaml")"
 }
@@ -212,7 +267,7 @@ flows_next_steps() {
 
 flows_print_steps() {
   local dir="$1" filled="$2" out="$3"
-  ( umask 077 && cp "$filled" "$out" )
+  install -m 600 "$filled" "$out"
   log_ok "filled template written to ${out} (contains client settings; do not commit it)"
   printf '\nImport in the builder (%s):\n' "$FLOWS_BASE_URL"
   printf '1. Sign in as the admin, open the flows list (Automations).\n'

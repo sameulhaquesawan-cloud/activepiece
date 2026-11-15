@@ -8,6 +8,7 @@ Commands run on your machine (Codespace, WSL, cloud AI session). Design and reas
 |---|---|---|---|
 | Failed flow runs (production only) | client server, `agent/detect-failed-runs.sh` | every 5 min | one per flow per 30 min, with flow name, step, short error, run link |
 | Server health: disk, memory, containers, HTTPS certificate | client server, `agent/health.sh` | hourly | once per problem per 24 h, then "Recovered" |
+| Hung container (Docker says `unhealthy`, e.g. app out of JavaScript heap): restarted automatically | client server, `agent/watchdog.sh` | every 2 min | critical per restart; after 3 restarts in 6 h no more restarts, one "keeps hanging" critical. Not within 10 min of a start (migrations) |
 | Daily summary | client server, `agent/digest.sh` | 08:00 client time | one message per client |
 | Backup failed / only on the server | client server, `agent/backup.sh` | nightly | right away |
 | Client site down | your Uptime Kuma (`<id> uptime`) | every 60 s | when down and when back up |

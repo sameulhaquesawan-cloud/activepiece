@@ -32,6 +32,14 @@ load helpers/common
   [ "$status" -eq 0 ]
 }
 
+@test "registry folders moved aside by a restore are git-ignored" {
+  cd "$OPSKIT_ROOT"
+  run git check-ignore -q .registry-before-20261026T120000Z/owner/alerts.conf
+  [ "$status" -eq 0 ]
+  run git check-ignore -q .registry-before-20261026T120000Z/clients/acme/secrets.env
+  [ "$status" -eq 0 ]
+}
+
 @test "no file under templates, agent, lib or bin is git-ignored (dump patterns must not hide code)" {
   cd "$OPSKIT_ROOT"
   run bash -c 'find templates agent lib bin schema -type f | git check-ignore --stdin'

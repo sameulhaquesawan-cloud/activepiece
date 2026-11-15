@@ -25,10 +25,10 @@ const value = JSON.parse(d.update(data, "hex", "utf8") + d.final("utf8"));
 console.log(value.secret_text === process.env.RT_MARKER ? "match" : "mismatch");
 '
 
-# rt_api <domain> <https port> <method> <path> [token] [json body]
+# rt_api <domain> <https port> <method> <path> [token] [json body]; RT_API_TIMEOUT seconds (default 30)
 rt_api() {
   local domain="$1" port="$2" method="$3" path="$4" token="${5:-}" body="${6:-}" args
-  args=(-sk -m 30 --resolve "${domain}:${port}:127.0.0.1" -X "$method" -H 'content-type: application/json')
+  args=(-sk -m "${RT_API_TIMEOUT:-30}" --resolve "${domain}:${port}:127.0.0.1" -X "$method" -H 'content-type: application/json')
   [ -z "$token" ] || args+=(-H "authorization: Bearer ${token}")
   [ -z "$body" ] || args+=(--data "$body")
   curl "${args[@]}" "https://${domain}:${port}/api${path}"
@@ -65,7 +65,13 @@ rt_seed() {
     || { log_fail "round trip: could not encrypt the test connection"; return 1; }
   stack_psql "$host" "$id" "insert into app_connection (id, \"externalId\", \"pieceName\", value, type, status, \"ownerId\", \"projectIds\", \"displayName\", \"platformId\", scope, \"pieceVersion\") values ('$(openssl rand -hex 10)x', '${RT_CONNECTION}', '@activepieces/piece-http', '${value}'::jsonb, 'SECRET_TEXT', 'ACTIVE', '${user}', ARRAY['${project}'], 'Roundtrip connection', '${platform}', 'PROJECT', '0.0.1')" >/dev/null \
     || { log_fail "round trip: could not store the test connection"; return 1; }
-  log_ok "round trip: seeded ${#RT_FLOWS[@]} flows (API) and 1 stored connection"
+  if ! stack_archive_pieces_ok "$(yaml_get "$(client_file "$id")" .image.tag)"; then
+    log_ok "round trip: seeded ${#RT_FLOWS[@]} flows (API) and 1 stored connection; piece pack skipped (release before ${STACK_ARCHIVE_PIECES_MIN_TAG})"
+    return 0
+  fi
+  printf '%s\n' "$RT_PASSWORD" | "${OPSKIT_ROOT}/bin/opskit" pieces install "$id" --email "$RT_EMAIL" >/dev/null \
+    || { log_fail "round trip: could not install our piece pack into ${id} (run: opskit pieces install ${id})"; return 1; }
+  log_ok "round trip: seeded ${#RT_FLOWS[@]} flows (API) and 1 stored connection; piece pack installed"
 }
 
 # rt_verify <host> <id> <domain> <https port>: the restored stack has the seeded data

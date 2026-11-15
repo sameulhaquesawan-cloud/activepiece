@@ -53,12 +53,26 @@ async function removeMonitors(names) {
   return removed;
 }
 
+async function setActive(names, active) {
+  const changed = [];
+  for (const monitor of await waitFor(() => monitors)) {
+    if (!names.includes(monitor.name)) continue;
+    const result = await call(active ? "resumeMonitor" : "pauseMonitor", monitor.id);
+    if (!result.ok) throw new Error((active ? "resume " : "pause ") + monitor.name + ": " + result.msg);
+    changed.push(monitor.name);
+  }
+  return changed;
+}
+
 socket.on("connect_error", (error) => done({ ok: false, msg: "connect: " + error.message }));
 socket.on("connect", async () => {
   try {
     const login = await call("login", { username: input.admin.username, password: input.admin.password, token: "" });
     if (!login.ok) return done({ ok: false, msg: "login: " + login.msg });
     if (input.action === "remove") return done({ ok: true, removed: await removeMonitors(input.remove) });
+    if (input.action === "pause" || input.action === "resume") {
+      return done({ ok: true, changed: await setActive(input.names, input.action === "resume") });
+    }
     const notificationId = await ensureNotification(input.notification);
     const result = {};
     for (const wanted of input.monitors) result[wanted.type] = await ensureMonitor(wanted, notificationId);

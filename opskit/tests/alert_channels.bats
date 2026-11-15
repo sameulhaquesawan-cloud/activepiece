@@ -53,6 +53,14 @@ https://auto.acme.com/projects/p1/runs/r1" ]
   [[ "$(jq -r .text <<< "$body")" == "[CRITICAL] acme on "*"— First action: open the run and fix the step"* ]]
 }
 
+@test "--owner-only reaches the owner and none of the client's channels" {
+  printf 'TELEGRAM_CHAT_ID=222\nSLACK_WEBHOOK_URL=%s/slack/T/B/C\n' "$MOCK_URL" > "${ROOT}/clients/acme/alerts.conf"
+  send --owner-only
+  [ "$status" -eq 0 ]
+  [ "$(mock_requests | jq -s length)" = "1" ]
+  [ "$(mock_requests | jq -r '.body | fromjson | .chat_id')" = "111" ]
+}
+
 @test "email goes to every client recipient with subject and body from the template" {
   smtp_owner
   printf 'EMAIL_TO=ops@acme.example,boss@acme.example\n' > "${ROOT}/clients/acme/alerts.conf"

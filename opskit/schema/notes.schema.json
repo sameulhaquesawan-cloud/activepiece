@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opskit.local/schema/notes.schema.json",
+  "title": "opskit client notes (registry clients/<id>/notes.yaml)",
+  "description": "Owner-written notes added to the client's handover pack. Never passwords, keys or customer data.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["notes_for"],
+  "properties": {
+    "notes_for": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,30}[a-z0-9]$" },
+    "flows": {
+      "type": "object",
+      "description": "flow name as shown in the builder → one sentence about what it does for the client",
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 300 }
+    },
+    "accounts": {
+      "type": "object",
+      "description": "account (e.g. Gmail, HubSpot) → who owns it and where its login is kept (e.g. 'Anna, company password manager')",
+      "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 300 }
+    },
+    "welcome": { "type": "string", "minLength": 1, "maxLength": 600, "description": "optional first paragraph of the handover pack" }
+  }
+}

@@ -60,3 +60,29 @@ deployed_events() {
   yq -i '.opskit_root = "/srv/opskit"' "${REG}/hosts/local-practice.yaml"
   [ "$(stack_remote_dir local-practice demo)" = "/srv/opskit/clients/demo" ]
 }
+
+@test "deploy stops before touching the host when it needs cron and crontab is missing" {
+  yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
+  PATH="/usr/bin:/bin" command -v crontab >/dev/null && skip "this machine has crontab"
+  run deploy_check_scheduler local-practice
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] crontab not found on local-practice (Ubuntu Minimal has no cron): run opskit host bootstrap local-practice"* ]]
+  run "$OPSKIT" deploy demo
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"crontab not found on local-practice"* ]]
+  [ ! -e "${REG}/clients/demo/rendered" ]
+}
+
+@test "scheduler check passes with crontab present or when the host gets no cron" {
+  run deploy_check_scheduler local-practice
+  [ "$status" -eq 0 ]
+  local stub
+  stub="$(mktemp -d)"
+  printf '#!/usr/bin/env bash\nexit 0\n' > "${stub}/crontab"
+  chmod +x "${stub}/crontab"
+  yq -i '.install_cron = true' "${REG}/hosts/local-practice.yaml"
+  PATH="${stub}:${PATH}" run deploy_check_scheduler local-practice
+  rm -rf "$stub"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] cron available on local-practice"* ]]
+}
