@@ -56,6 +56,19 @@ SMTP account for tests: Gmail app password (needs 2-step verification) or a free
 | Fri | handover call role-play; promote to prod | demo script, handover, Care plan |
 | Sat | mock discovery call (agent plays a hard prospect); first outreach | objections, pricing talk, proposal |
 
+**Practice niche (owner, 15 Nov 2026): online shops** — GreenCart BD on staging. International outreach still
+targets small agencies too.
+
+**Scenario B — AutonyxAI's own sales system on prod** (owner approved, 15 Nov 2026):
+1. Site enquiry → table → Telegram alert.
+2. Prospect pipeline table (status, next follow-up) → daily Telegram "follow up today" list (day 4 / day 10 rule
+   from `outreach.md`). The owner builds this one as practice.
+3. Prospect research helper: owner pastes a company URL or Upwork job text → page fetched → AI summary + likely
+   automation needs + draft first message → table. Owner reviews and sends by hand. AI = owner's GLM key via the
+   `openai-compatible` piece (ADR-013), stored only as an Activepieces connection on prod; public business data only.
+No automated lead scraping (LinkedIn/Maps): ban risk, paid data, separate product idea.
+Schedule: Fri = B1 + B2 on prod; Sat = B3, then used on the first 10 real prospects.
+
 **Build this week (no new features):** fixes the first real deploy needs (likely: sharing 80/443 with AnythingLLM,
 Oracle's default iptables rules), the AutonyxAI site (brand, pilot prices, contact form → prod webhook), the
 Telegram alert bot, our own prod lead flow. Each fix gets a test, per the repo rules.
