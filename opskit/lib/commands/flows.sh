@@ -11,6 +11,7 @@ flows_usage() {
 Usage: opskit flows list
        opskit flows validate [<template>]
        opskit flows check-pieces [<template>]
+       opskit flows check-pins [<template>]
        opskit flows import <template> <client id> [--set KEY=value]... [--email <admin email>]
                            [--again] [--print-steps] [--url <https://…>]
        opskit flows import <template> --url <builder address> [--set KEY=value]... [--email …]
@@ -25,6 +26,10 @@ validate [<template>] check one template (or all): flow.json is valid Activepiec
 check-pieces         compare every piece step with the piece's definition in the Activepieces
                      catalog (needs internet): list inputs present, required inputs filled, no
                      unknown inputs. Catches steps the builder would show as "Incomplete".
+check-pins           every pinned official piece version is still in the catalog's list for new
+                     stacks of the template's Activepieces release (needs internet). A fresh stack
+                     only gets the versions on that list, so a dropped pin breaks the import.
+                     Runs weekly in CI (.github/workflows/opskit-pins.yml).
 import               validate, fill the {{OPSKIT:KEY}} placeholders (--set, else the template's
                      default), sign in to the client's builder (admin password asked at the prompt,
                      used once, never stored), install our custom pieces, create the flow switched
@@ -53,12 +58,21 @@ flows_validate() {
 }
 
 flows_check_pieces() {
-  local id failed=0 ids
-  ids="${1:-$(flows_ids)}"
+  flows_each_with_catalog flows_check_pieces_one "${1:-}"
+}
+
+flows_check_pins() {
+  flows_each_with_catalog flows_check_pins_one "${1:-}"
+}
+
+# flows_each_with_catalog <check function> [<template>]: runs the check per template with a shared cache
+flows_each_with_catalog() {
+  local check="$1" id failed=0 ids
+  ids="${2:-$(flows_ids)}"
   FLOWS_META_DIR="$(mktemp -d)"
   trap 'rm -rf "${FLOWS_META_DIR:-}"' EXIT
   while IFS= read -r id; do
-    flows_check_pieces_one "$id" || failed=1
+    "$check" "$id" || failed=1
   done <<< "$ids"
   return "$failed"
 }
@@ -138,6 +152,7 @@ cmd_main() {
     list) flows_list ;;
     validate) flows_validate "${2:-}" ;;
     check-pieces) flows_check_pieces "${2:-}" ;;
+    check-pins) flows_check_pins "${2:-}" ;;
     import) shift; flows_import "$@" ;;
     *) flows_usage >&2; return 1 ;;
   esac
