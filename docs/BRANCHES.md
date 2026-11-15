@@ -21,6 +21,7 @@ invisible to the next session — that is how 15 Nov 2026 started from a 3-week-
 | 1 | `main` (fork of upstream `0.92.3`) | 20 Oct 2026 | pinned upstream release, deleted upstream workflows (ledger #4) | base |
 | 2 | `claude/funny-keller-x6sgy1` | 20–26 Oct 2026 | Phases 0–5 (merged by PR #1 on 22 Oct), then Phases 6, 7 and the Phase 9 build + Oracle shared-server run S1–S6 | fully contained in #3 |
 | 3 | `claude/blissful-lovelace-ltnlm9` | 15 Nov 2026 | merged #2, four fixes (secret file modes, `doctor --remote`, pin check, backup lock test), independence plan + I.2 image mirror, I.3 piece pack | fully contained in #4 |
-| 4 | `claude/ecstatic-keller-dxgivp` | 15 Nov 2026 | merged #3, launch-week plan, Chrome log T0–T4 (local Claude-in-Chrome session), practice client Threadline BD, learning track, this file | merged into `main` by PR (15 Nov 2026) |
+| 4 | `claude/ecstatic-keller-dxgivp` | 15 Nov 2026 | merged #3, launch-week plan, Chrome log T0–T4 (local Claude-in-Chrome session), practice client Threadline BD, learning track, this file | merged into `main` by [PR #2](https://github.com/sameulhaquesawan-cloud/activepiece/pull/2), merge commit `5c5dd570` (15 Nov 2026), after 3 CI-found fixes (piece pack needs 0.92.3+, staging copy catalog) |
 
-Branches #2 and #3 are fully inside `main` after #4's merge; they can be deleted on GitHub (the commits stay in `main`).
+Branches #2 and #3 are fully inside `main` since `5c5dd570`; they can be deleted on GitHub (the commits stay in `main`).
+`claude/ecstatic-keller-dxgivp` continues from `main` after the merge; its next PR is the next row.
