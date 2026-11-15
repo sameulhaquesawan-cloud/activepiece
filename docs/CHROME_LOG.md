@@ -23,13 +23,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T2 — Getting paid from Bangladesh (research, then Payoneer signup start)
-1. Using official pages only (payoneer.com, upwork.com, fiverr.com, wise.com, paypal.com, stripe.com), check for a
-   seller living in Bangladesh: can they receive and withdraw to a BD bank? Fees for receiving USD and withdrawing to BDT.
-   Report a table: provider · works in BD (yes/no/partly) · fee · source URL · date checked.
-2. Payoneer: open the signup page and walk the owner through it. *Owner tries:* the owner fills and submits
-   every field and document. You only explain fields. Report which documents were asked for and the status shown.
-
 ### T3 — Telegram alert bot (owner on phone or web.telegram.org)
 Opskit already sends alerts to Telegram (`alerts.telegram.chat_id` in `client.yaml`, `opskit/agent/alert.sh`);
 it only needs a bot. *Owner tries* every step; you explain.
@@ -129,6 +122,25 @@ Containers (`docker ps`, 18 running):
 3. **One small box runs everything** — 18 containers (voice stack, AnythingLLM, crw, Activepieces practice, Kuma) on 2 OCPU / 12 GB with 18 GB disk free. Room for staging is tight on disk; a second free A1 instance (2 OCPU / 12 GB left in the allowance) is an option.
 4. `crw` uses an unpinned `:latest` image (minor; not ours to change without owner).
 5. NSG on the instance VNIC not checked (security list and iptables agree, so low risk).
+
+**Owner note (2026-11-15):** cloud session, please turn every blocker above into tasks and handle them all.
+`staging-activepiece` was **not** created on purpose — the owner wants to watch/learn the full flow, so set up
+staging as guided tasks (explain each step; DNS change still needs the owner's OK).
+
+### T2 — Getting paid from Bangladesh
+Done 2026-11-15. Official pages only; all checked 2026-11-15.
+
+| Provider | Works in BD | Fee (receive USD → BDT bank) | Source |
+|---|---|---|---|
+| Payoneer | **yes** — the main route for BD | Receive in non-local currency (USD) 1% (min 1 USD); withdraw to bank with conversion 1.2%–4%; free from another Payoneer balance; annual fee 29.95 USD if < 6,000 USD received in 12 months. Exact BD rate only shown after sign-in. | https://www.payoneer.com/pricing/ (page says "last updated 1 January 2026") |
+| Upwork | **yes** | Direct to Local Bank (outside US) 0.99 USD/transfer; Direct to Wallet lists Bangladesh; Payoneer and PayPal also offered; USD wire 50 USD. Upwork service fee on earnings is separate. Beneficiary name must match verified Upwork name. | https://support.upwork.com/hc/en-us/articles/211060918-How-to-get-paid-on-Upwork |
+| Fiverr | **partly** — via Payoneer only (PayPal not usable from BD) | Bank Transfer via Payoneer 1 USD (min 20 USD, 1–3 business days local currency); Payoneer account 3 USD (min 10 USD); max 5,000 USD per withdrawal | https://help.fiverr.com/hc/en-us/articles/360010530058-Withdrawing-your-earnings-managing-payout-methods |
+| Wise | **partly** — a client can send to a BD bank via Wise (sender pays), but a BD resident cannot hold money or get USD account details (BD not in the list) | n/a for receiving | https://wise.com/help/articles/2813542/where-do-i-need-to-live-to-hold-money-with-wise , https://wise.com/help/articles/2978049/where-can-i-use-wise |
+| PayPal | **no** — Bangladesh not in PayPal's country list (paypal.com/bd shows the US site) | — | https://www.paypal.com/us/webapps/mpp/country-worldwide |
+| Stripe | **no** — Bangladesh not a supported country (only via Stripe Atlas US company, paid) | — | https://stripe.com/global |
+
+**Step 2 (Payoneer signup):** skipped at the owner's request — the owner already has a payment method to get paid.
+No documents asked, nothing submitted.
 
 ### T0 — Round-trip test
 - **Date:** 2026-11-15
