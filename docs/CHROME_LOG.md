@@ -23,15 +23,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T3 — Telegram alert bot (owner on phone or web.telegram.org)
-Opskit already sends alerts to Telegram (`alerts.telegram.chat_id` in `client.yaml`, `opskit/agent/alert.sh`);
-it only needs a bot. *Owner tries* every step; you explain.
-1. In Telegram open `@BotFather` → `/newbot` → name `AutonyxAI Alerts`, username ending in `bot`. The owner keeps
-   the token in a password manager (secret — never in this file or chat).
-2. Owner sends any message to the new bot, then opens `https://api.telegram.org/bot<TOKEN>/getUpdates` in the browser
-   and finds `"chat":{"id":…}`. That number is the chat id; keep it with the token.
-Report: bot created yes/no, chat id found yes/no (write `[stored by owner]` for both values).
-
 ## Done
 
 ### T1 — Read-only inventory of the Oracle server and DNS
@@ -141,6 +132,23 @@ Done 2026-11-15. Official pages only; all checked 2026-11-15.
 
 **Step 2 (Payoneer signup):** skipped at the owner's request — the owner already has a payment method to get paid.
 No documents asked, nothing submitted.
+
+### T3 — Telegram alert bot
+Done 2026-11-15 by the owner (local session only explained; it did not touch Telegram).
+
+| Item | Result |
+|---|---|
+| Bot created via @BotFather (name `AutonyxAI Alerts`) | **yes** — token: [stored by owner] |
+| Chat id found via `getUpdates` | **yes** — chat id: [stored by owner] |
+| Where kept | Owner's password manager (Google Password Manager suggested) |
+
+Problems / notes:
+- First `getUpdates` returned `{"ok":true,"result":[]}` because no message had been sent to the bot yet; fixed by
+  pressing Start and sending a message, then reloading.
+- A screenshot shared in the local chat showed part of the token in the address bar. Owner was advised to rotate it
+  with `/revoke` in @BotFather and keep only the new token (owner to confirm).
+- Next for cloud: when the opskit client config is set up, the owner enters token + chat id into
+  `alerts.telegram` locally (in the WSL registry, never in git) and we send a test alert.
 
 ### T0 — Round-trip test
 - **Date:** 2026-11-15
