@@ -40,6 +40,21 @@ On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the fil
 5. Ask the Codespace Claude: "redeploy autonyx-practice, send a test alert, then opskit monitor sync autonyx-practice" — report whether the Telegram test alert arrived.
 Report each step's result lines.
 
+### T8 — DNS record for staging (Spaceship; owner approved 15 Nov 2026 by asking to continue)
+1. Spaceship → `autonyxai.shop` → DNS records → Add: type **A**, host `staging-activepiece`, value `129.154.225.22`, TTL 5 min. The owner clicks Save.
+2. Wait 2–5 min, then check from the laptop: `nslookup staging-activepiece.autonyxai.shop 1.1.1.1` → must show 129.154.225.22.
+Report: record added yes/no, nslookup answer.
+
+### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)
+Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
+1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
+2. `opskit/bin/opskit client new autonyx-staging --domain staging-activepiece.autonyxai.shop --host oracle-mumbai --contact <owner's email> --name "Threadline BD (staging)" --timezone Asia/Dhaka` (the owner types the email).
+3. `opskit/bin/opskit deploy autonyx-staging` → report every `[ok]`/`[warn]`/`[fail]` line.
+4. *Owner tries:* open `https://staging-activepiece.autonyxai.shop` at once and create the admin account (first sign-up becomes admin); password into the password manager.
+5. `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (owner types the password at the prompt).
+6. `opskit/bin/opskit monitor sync autonyx-staging`, then `opskit/bin/opskit backup autonyx-staging` (must end "complete").
+Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
+
 ## Done
 
 ### T5 — Rescue the Codespace registry (owner approved starting it, 15 Nov 2026)
