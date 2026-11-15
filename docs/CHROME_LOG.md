@@ -44,6 +44,15 @@ Report format: a short table per item, then "Blockers I see".
 2. Payoneer: open the signup page and walk the owner through it. *Owner tries:* the owner fills and submits
    every field and document. You only explain fields. Report which documents were asked for and the status shown.
 
+### T3 — Telegram alert bot (owner on phone or web.telegram.org)
+Opskit already sends alerts to Telegram (`alerts.telegram.chat_id` in `client.yaml`, `opskit/agent/alert.sh`);
+it only needs a bot. *Owner tries* every step; you explain.
+1. In Telegram open `@BotFather` → `/newbot` → name `AutonyxAI Alerts`, username ending in `bot`. The owner keeps
+   the token in a password manager (secret — never in this file or chat).
+2. Owner sends any message to the new bot, then opens `https://api.telegram.org/bot<TOKEN>/getUpdates` in the browser
+   and finds `"chat":{"id":…}`. That number is the chat id; keep it with the token.
+Report: bot created yes/no, chat id found yes/no (write `[stored by owner]` for both values).
+
 ## Done
 
 ### T0 — Round-trip test
