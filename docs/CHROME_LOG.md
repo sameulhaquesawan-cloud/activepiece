@@ -22,20 +22,63 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T4 — Is the Codespace (the operator's registry) still there?
-The registry with client settings, the age key and Kuma login exists only in the Codespace; GitHub deletes a
-stopped Codespace after its retention period. Read-only.
-1. github.com/codespaces: list codespaces for `sameulhaquesawan-cloud/activepiece` — name, branch, state, last used,
-   and the "will be deleted on/after" date if shown. Do not start, stop or delete anything.
-2. github.com/settings/codespaces: default retention period and idle timeout values.
-3. Repo → Settings → Secrets and variables → Codespaces: names of the secrets only (expect `ORACLE_SSH_KEY_PRIVATE`).
-4. Oracle console → Governance → Limits: Compute, "Cores for Standard.A1 based VM" and memory — limit vs used
-   (T1 said half the free A1 allowance is unused; phase-9 notes said the instance uses the whole limit).
-5. Oracle instance → attached VNIC → Network security groups: none or list the rules.
-6. Owner: was the Telegram bot token rotated with `/revoke` after the screenshot? yes/no.
-Report a short table per item.
-
 ## Done
+
+### T4 — Is the Codespace (the operator's registry) still there?
+Done 2026-11-15. Read-only: nothing was started, stopped, deleted or saved.
+
+**⚠ Urgent:** the activepiece Codespace was last used 22 days ago and retention is 30 days → it will be
+auto-deleted around **2026-11-23** (≈8 days) unless it is started before then. It also shows uncommitted changes.
+
+**1. Codespaces (github.com/codespaces)**
+
+| Name | Repo | Branch | State | Last used | Deletion date |
+|---|---|---|---|---|---|
+| `verbose trout` | sameulhaquesawan-cloud/activepiece | `claude/funny-keller-x6sgy1*` (PR #1) | not running (no "Active" label); "This codespace has uncommitted changes"; 4-core · 16 GB RAM · 32 GB | 22 days ago | not shown on the list; by retention ≈ 2026-11-23 |
+| `wild toad` | sameulhaquesawan-cloud/AutoPost | `agency-edition` | not running; no changes; 18.05 GB | 21 days ago | not shown; ≈ 2026-11-24 |
+
+**2. Codespaces settings (github.com/settings/codespaces)**
+
+| Setting | Value |
+|---|---|
+| Default retention period | 30 days (maximum; "deleted 30 days after the last time they were stopped") |
+| Default idle timeout | 30 minutes |
+| Deletion warning emails | enabled |
+| User-level Codespaces secrets | `ORACLE_SSH_KEY` (1 repository), `ORACLE_SSH_KEY_PRIVATE` (1 repository) — values [stored by owner] |
+
+**3. Repo Codespaces secrets** (activepiece → Settings → Secrets and variables → Codespaces)
+
+| Item | Value |
+|---|---|
+| Repository secrets | **none** ("This repository has no secrets") |
+| Where `ORACLE_SSH_KEY_PRIVATE` lives | as a **user** secret (item 2), granted to 1 repository |
+
+**4. Oracle limits** (Compute, scope AP-MUMBAI-1-AD-1, compartment root)
+
+| Limit | Service limit | Used | Available |
+|---|---|---|---|
+| Cores for Standard.A1 (`standard-a1-core-count`) | 2 | 2 | 0 |
+| Memory for Standard.A1 (`standard-a1-memory-count`) | 12 GB | 12 | 0 |
+| Reservable / reserved A1 cores and memory | 0 / n/a | 0 | 0 / n/a |
+
+**Correction to T1:** the phase-9 note is right — the instance uses the whole A1 limit. T1 blocker 3's "second free A1
+instance (2 OCPU / 12 GB left)" is **wrong**; I had read the generic Free Tier banner (4 OCPU / 24 GB), but this
+tenancy's actual limit is 2 / 12. A second A1 box needs a limit increase or a paid upgrade.
+
+**5. NSG on the instance VNIC**
+
+| Item | Value |
+|---|---|
+| Network security groups | **none** (—) |
+| Route table / subnet | default route table for sawan / public subnet-sawan |
+
+So the only firewall layers are the subnet security list and the host iptables (both in T1, they match).
+
+**6. Telegram token rotation**
+
+| Item | Value |
+|---|---|
+| Rotated with `/revoke` after the screenshot | **yes** (owner confirmed 2026-11-15); new token [stored by owner] |
 
 ### T1 — Read-only inventory of the Oracle server and DNS
 Done 2026-11-15. Nothing was changed anywhere (only viewed pages and ran the listed read-only commands).
@@ -122,7 +165,7 @@ Containers (`docker ps`, 18 running):
 **Blockers I see**
 1. **No Ubuntu in WSL** — opskit can't run on the laptop until `wsl --install -d Ubuntu-24.04` (owner action; needs a reboot).
 2. **No `staging-activepiece` DNS record** — HANDOFF expects `staging-activepiece.autonyxai.shop`; needs an A record → 129.154.225.22 (DNS change, needs owner approval).
-3. **One small box runs everything** — 18 containers (voice stack, AnythingLLM, crw, Activepieces practice, Kuma) on 2 OCPU / 12 GB with 18 GB disk free. Room for staging is tight on disk; a second free A1 instance (2 OCPU / 12 GB left in the allowance) is an option.
+3. **One small box runs everything** — 18 containers (voice stack, AnythingLLM, crw, Activepieces practice, Kuma) on 2 OCPU / 12 GB with 18 GB disk free. Room for staging is tight on disk. ~~A second free A1 instance (2 OCPU / 12 GB left in the allowance) is an option.~~ Wrong — corrected in T4: the A1 limit (2 / 12) is fully used.
 4. `crw` uses an unpinned `:latest` image (minor; not ours to change without owner).
 5. NSG on the instance VNIC not checked (security list and iptables agree, so low risk).
 
@@ -158,7 +201,7 @@ Problems / notes:
 - First `getUpdates` returned `{"ok":true,"result":[]}` because no message had been sent to the bot yet; fixed by
   pressing Start and sending a message, then reloading.
 - A screenshot shared in the local chat showed part of the token in the address bar. Owner was advised to rotate it
-  with `/revoke` in @BotFather and keep only the new token (owner to confirm).
+  with `/revoke` in @BotFather and keep only the new token — **done**, owner rotated it (confirmed 2026-11-15).
 - Next for cloud: when the opskit client config is set up, the owner enters token + chat id into
   `alerts.telegram` locally (in the WSL registry, never in git) and we send a test alert.
 
