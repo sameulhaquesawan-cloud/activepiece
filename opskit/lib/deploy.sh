@@ -122,17 +122,69 @@ host_installs_cron() {
   yaml_get "$(host_file "$1")" .install_cron "$default"
 }
 
-# deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists
+# preflight_resolve <domain>: IPv4 addresses of the domain as this machine sees them, one per line
+preflight_resolve() {
+  getent ahostsv4 "$1" 2>/dev/null | awk '{print $1}' | sort -u
+}
+
+# preflight_needs_dns <host>: public ACME hosts reached over SSH need real DNS; practice hosts do not
+preflight_needs_dns() {
+  [ "$(host_transport "$1")" != "local" ] && [ "$(yaml_get "$(host_file "$1")" .edge.tls acme)" = "acme" ]
+}
+
+# preflight_dns <domain> <expected ip>: the domain's A record points at the host
+preflight_dns() {
+  local domain="$1" ip="$2" found
+  found="$(preflight_resolve "$domain")"
+  if [ -z "$found" ]; then
+    log_fail "DNS: ${domain} has no A record yet (add one pointing at ${ip}, wait a few minutes)"
+    return 1
+  fi
+  if ! grep -qx -- "$ip" <<< "$found"; then
+    log_fail "DNS: A record of ${domain} points at $(paste -sd, <<< "$found"), expected ${ip}"
+    return 1
+  fi
+  log_ok "DNS: ${domain} → ${ip}"
+}
+
+# preflight_deploy_dns <host> <id>: deploy's gate, before anything touches the host (Let's Encrypt limits)
+preflight_deploy_dns() {
+  local host="$1" id="$2"
+  preflight_needs_dns "$host" || return 0
+  if [ "${OPSKIT_SKIP_DNS_CHECK:-0}" = "1" ]; then
+    log_warn "DNS check skipped (OPSKIT_SKIP_DNS_CHECK=1)"
+    return 0
+  fi
+  preflight_dns "$(yaml_get "$(client_file "$id")" .domain)" "$(yaml_get "$(host_file "$host")" .ip)"
+}
+
+# deploy_check_scheduler <host>: hosts that get cron schedules need crontab (Ubuntu Minimal ships without it)
+deploy_check_scheduler() {
+  local host="$1"
+  [ "$(host_installs_cron "$host")" = "true" ] || return 0
+  if ! host_run "$host" sh -c 'command -v crontab' >/dev/null 2>&1; then
+    log_fail "crontab not found on ${host} (Ubuntu Minimal has no cron): run opskit host bootstrap ${host}"
+    return 1
+  fi
+  log_ok "cron available on ${host}"
+}
+
+# deploy_install_agents <host> <id>: monitoring always; backups only when the owner age key exists (and never
+# removed from a client that has them)
 deploy_install_agents() {
   local host="$1" id="$2" root out owner script template backups="true" cron
   root="$(host_root "$host")"
   out="$(rendered_dir "$id")"
   owner="$(registry_root)/owner"
   if [ ! -s "$(owner_age_pubkey)" ]; then
+    if host_run "$host" test -s "${root}/clients/${id}/backup.conf" 2>/dev/null; then
+      log_fail "${id} already has nightly backups on ${host}: refusing to deploy without the owner public key ($(owner_age_pubkey)), it would drop the backup schedule; see docs/runbooks/backup-restore.md §A"
+      return 1
+    fi
     backups="false"
     log_warn "backups NOT installed for ${id}: no owner age public key ($(owner_age_pubkey)); see docs/runbooks/backup-restore.md"
   fi
-  for script in alert.sh cron-sync.sh detect-failed-runs.sh health.sh digest.sh; do
+  for script in alert.sh cron-sync.sh detect-failed-runs.sh health.sh digest.sh watchdog.sh; do
     host_put "$host" "${OPSKIT_ROOT}/agent/${script}" "${root}/agent/${script}" 755 || return 1
   done
   for template in "${OPSKIT_ROOT}"/templates/alerts/*.jq; do
@@ -163,7 +215,7 @@ deploy_install_agents() {
     if [ "$backups" = "true" ]; then
       log_ok "monitoring + backup agents installed; nightly backup ($(yaml_get "$(client_file "$id")" .backup.schedule "30 2 * * *"))"
     else
-      log_ok "monitoring agents installed (failed runs every 5 min, health hourly, daily digest)"
+      log_ok "monitoring agents installed (failed runs every 5 min, health hourly, daily digest, watchdog every 2 min)"
     fi
   else
     log_ok "agents installed (no cron on practice host ${host}: run opskit backup ${id}; monitoring scripts by hand)"
@@ -201,6 +253,8 @@ deploy_client() {
   status="$(yaml_get "$(client_file "$id")" .status)"
   [ "$status" != "offboarded" ] || { log_fail "client ${id} is offboarded; refusing to deploy"; return 1; }
   host="$(yaml_get "$(client_file "$id")" .host.name)"
+  preflight_deploy_dns "$host" "$id" || return 1
+  deploy_check_scheduler "$host" || return 1
   stack_render "$id" || return 1
   deploy_push_files "$host" "$id" || return 1
   since="$(date -u +%Y-%m-%dT%H:%M:%SZ)"

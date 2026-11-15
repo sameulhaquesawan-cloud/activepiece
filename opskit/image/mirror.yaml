@@ -1,0 +1,9 @@
+# Activepieces image tags copied into our own registry (manifest list by digest, every architecture).
+# Client stacks pull from target, so a tag Activepieces removes or a registry that blocks us changes nothing.
+# Add a tag here before upgrading any client to it; .github/workflows/opskit-image-mirror.yml copies it.
+source: ghcr.io/activepieces/activepieces
+target: ghcr.io/sameulhaquesawan-cloud/activepieces
+tags:
+  - 0.91.4
+  - 0.92.2
+  - 0.92.3

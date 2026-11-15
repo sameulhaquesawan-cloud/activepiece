@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Copy every tag in opskit/image/mirror.yaml from the source repo to our registry, by digest, all
+# architectures (docker buildx imagetools: no pull, no rebuild). Idempotent; verifies digests after.
+set -euo pipefail
+IFS=$'\n\t'
+
+usage() {
+  cat <<'EOF'
+Usage: opskit/bin/image-mirror [--check] [--help]
+
+Copies each tag listed in opskit/image/mirror.yaml from `source` to `target` as the exact same
+manifest list (same digest, every architecture). Tags already copied with the same digest are
+skipped. --check only compares and exits non-zero if a tag is missing or differs (no writes).
+Needs `docker buildx` and, without --check, a registry login that may push to `target`
+(CI: .github/workflows/opskit-image-mirror.yml).
+EOF
+}
+
+OPSKIT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../lib/log.sh
+source "${OPSKIT_ROOT}/lib/log.sh"
+MIRROR_FILE="${OPSKIT_MIRROR_FILE:-${OPSKIT_ROOT}/image/mirror.yaml}"
+
+digest_of() {
+  docker buildx imagetools inspect "$1" --format '{{json .Manifest}}' 2>/dev/null | jq -r '.digest // empty' 2>/dev/null || true
+}
+
+main() {
+  local check="false" source target tag src dst failed=0
+  case "${1:-}" in
+    -h|--help) usage; return 0 ;;
+    --check) check="true" ;;
+    "") ;;
+    *) usage >&2; return 1 ;;
+  esac
+  source="$(yq -r '.source' "$MIRROR_FILE")"
+  target="$(yq -r '.target' "$MIRROR_FILE")"
+  if ! [[ "$source" =~ ^[a-z0-9./-]+$ ]] || ! [[ "$target" =~ ^ghcr\.io/[a-z0-9-]+/[a-z0-9-]+$ ]]; then
+    die "mirror.yaml: bad source or target"
+  fi
+  while IFS= read -r tag; do
+    [[ "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { log_fail "mirror.yaml: bad tag '${tag}'"; failed=1; continue; }
+    src="$(digest_of "${source}:${tag}")"
+    [ -n "$src" ] || { log_fail "${source}:${tag} not found"; failed=1; continue; }
+    dst="$(digest_of "${target}:${tag}")"
+    if [ "$dst" = "$src" ]; then
+      log_ok "${target}:${tag} = ${src}"
+      continue
+    fi
+    if [ "$check" = "true" ]; then
+      log_fail "${target}:${tag} ${dst:-missing}, source is ${src}"
+      failed=1
+      continue
+    fi
+    if ! docker buildx imagetools create --tag "${target}:${tag}" "${source}@${src}" >/dev/null; then
+      log_fail "could not copy ${source}:${tag} to ${target}"
+      failed=1
+      continue
+    fi
+    dst="$(digest_of "${target}:${tag}")"
+    if [ "$dst" = "$src" ]; then
+      log_ok "copied ${source}:${tag} → ${target}:${tag} (${src})"
+    else
+      log_fail "${target}:${tag} has digest ${dst:-none} after the copy, expected ${src}"
+      failed=1
+    fi
+  done < <(yq -r '.tags[]' "$MIRROR_FILE")
+  [ "$failed" -eq 0 ] || { log_fail "image mirror incomplete"; return 1; }
+  log_ok "image mirror: every tag in ${MIRROR_FILE##*/} is in ${target}"
+}
+
+main "$@"

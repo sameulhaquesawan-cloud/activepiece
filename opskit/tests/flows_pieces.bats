@@ -65,3 +65,27 @@ edit_trigger_input() {
   echo "$output"
   [ "$status" -eq 0 ]
 }
+
+@test "check-pins: a pin still offered to new stacks passes; custom pieces are skipped" {
+  export OPSKIT_FLOWS_DIR="${OPSKIT_ROOT}/flows"
+  jq -n '[{name: "@activepieces/piece-openai", version: "0.1.0"}]' > "${WORK}/registry.json"
+  yq -o=json '[.pieces[] | select(.custom == null) | {"name": .name, "version": .version}]' "${OPSKIT_ROOT}/flows/ai-email-sorter/template.yaml" \
+    | jq --slurpfile extra "${WORK}/registry.json" '. + $extra[0]' > "${WORK}/registry-all.json"
+  OPSKIT_PIECES_REGISTRY_FILE="${WORK}/registry-all.json" run "$OPSKIT" flows check-pins ai-email-sorter
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[ok] ai-email-sorter: pinned pieces are offered to new 0.92.3 stacks"* ]]
+}
+
+@test "check-pins: a pin dropped from the catalog fails and names the offered version" {
+  jq -n '[{name: "@activepieces/piece-webhook", version: "0.1.43"}]' > "${WORK}/registry.json"
+  OPSKIT_PIECES_REGISTRY_FILE="${WORK}/registry.json" run "$OPSKIT" flows check-pins example
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"@activepieces/piece-webhook 0.1.42 is no longer offered to new"*"(offered: 0.1.43)"* ]]
+}
+
+@test "check-pins: no catalog answer is a failure, not a pass" {
+  printf '' > "${WORK}/registry.json"
+  OPSKIT_PIECES_REGISTRY_FILE="${WORK}/registry.json" run "$OPSKIT" flows check-pins example
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no piece list for Activepieces"* ]]
+}

@@ -48,6 +48,8 @@ stack_render_backup() {
   cfile="$(client_file "$id")"
   out="$(rendered_dir "$id")"
   channels="$(yq -r '.alerts.channels[]' "$cfile")"
+  install -m 600 /dev/null "${out}/backup.conf"
+  install -m 600 /dev/null "${out}/alerts.conf"
   (
     umask 077
     {
@@ -84,6 +86,7 @@ stack_render_backup() {
       fi
     } > "${out}/alerts.conf"
   )
+  chmod 600 "${out}/backup.conf" "${out}/alerts.conf"
 }
 
 # stack_render <id>: requires a valid client + host; generates secrets on first use
@@ -114,6 +117,11 @@ stack_render() {
     export WORKER_MEMORY
     APP_MEMORY="$(yaml_get "$cfile" .app.memory_limit 1g)"
     export APP_MEMORY
+    if [ "$(yaml_get "$cfile" .pieces.catalog ours)" = "official" ]; then
+      export AP_PIECES_SYNC_MODE=OFFICIAL_AUTO
+    else
+      export AP_PIECES_SYNC_MODE=NONE
+    fi
     export POSTGRES_IMAGE="$POSTGRES_IMAGE_PINNED" REDIS_IMAGE="$REDIS_IMAGE_PINNED"
     export POSTGRES_MEMORY="$POSTGRES_MEMORY_DEFAULT" REDIS_MEMORY="$REDIS_MEMORY_DEFAULT"
     AP_FRONTEND_URL="$(stack_frontend_url "$CLIENT_DOMAIN" "$(yaml_get "$hfile" .edge.https_port 443)")"

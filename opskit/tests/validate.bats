@@ -32,6 +32,15 @@ expect_client_error() {
   [ "$status" -eq 0 ]
 }
 
+@test "upgrade history events are valid; an unknown event is not" {
+  broken_client '.history += [{"at": "2026-10-22T10:00:00Z", "event": "upgraded", "tag": "0.92.3", "note": "from 0.92.2 in 65 s; app down 15 s"},
+    {"at": "2026-10-22T11:00:00Z", "event": "upgrade_failed", "tag": "0.93.0", "note": "verify failed"},
+    {"at": "2026-10-22T11:01:00Z", "event": "rolled_back", "tag": "0.92.3", "note": "path restore"}]'
+  run "$OPSKIT" validate "${WORK}/client.yaml"
+  [ "$status" -eq 0 ]
+  expect_client_error '.history += [{"at": "2026-10-22T10:00:00Z", "event": "downgraded"}]' "history.0.event: must be one of"
+}
+
 @test "missing required field" {
   expect_client_error 'del(.domain)' "domain: is required"
 }
@@ -164,4 +173,43 @@ expect_template_error() {
   rm -rf "$stub"
   [ "$status" -eq 1 ]
   [[ "$output" == *"mikefarah yq v4 is required"*"opskit/bin/dev-env"* ]]
+}
+
+@test "owner business profile: the example is valid; missing email, bad website and unknown fields fail" {
+  run "$OPSKIT" validate "${OPSKIT_ROOT}/templates/business.example.yaml"
+  [ "$status" -eq 0 ]
+  yq 'del(.support_email) | .website = "http://plain.example" | .logo = "x"' "${OPSKIT_ROOT}/templates/business.example.yaml" > "${WORK}/business.yaml"
+  run "$OPSKIT" validate "${WORK}/business.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] support_email: is required"* ]]
+  [[ "$output" == *"[fail] website: has an invalid format"* ]]
+  [[ "$output" == *"[fail] logo: unknown field"* ]]
+}
+
+@test "client notes: flows and accounts take one short sentence each" {
+  printf 'notes_for: acme\nflows:\n  Lead capture: Website form leads go to the sales sheet.\naccounts:\n  Gmail: Anna owns it; login in the company password manager.\n' > "${WORK}/notes.yaml"
+  run "$OPSKIT" validate "${WORK}/notes.yaml"
+  [ "$status" -eq 0 ]
+  yq -i '.flows["Lead capture"] = "" | .password = "x"' "${WORK}/notes.yaml"
+  run "$OPSKIT" validate "${WORK}/notes.yaml"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"[fail] password: unknown field"* ]]
+  [[ "$output" == *"flows.Lead capture"* ]]
+}
+
+@test "included support hours are 0 to 40 per month" {
+  broken_client '.support.included_hours = 3'
+  run "$OPSKIT" validate "${WORK}/client.yaml"
+  [ "$status" -eq 0 ]
+  expect_client_error '.support.included_hours = 41' "support.included_hours"
+}
+
+@test "app memory below 896m is refused with the reason; 896m, 1g and 1536m pass" {
+  expect_client_error '.app.memory_limit = "640m"' "app.memory_limit: must be at least 896m (less runs the app out of JavaScript heap)"
+  local value
+  for value in 896m 1g 1536m; do
+    broken_client ".app.memory_limit = \"${value}\""
+    run "$OPSKIT" validate "${WORK}/client.yaml"
+    [ "$status" -eq 0 ]
+  done
 }

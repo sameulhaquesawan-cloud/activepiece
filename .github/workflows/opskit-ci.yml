@@ -22,13 +22,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  mirror:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Log in to our registry
+        run: printf '%s' "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Copy the Activepieces images we use into our registry
+        run: opskit/bin/image-mirror
+
+  check:
+    needs: mirror
+    if: always() && (needs.mirror.result == 'success' || needs.mirror.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+      - name: Log in to our registry (pull)
+        run: printf '%s' "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - uses: actions/setup-node@v6
         with:
           node-version: '22'

@@ -47,11 +47,23 @@ your data on your server, and you can take it all with you if you ever leave. Sh
 today?"
 [Screen: pricing section of the site.]
 
-US version: $749 setup, $179 per month. Never demo features marked *coming* (care report,
-automatic upgrade rollback). Ready-made flows may be shown (`opskit/flows/`), connected to your own test
-accounts only.
+US version: $749 setup, $179 per month. A sample care report and handover pack may be shown (generate them for your demo client with
+`opskit report` / `opskit docs`; never a real client's). Ready-made flows may be shown (`opskit/flows/`),
+connected to your own test accounts only.
 
 ## Preparation
+
+### Your demo server today (free, Oracle)
+You already have one: `https://activepiece.autonyxai.shop` (client id `autonyx-practice`, server
+`oracle-mumbai`, user `ubuntu`, opskit root `/opt/opskit`). Use Option A's steps 1–5 with these names:
+- builder: `https://activepiece.autonyxai.shop`; uptime page for the "watched around the clock" part:
+  `https://status.autonyxai.shop`;
+- detector on demand: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22 /opt/opskit/agent/detect-failed-runs.sh autonyx-practice --root /opt/opskit`;
+- fresh summary: `ssh -i ~/.ssh/oracle ubuntu@129.154.225.22 /opt/opskit/agent/digest.sh autonyx-practice --root /opt/opskit --now`;
+- backup proof: `opskit/bin/opskit backups autonyx-practice` and `opskit/bin/opskit restore-test autonyx-practice`;
+- a sample report/pack: `opskit/bin/opskit report autonyx-practice` and `opskit/bin/opskit docs autonyx-practice`.
+Needs first: Telegram in `opskit/owner/alerts.conf` and Backblaze (otherwise backups show "local only").
+The server is in Mumbai: for EU prospects say "your server would be in the EU"; the demo one is ours.
 
 ### Option A — a real demo server (recommended, ≈ €20/month)
 The best demo is the real thing: a small server at `demo.yourbrand.com`, deployed with opskit exactly like a
