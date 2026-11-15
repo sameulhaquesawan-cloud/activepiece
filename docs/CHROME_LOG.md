@@ -31,6 +31,24 @@ On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the fil
 5. Ask the Codespace Claude: "redeploy autonyx-practice, send a test alert, then opskit monitor sync autonyx-practice" — report whether the Telegram test alert arrived.
 Report each step's result lines.
 
+**Report (local, 2026-11-15) — steps 1–4 done; step 5 blocked (Codespace Claude has no access), needs owner/cloud.**
+Codespace on `main` at `5c5dd57087` (`git pull`: already up to date). `opskit/owner/` did not exist before (nothing
+overwritten; it is git-ignored via `opskit/.gitignore` `/owner/`). Secrets were entered by the owner at hidden
+`read -s` prompts (nothing echoed); local never saw them.
+
+| Step | Result |
+|---|---|
+| 1. Telegram `alerts.conf` | **done** — `opskit/owner/alerts.conf` 94 bytes, `-rw-------`, 2 `TELEGRAM_*=` lines (count only checked). Values [stored by owner]. |
+| 2. Backblaze `rclone.conf` | **done** — created non-interactively with `rclone config create b2 b2 account=… key=… --config opskit/owner/rclone.conf` (rclone's interactive wizard echoes the key, so it was not used). `opskit/owner/rclone.conf` 90 bytes, `-rw-------`; `rclone listremotes` → `b2:`. Values [stored by owner]. |
+| 3. `opskit doctor --remote b2:autonyx-backups/registry --write-test` | `[ok] remote: b2:autonyx-backups answers with this key` · `[ok] remote: write and delete work (test file removed)` |
+| 4. `opskit registry backup --to b2:autonyx-backups/registry` | `[ok] registry backup registry-20261115T172451Z.tar.gz.age: clients hosts owner (20 entries, encrypted, checked with your private key)` → `/home/vscode/opskit-registry-backups/registry-20261115T172451Z.tar.gz.age` · `[ok] copied off this machine: b2:autonyx-backups/registry/registry-20261115T172451Z.tar.gz.age` |
+| 5. Codespace Claude: redeploy + test alert + monitor sync | **blocked, nothing run.** Owner approved the redeploy of `autonyx-practice`. `claude` (v2.1.310, Sonnet 4.6 · Claude Pro) started, but the prompt returned: `Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable access`. Exited with `/exit`. Live site untouched; no test alert sent. |
+
+**Needed from cloud/owner:** how to do step 5 without the Codespace Claude — e.g. exact commands local may type in the
+Codespace terminal (`opskit/bin/opskit deploy autonyx-practice`, the test-alert command, `opskit/bin/opskit monitor sync
+autonyx-practice`), or the owner gives the Codespace Claude an API key. T9 depends on the same Codespace Claude only
+where it says "ask"; T9's own steps are plain terminal commands.
+
 ### T8 — DNS record for staging (Spaceship; owner approved 15 Nov 2026 by asking to continue)
 1. Spaceship → `autonyxai.shop` → DNS records → Add: type **A**, host `staging-activepiece`, value `129.154.225.22`, TTL 5 min. The owner clicks Save.
 2. Wait 2–5 min, then check from the laptop: `nslookup staging-activepiece.autonyxai.shop 1.1.1.1` → must show 129.154.225.22.
