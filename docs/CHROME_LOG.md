@@ -22,15 +22,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-(none)
-
-### T6 — Monday setup, part 1: Backblaze B2 for off-server backups (Chrome; owner creates, you guide)
-`docs/OPERATOR_GUIDE.md` §4 item 2. Free 10 GB. The owner types every secret; you never read or screenshot a key.
-1. backblaze.com → sign up for B2 Cloud Storage (owner fills the form, region **EU Central or US West** — owner picks; note which).
-2. Buckets → Create a Bucket: name `autonyx-backups` (or the closest free name), **Private**, default encryption on, object lock off.
-3. Application Keys → Add a New Application Key: name `opskit`, **access only to that bucket**, Read and Write. The owner copies `keyID` and `applicationKey` into the password manager at once (shown only once).
-Report: account created, region, bucket name, key created yes/no (`[stored by owner]`).
-
 ### T7 — Monday setup, part 2: wire Telegram + Backblaze into the Codespace (Codespace terminal; owner types secrets)
 On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the files below; the owner types the values.
 1. Telegram (`docs/runbooks/monitoring.md` §A): owner creates `opskit/owner/alerts.conf` with `TELEGRAM_BOT_TOKEN=` and `TELEGRAM_CHAT_ID=` (new token from T3's rotation), `chmod 600`.
@@ -56,6 +47,25 @@ Teach mode: explain each line's output in one sentence. Stop at the first `[fail
 Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
 
 ## Done
+
+### T6 — Monday setup, part 1: Backblaze B2 for off-server backups (Chrome; owner creates, you guide)
+`docs/OPERATOR_GUIDE.md` §4 item 2. Free 10 GB. The owner types every secret; you never read or screenshot a key.
+1. backblaze.com → sign up for B2 Cloud Storage (owner fills the form, region **EU Central or US West** — owner picks; note which).
+2. Buckets → Create a Bucket: name `autonyx-backups` (or the closest free name), **Private**, default encryption on, object lock off.
+3. Application Keys → Add a New Application Key: name `opskit`, **access only to that bucket**, Read and Write. The owner copies `keyID` and `applicationKey` into the password manager at once (shown only once).
+Report: account created, region, bucket name, key created yes/no (`[stored by owner]`).
+
+**Report (local, 2026-11-15) — done.**
+
+| Item | Result |
+|---|---|
+| Account created | **yes** — owner signed up and signed in (email/password [stored by owner]). |
+| Region | **CA East** (bucket endpoint `s3.ca-east-006.backblazeb2.com`) — *not* EU Central / US West as the task asked; Backblaze fixes the region at sign-up. Works for rclone `b2` remotes (no region setting needed). |
+| Bucket | `autonyx-backups` (exact name was free), **Private**, encryption **Enabled** (SSE-B2), Object Lock **Disabled**, lifecycle "Keep all versions" (default). No fee for a private bucket. |
+| Application key | **yes** — name `opskit`, bucket `autonyx-backups` only, Read and Write, no prefix, no expiry, "list all bucket names" off. Local filled the form; owner clicked Create and saved `keyID` + `applicationKey` [stored by owner]. Local did not see the key screen. |
+
+**Note for cloud:** lifecycle "Keep all versions" means overwritten/deleted backup files keep using storage; consider a
+lifecycle rule (e.g. keep prior versions N days) if the 10 GB free tier gets tight.
 
 ### T5 — Rescue the Codespace registry (owner approved starting it, 15 Nov 2026)
 Goal: reset the 30-day deletion clock and get an encrypted copy of the registry off the Codespace. In the Codespace's
