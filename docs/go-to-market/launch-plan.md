@@ -38,7 +38,16 @@ Registry with secrets (`opskit/clients/`, `opskit/hosts/`) lives only on the lap
 | Fri 20 (long) | `autonyx-prod` deploy; promote templates staging → prod; record 3-min demo video | profiles live; prospect list (40 names) | do the demo out loud twice |
 | Sat 21 (long) | our own lead-capture flow live on prod (site form → table → Telegram) | 20 warm messages, 10 Upwork proposals, 20 LinkedIn messages | run a mock discovery call with the agent |
 
-Week 2+: 10 proposals/day on Upwork, follow-ups (day 4, day 10), discovery calls, proposals within 2 days.
+## Week 2–3 (22 Nov – 5 Dec) — to the first dollar
+| Week | Daily (3 h) | Target by end of week |
+|---|---|---|
+| 2 | 1 h outreach (10 Upwork proposals, 10 LinkedIn/email, 5 local BD contacts), 1 h follow-ups + calls, 1 h practice/fixes on staging | 150 contacts total, 10 replies, 3–5 discovery calls, 1–2 proposals sent |
+| 3 | same; plus deliver whatever was won | first payment (one-off build or pilot setup 50 % upfront) |
+
+Fastest first dollar, in order of likelihood: (1) warm/local contact, one-off build (e.g. Facebook lead → sheet/table →
+Telegram), paid by bKash/bank; (2) small fixed-price Upwork/Fiverr job ($50–300); (3) international pilot
+(setup + Care). Funnel rule of thumb for a new seller: ~100–150 contacts → ~10 replies → 3–5 calls → 1 yes.
+If week 2 gets < 3 replies: change the message (sharper outcome, one niche), not the product.
 
 ## Client path (same steps as staging, for real)
 1. Discovery call (questions in `outreach.md`) → proposal (`proposal-template.md`) → 50 % upfront (Payoneer invoice or platform escrow).
