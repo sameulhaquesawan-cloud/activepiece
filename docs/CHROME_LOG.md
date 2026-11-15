@@ -22,6 +22,10 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
+(none)
+
+## Done
+
 ### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)
 Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
 1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
@@ -32,7 +36,21 @@ Teach mode: explain each line's output in one sentence. Stop at the first `[fail
 6. `opskit/bin/opskit monitor sync autonyx-staging`, then `opskit/bin/opskit backup autonyx-staging` (must end "complete").
 Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
 
-## Done
+**Report (local, 2026-11-15/16) — done, no `[fail]`.** Run in the Codespace terminal on `main` (`5c5dd57087`). Owner typed
+the contact email, admin email and admin password at hidden prompts (values [stored by owner]).
+
+| Step | Result |
+|---|---|
+| 1. `host preflight oracle-mumbai` | no `[warn]`/`[fail]`. `[ok] ssh` · `[ok] sudo: works without a password` · `[ok] OS: Ubuntu 24.04` · `[ok] CPU: aarch64, 2 core(s)` · `[ok] memory: 12 GB (host yaml says 11)` · **`[ok] disk: 17 GB free on /`** · `[ok] IPv6` · `[ok] cron` · `[ok] docker: Docker version 29.8.0` · `[ok] outbound HTTPS` cloud.activepieces.com / ghcr.io / registry.npmjs.org · `[ok] DNS` status + activepiece → 129.154.225.22 · `[ok] preflight of oracle-mumbai passed` |
+| 2. `client new autonyx-staging …` | `[ok] client.yaml: valid` · `[ok] client autonyx-staging created: …/opskit/clients/autonyx-staging/client.yaml (status draft)`. Contact email checked by value-compare only (`match (3)`). |
+| 3. `backup.remote` + `deploy autonyx-staging` | `[ok] DNS: staging-activepiece.autonyxai.shop → 129.154.225.22` · `[ok] cron available` · `[ok] rendered autonyx-staging: compose.yml, .env (600), autonyx-staging.caddy, cron, backup.conf, alerts.conf` · `[ok] files copied to oracle-mumbai:/opt/opskit/clients/autonyx-staging` · `[ok] stack autonyx-staging up` · `[ok] app healthy (20s)` · `[ok] worker registered (polling the app)` · `[ok] read-only database role opskit_ro ready` · `[ok] HTTPS site published via opskit-caddy` · `[ok] HTTPS health OK: https://staging-activepiece.autonyxai.shop` · `[ok] monitoring + backup agents installed; nightly backup (30 2 * * *)` · `[ok] deployed autonyx-staging`. No `[warn]` (image is 0.92.3). |
+| 4. Admin account | **done by owner** right after deploy (sign-up page was shown, so nobody signed up first); password in owner's password manager. |
+| 5. `pieces install autonyx-staging --email …` | `[ok] piece pack: 11 pieces, files intact, every template pin included` · `[ok] signed in to https://staging-activepiece.autonyxai.shop as <admin email>` · `[ok] installed` delay 0.4.0, facebook-leads 0.5.1, gmail 0.18.3, google-sheets 0.19.3, hubspot 0.13.1, schedule 0.1.22, slack 0.23.1, smtp 0.5.0, store 0.6.20, tables 0.6.2, webhook 0.1.42 (all "from our own copy") · `[ok] pieces on https://staging-activepiece.autonyxai.shop: 11 installed, the rest were already there` |
+| 6. `monitor sync` + `backup` | `[ok] monitors for autonyx-staging in Uptime Kuma on oracle-mumbai: uptime every 60 s (…/api/v1/health), backup watchdog window 26 h` · `[ok] backup heartbeat … now goes to Uptime Kuma` · `[ok] backup autonyx-staging/20261115T180700Z: db.dump.age 4056499 bytes, env.age 1063 bytes (both encrypted)` · `[ok] copied off-server: b2:autonyx-backups/clients/autonyx-staging/20261115T180700Z (4059393 bytes verified)` · `[ok] local retention 14 days: pruned 0` · `[ok] remote retention 30 days: pruned 0` · `[ok] backup of autonyx-staging complete (local + off-server)` · `[ok] heartbeat sent` · `[ok] backup of autonyx-staging complete` |
+| Builder version | **0.92.3** — `client.yaml` image `ghcr.io/sameulhaquesawan-cloud/activepieces:0.92.3`; the running site's `/api/v1/flags` `CURRENT_VERSION` = `0.92.3` (read via API, not the Settings screen). |
+| Extra: registry backup | `opskit registry backup --to b2:autonyx-backups/registry` → `[ok] registry backup registry-20261115T180736Z.tar.gz.age: clients hosts owner (30 entries, …)` · `[ok] copied off this machine: b2:autonyx-backups/registry/registry-20261115T180736Z.tar.gz.age` (captures both `backup.remote` changes and the new staging client). |
+
+Codespace left running on `main`; local closed its Codespace tab; the staging tab stays open for the owner.
 
 ### T7 — Monday setup, part 2: wire Telegram + Backblaze into the Codespace (Codespace terminal; owner types secrets)
 On `main` in the Codespace (`git pull` first). Never `cat` or screenshot the files below; the owner types the values.
