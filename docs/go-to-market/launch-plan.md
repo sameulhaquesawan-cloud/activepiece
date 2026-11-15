@@ -38,6 +38,32 @@ Registry with secrets (`opskit/clients/`, `opskit/hosts/`) lives only on the lap
 | Fri 20 (long) | `autonyx-prod` deploy; promote templates staging → prod; record 3-min demo video | profiles live; prospect list (40 names) | do the demo out loud twice |
 | Sat 21 (long) | our own lead-capture flow live on prod (site form → table → Telegram) | 20 warm messages, 10 Upwork proposals, 20 LinkedIn messages | run a mock discovery call with the agent |
 
+## Week 1 detail
+**Role-play client #0:** staging plays *GreenCart BD*, a fictional small online shop in Dhaka (website form,
+B2B invoices, order-paid webhook). Every client document is filled for it as if real: brief from the discovery
+questions, proposal, `client.yaml`, handover. Templates on staging: `lead-capture-tables`,
+`invoice-reminder-tables`, `review-request` (all SMTP, no Google) + one flow the owner builds (webhook → Telegram).
+Skipped: `lead-ad-alert` (needs a Meta app), Google Sheets variants, `ai-email-sorter` (optional Sat, needs an AI key).
+SMTP account for tests: Gmail app password (needs 2-step verification) or a free SMTP relay — decided on Wed.
+
+| Day | Role-play step | Teach topics |
+|---|---|---|
+| Sun | client brief for GreenCart (discovery answers) | flow, trigger, step, piece, connection, run; what a VPS, DNS record, firewall are |
+| Mon | proposal for GreenCart; server preparation (`host bootstrap`) | SSH keys, Docker containers, why each client gets its own stack |
+| Tue | onboarding: DNS, `client new`, `deploy` | HTTPS/Caddy, `.env` and the encryption key, Uptime Kuma |
+| Wed | delivery: import + test the 3 templates with test data | data selector, publish, run log, connections |
+| Thu | incident drill: break a flow → alert → fix; backup + restore test | failed runs, alerts, why tested backups sell |
+| Fri | handover call role-play; promote to prod | demo script, handover, Care plan |
+| Sat | mock discovery call (agent plays a hard prospect); first outreach | objections, pricing talk, proposal |
+
+**Build this week (no new features):** fixes the first real deploy needs (likely: sharing 80/443 with AnythingLLM,
+Oracle's default iptables rules), the AutonyxAI site (brand, pilot prices, contact form → prod webhook), the
+Telegram alert bot, our own prod lead flow. Each fix gets a test, per the repo rules.
+
+**Branches:** every cloud session works on its own `claude/...` branch (named in PROGRESS). At the end of each
+working day the owner merges it into `main` by PR, so a new session or account always starts from an
+up-to-date `main`. Staging is deployed and tested first; prod only gets what passed on staging.
+
 ## Week 2–3 (22 Nov – 5 Dec) — to the first dollar
 | Week | Daily (3 h) | Target by end of week |
 |---|---|---|
