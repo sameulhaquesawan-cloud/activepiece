@@ -1,7 +1,7 @@
 # Activepieces 101 — owner learning track
 
 For the owner, learning while the local session works in Chrome. Practise only on **staging**
-(`staging-activepiece.autonyxai.shop`), never on a client stack. Official docs: https://www.activepieces.com/docs
+(`staging-activepiece.autonyxai.shop`), never on a client stack. Full beginner's guide: `docs/ACTIVEPIECES_GUIDE.md`. Official docs: https://www.activepieces.com/docs
 
 ## Words you need
 **Flow** — one automation: a trigger plus the steps after it. Has a draft you edit and a published version that runs.

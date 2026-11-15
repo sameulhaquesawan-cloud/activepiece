@@ -7,9 +7,10 @@ Works for Claude Code, Codex, Cursor, Kilo, Gemini, Copilot or a human. Nothing 
 
 ## Owner context (read first, every new account or AI)
 - **Goal:** start earning with AutonyxAI (`autonyxai.shop`) — setup + hosting + care of Activepieces for clients, international + Bangladesh. Plan and week schedule: `docs/go-to-market/launch-plan.md`.
-- **Owner is new to Activepieces and semi-technical.** Explain each step in plain words while doing it; give short numbered steps; practise on staging. Learning track: `docs/learn/activepieces-101.md`.
-- **Two sessions:** cloud (code, docs) + local on the owner's laptop (Claude in Chrome + opskit operator in WSL). Tasks and reports go through `docs/CHROME_LOG.md`.
-- **Environments:** `staging-activepiece.autonyxai.shop` (client #0, test every change here first) → `activepiece.autonyxai.shop` (our prod/demo) · `status.autonyxai.shop` (Uptime Kuma).
+- **Owner is new to Activepieces and semi-technical.** Explain each step in plain words while doing it; give short numbered steps; practise on staging. Learning: `docs/ACTIVEPIECES_GUIDE.md`, practice ladder `docs/learn/activepieces-101.md`.
+- **Three places:** cloud session (code, docs; no SSH) · **Codespace Claude** = operator (registry + SSH key; `docs/OPERATOR_GUIDE.md`) · local session on the owner's laptop = Claude in Chrome. Chrome tasks and reports go through `docs/CHROME_LOG.md`.
+- **Environments:** `staging-activepiece.autonyxai.shop` (`autonyx-staging`, client #0 Threadline BD, test every change here first) → `activepiece.autonyxai.shop` (`autonyx-practice`, our prod/demo, live) · `status.autonyxai.shop` (Uptime Kuma).
+- **Before starting, check every `claude/*` branch on GitHub**: work has happened on several; merge the newest into yours first.
 
 ## Read in this order
 1. `docs/HANDOFF.md` (this file).

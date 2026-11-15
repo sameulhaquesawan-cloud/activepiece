@@ -2,8 +2,8 @@
 
 Two sessions share the branch named in `docs/PROGRESS.md`:
 - **Cloud session**: code, tests, docs. Writes tasks here, owns every other tracked file. Cannot SSH out.
-- **Local session** (owner's Windows laptop): Claude in Chrome **and** the opskit operator inside WSL2 Ubuntu
-  (SSH to hosts, `opskit` commands). In git it writes **only this file**. The plan behind the tasks:
+- **Local session** (owner's Windows laptop): Claude in Chrome. In git it writes **only this file**.
+- **Codespace Claude**: the opskit operator (registry + SSH key). Server commands happen there, not here. The plan behind the tasks:
   `docs/go-to-market/launch-plan.md`.
 
 ## Protocol
@@ -18,10 +18,22 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 6. **Teach mode (always):** the owner is learning. Before each action, say in one plain sentence what you are
    about to do and why; after each page or command, one sentence on what it showed. When a task says
    *Owner tries*, stop and let the owner do that part while you guide.
-7. Opskit commands run in WSL (`wsl -d Ubuntu-24.04 -- bash -lc '...'`) from the clone inside Ubuntu, never
-   against the AnythingLLM containers. The registry (`opskit/clients/`, `opskit/hosts/`) exists only there.
+7. No opskit commands from the laptop: the registry and the SSH key live in the Codespace. Read-only SSH only when a task lists the exact commands.
 
 ## Open tasks
+
+### T4 — Is the Codespace (the operator's registry) still there?
+The registry with client settings, the age key and Kuma login exists only in the Codespace; GitHub deletes a
+stopped Codespace after its retention period. Read-only.
+1. github.com/codespaces: list codespaces for `sameulhaquesawan-cloud/activepiece` — name, branch, state, last used,
+   and the "will be deleted on/after" date if shown. Do not start, stop or delete anything.
+2. github.com/settings/codespaces: default retention period and idle timeout values.
+3. Repo → Settings → Secrets and variables → Codespaces: names of the secrets only (expect `ORACLE_SSH_KEY_PRIVATE`).
+4. Oracle console → Governance → Limits: Compute, "Cores for Standard.A1 based VM" and memory — limit vs used
+   (T1 said half the free A1 allowance is unused; phase-9 notes said the instance uses the whole limit).
+5. Oracle instance → attached VNIC → Network security groups: none or list the rules.
+6. Owner: was the Telegram bot token rotated with `/revoke` after the screenshot? yes/no.
+Report a short table per item.
 
 ## Done
 

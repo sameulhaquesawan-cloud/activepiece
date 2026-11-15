@@ -1,7 +1,7 @@
 # Launch plan — AutonyxAI, first income
 
 Owner decisions (15 Nov 2026): brand **AutonyxAI**, domain `autonyxai.shop` (Spaceship). Markets: **international
-(Upwork, Fiverr, LinkedIn) + Bangladesh local**. No Payoneer yet. No job restrictions. Time: 3 h/day Sun–Thu,
+(Upwork, Fiverr, LinkedIn) + Bangladesh local**. Owner already has a payment method. No job restrictions. Time: 3 h/day Sun–Thu,
 6–8 h Fri + Sat (Bangladesh weekend). Owner has never used Activepieces → every step is also a lesson.
 
 ## Goal
@@ -10,33 +10,35 @@ client, demo assets, payment rail, profiles and first outreach. Realistic: first
 monthly client in 1–2 months. Pricing and offer: `pricing.md`, `offer.md`; pilot price for the first 2
 clients ≈ $299 setup + $79–99/month in exchange for a testimonial.
 
-## Our environments
-| Name | URL | Client id | Purpose |
+## Our environments (all on the Oracle host `oracle-mumbai`, `ubuntu@129.154.225.22`)
+| Name | URL | Client id | State |
 |---|---|---|---|
-| Staging | `staging-activepiece.autonyxai.shop` | `autonyx-staging` | treated as client #0: every change (new pinned version, opskit change, flow template) is tested here first |
-| Production / demo | `activepiece.autonyxai.shop` | `autonyx-prod` | our own instance: live demo for prospects, our own business automations (lead alerts, invoice reminders) |
-| Status | `status.autonyxai.shop` | — | Uptime Kuma (owner monitoring host) |
+| Production / demo | `activepiece.autonyxai.shop` | `autonyx-practice` | live since 24 Oct 2026 (Phase 9 S5), Activepieces 0.92.2 |
+| Staging | `staging-activepiece.autonyxai.shop` | `autonyx-staging` | to create this week (DNS record not yet made); client #0 = Threadline BD |
+| Status | `status.autonyxai.shop` | — | Uptime Kuma, live since 24 Oct 2026 (S6) |
 
-Host: the owner's Oracle Cloud server (also runs AnythingLLM). Both stacks on one host is a **shared host**,
-which SPEC defers until after the first paying client — allowed here only because both stacks are ours (no client
-data); owner approval recorded in `docs/ASSUMPTIONS.md`. Facts still to check (T1): CPU type/RAM, free ports
-80/443 (AnythingLLM may hold them), Oracle firewall rules. Activepieces 0.92.3 image ships amd64 + arm64
-(verified 15 Nov 2026 with `docker manifest inspect`).
+The host is shared with AnythingLLM, Dograh, crw (ADR-020, ASSUMPTIONS #32); one `opskit-caddy` edge holds 80/443.
+T1 (15 Nov): 2 OCPU / 12 GB, 7.6 GiB free, **18 GB disk free** — one more stack fits, disk is the limit.
+Staging is our own (no client data), so a second stack on this shared host is fine (ASSUMPTIONS #35).
+Rule: every change (new Activepieces version, opskit change, flow) goes to staging first; prod is upgraded with
+`opskit upgrade` (Phase 6) only after staging passed. First use: prod 0.92.2 → pinned 0.92.3.
 
-Who runs what: the cloud session writes code/docs and cannot SSH out (port 22 blocked, verified). The **local
-session** (owner's Windows laptop) is the operator: Chrome work, and opskit commands inside WSL2 Ubuntu.
-Registry with secrets (`opskit/clients/`, `opskit/hosts/`) lives only on the laptop. Protocol: `docs/CHROME_LOG.md`.
+Who runs what:
+- **Cloud session** — code, tests, docs. Cannot SSH out (verified 15 Nov).
+- **Codespace Claude** — the operator: holds the registry (`opskit/clients/`, `opskit/hosts/`, `opskit/owner/`)
+  and the SSH key (secret `ORACLE_SSH_KEY_PRIVATE`). `docs/OPERATOR_GUIDE.md`, `docs/testing/TESTING_GUIDE.md`.
+- **Local session** (owner's laptop) — Claude in Chrome. Protocol: `docs/CHROME_LOG.md`.
 
 ## Week 1 (15–21 Nov 2026)
-| Day | Tech track (staging = client #0) | Business track | Owner learns |
+| Day | Tech track | Business track | Owner learns |
 |---|---|---|---|
-| Sun 15 | T1 read-only inventory of server, Oracle firewall, DNS | T2 payout research; start Payoneer signup | what a flow, trigger, step, connection, run are (`docs/learn/activepieces-101.md`) |
-| Mon 16 | WSL2 + `opskit/bin/dev-env` on laptop; `host bootstrap` on Oracle (with approval) | Payoneer documents | watch the server setup, read the step summaries |
-| Tue 17 | DNS records; `client new autonyx-staging`; `deploy`; Uptime Kuma at `status.` | brand basics: email on the domain, LinkedIn headline | first login, tour of the builder |
-| Wed 18 | Threadline flows 1 + 9 on staging (real SMTP account) | Upwork + Fiverr profile drafts | build a 3-step flow yourself in staging |
-| Thu 19 | Threadline flow 2 + incident drill; backup + restore-test; fix what the real deploy broke | website with real brand on Cloudflare Pages | read run logs, find a failed step, re-run it |
-| Fri 20 (long) | `autonyx-prod` deploy; promote templates staging → prod; record 3-min demo video | profiles live; prospect list (40 names) | do the demo out loud twice |
-| Sat 21 (long) | our own lead-capture flow live on prod (site form → table → Telegram) | 20 warm messages, 10 Upwork proposals, 20 LinkedIn messages | run a mock discovery call with the agent |
+| Sun 15 ✓ | T1 inventory, T3 Telegram bot | T2 payouts (owner already has a payment method) | basic words (`docs/ACTIVEPIECES_GUIDE.md`) |
+| Mon 16 | T4: Codespace still there? registry backup; TESTING_GUIDE Part 0 (alerts.conf with Telegram, SMTP, Backblaze) | client brief for Threadline | tour of the live builder on prod |
+| Tue 17 | staging: DNS record (approval) → `client new autonyx-staging` → `deploy` → `monitor sync` | proposal for Threadline; email on the domain | HTTPS, the encryption key, Kuma |
+| Wed 18 | Threadline flows 1 + 9 on staging | Upwork + Fiverr profile drafts | build a flow yourself on staging |
+| Thu 19 | flow 2 + incident drill; backup + `restore-test` on staging | website with the real brand | failed runs, alerts, restores |
+| Fri 20 (long) | `opskit upgrade autonyx-practice` 0.92.2 → 0.92.3 after staging passed; Scenario B flows 1–2 on prod; demo video | profiles live; prospect list (40) | the staging → prod routine; demo out loud |
+| Sat 21 (long) | Scenario B flow 3 (research helper) | first 50 messages | mock discovery call |
 
 ## Week 1 detail
 **Role-play client #0: Threadline BD** (men's and women's clothing; COD, couriers, bKash, size exchanges). Scenario,
@@ -44,9 +46,8 @@ pain-point research, the 10 flows and their build order: `docs/practice/threadli
 
 | Day | Role-play step | Teach topics |
 |---|---|---|
-| Sun | client brief for Threadline (discovery answers) | flow, trigger, step, piece, connection, run; what a VPS, DNS record, firewall are |
-| Mon | proposal for Threadline; server preparation (`host bootstrap`) | SSH keys, Docker containers, why each client gets its own stack |
-| Tue | onboarding: DNS, `client new`, `deploy` | HTTPS/Caddy, `.env` and the encryption key, Uptime Kuma |
+| Mon | client brief for Threadline (discovery answers) | flow, trigger, step, piece, connection, run; what a VPS, DNS record, firewall are |
+| Tue | proposal for Threadline; onboarding: DNS, `client new`, `deploy` | SSH keys, Docker containers, HTTPS, `.env` and the encryption key |
 | Wed | delivery: flows 1 (order intake) + 9 (review request) with test data | data selector, publish, run log, connections |
 | Thu | flow 2 (COD confirmation); incident drill on it → alert → fix; backup + restore test | failed runs, alerts, why tested backups sell |
 | Fri | handover call role-play; promote to prod | demo script, handover, Care plan |
@@ -65,9 +66,8 @@ targets small agencies too.
 No automated lead scraping (LinkedIn/Maps): ban risk, paid data, separate product idea.
 Schedule: Fri = B1 + B2 on prod; Sat = B3, then used on the first 10 real prospects.
 
-**Build this week (no new features):** fixes the first real deploy needs (likely: sharing 80/443 with AnythingLLM,
-Oracle's default iptables rules), the AutonyxAI site (brand, pilot prices, contact form → prod webhook), the
-Telegram alert bot, our own prod lead flow. Each fix gets a test, per the repo rules.
+**Build this week (no new features):** fixes the staging deploy and the prod upgrade surface, the AutonyxAI site
+(brand, pilot prices, contact form → prod webhook), our own prod flows. Each fix gets a test, per the repo rules.
 
 **Branches:** every cloud session works on its own `claude/...` branch (named in PROGRESS). At the end of each
 working day the owner merges it into `main` by PR, so a new session or account always starts from an
@@ -85,20 +85,21 @@ Telegram), paid by bKash/bank; (2) small fixed-price Upwork/Fiverr job ($50–30
 If week 2 gets < 3 replies: change the message (sharper outcome, one niche), not the product.
 
 ## Client path (same steps as staging, for real)
-1. Discovery call (questions in `outreach.md`) → proposal (`proposal-template.md`) → 50 % upfront (Payoneer invoice or platform escrow).
+1. Discovery call (questions in `outreach.md`) → proposal (`proposal-template.md`) → 50 % upfront (Payoneer/bank invoice or platform escrow).
 2. Client opens their own server account (Hetzner/DigitalOcean) and adds us; adds one DNS record; connects their own apps.
 3. `host bootstrap` → `client new` → `deploy` → backups and alerts on → `flows import` / build → test with their data.
 4. Handover call (45 min) → invoice the rest → first Care month → testimonial + case study on the site.
 
 ## Prerequisites checklist
-- [ ] Payoneer verified (BD payouts; Stripe, PayPal and Wise do not serve BD residents — T2 confirms)
+- [x] Payment method (owner has one; T2: Payoneer, Upwork, Fiverr work from BD; PayPal and Stripe do not)
 - [ ] Email on the domain, Upwork + Fiverr + LinkedIn profiles
-- [ ] Staging + prod + status live, 3 templates tested with real accounts, Telegram alert bot
+- [ ] Staging live, prod on 0.92.3, Threadline flows 1, 2, 9 tested; Telegram bot made (T3), wired into alerts.conf
 - [ ] 3-minute demo video, site live with AutonyxAI branding and pilot prices
 - [ ] Prospect sheet (columns in `outreach.md`)
 
 ## Risks
-- First real-internet deploy will surface bugs → do it on staging, log them in PROGRESS Known issues.
+- The registry lives only in the Codespace: a deleted Codespace loses client settings and keys → T4 + registry backup first.
+- Disk: 18 GB free on the shared host; watch it when staging is added.
 - `.shop` reads less trustworthy to B2B buyers; a `.com` later is cheap.
 - Bangladesh local clients cannot carry a dedicated €20 server; local = one-off builds or shared hosts (V2).
 - Capacity: 3–5 simple clients max alongside the job; 12 h response.
