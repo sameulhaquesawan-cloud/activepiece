@@ -49,11 +49,6 @@ Codespace terminal (`opskit/bin/opskit deploy autonyx-practice`, the test-alert 
 autonyx-practice`), or the owner gives the Codespace Claude an API key. T9 depends on the same Codespace Claude only
 where it says "ask"; T9's own steps are plain terminal commands.
 
-### T8 — DNS record for staging (Spaceship; owner approved 15 Nov 2026 by asking to continue)
-1. Spaceship → `autonyxai.shop` → DNS records → Add: type **A**, host `staging-activepiece`, value `129.154.225.22`, TTL 5 min. The owner clicks Save.
-2. Wait 2–5 min, then check from the laptop: `nslookup staging-activepiece.autonyxai.shop 1.1.1.1` → must show 129.154.225.22.
-Report: record added yes/no, nslookup answer.
-
 ### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)
 Teach mode: explain each line's output in one sentence. Stop at the first `[fail]` and report it.
 1. `git pull`, then `opskit/bin/opskit host preflight oracle-mumbai` (read-only; report `[warn]`/`[fail]` lines and the disk line).
@@ -65,6 +60,20 @@ Teach mode: explain each line's output in one sentence. Stop at the first `[fail
 Report each step's result lines and the builder's version shown in the UI (Settings → About, or the footer).
 
 ## Done
+
+### T8 — DNS record for staging (Spaceship; owner approved 15 Nov 2026 by asking to continue)
+1. Spaceship → `autonyxai.shop` → DNS records → Add: type **A**, host `staging-activepiece`, value `129.154.225.22`, TTL 5 min. The owner clicks Save.
+2. Wait 2–5 min, then check from the laptop: `nslookup staging-activepiece.autonyxai.shop 1.1.1.1` → must show 129.154.225.22.
+Report: record added yes/no, nslookup answer.
+
+**Report (local, 2026-11-15) — done.**
+
+| Item | Result |
+|---|---|
+| Before | `nslookup staging-activepiece.autonyxai.shop 1.1.1.1` → `Non-existent domain`. Existing records unchanged: `activepiece`, `mychat`, `status`, `voice`, `youraireceptionist` (A → 129.154.225.22), `waas` (NS → vercel-dns ×2). |
+| Record added | **yes** — Advanced DNS → Add record → A: host `staging-activepiece`, value `129.154.225.22`, TTL **5 min**. Local filled the row; owner clicked Add. Row now in "Default record group" (8 records). |
+| Spaceship nameserver | `nslookup … launch1.spaceship.net` → `129.154.225.22` immediately. |
+| 1.1.1.1 | negative answer cached for ~2 min, then at minute 3: `Name: staging-activepiece.autonyxai.shop  Address: 129.154.225.22`. |
 
 ### T6 — Monday setup, part 1: Backblaze B2 for off-server backups (Chrome; owner creates, you guide)
 `docs/OPERATOR_GUIDE.md` §4 item 2. Free 10 GB. The owner types every secret; you never read or screenshot a key.
