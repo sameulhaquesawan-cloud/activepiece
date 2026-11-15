@@ -50,7 +50,7 @@ upgrade_stage_checks() {
     return 1
   fi
   log_ok "staging: signed in to the copy with a temporary password"
-  if [ -z "$(smoke_piece_version "$domain" "$TEMP_PORT" "$token" "$project" @activepieces/piece-webhook)" ]; then
+  if ! upgrade_stage_wait_webhook "$domain" "$token" "$project"; then
     OPSKIT_REQUIRE_PIECES="${OPSKIT_REQUIRE_PIECES:-1}" e2e_skip "piece metadata is not available (no internet for the app)" "staging flow checks" \
       || failed=1
     return "$failed"
@@ -58,6 +58,20 @@ upgrade_stage_checks() {
   smoke_webhook_flow "$domain" "$TEMP_PORT" "$token" "$project" || failed=1
   smoke_schedule_dry_run "$domain" "$TEMP_PORT" "$token" "$project" || failed=1
   return "$failed"
+}
+
+# upgrade_stage_wait_webhook <domain> <token> <project>: the webhook piece is known in the copy. A copy that
+# keeps Activepieces' catalog (client on a release before STACK_ARCHIVE_PIECES_MIN_TAG) may still be filling
+# it, so it is polled for up to UPGRADE_STAGE_PIECE_WAIT_S (default 300 s); a frozen copy is asked once.
+upgrade_stage_wait_webhook() {
+  local domain="$1" token="$2" project="$3" waited=0 limit=0
+  [ "$(yaml_get "$(client_file "$TEMP_ID")" .pieces.catalog ours)" != "official" ] || limit="${UPGRADE_STAGE_PIECE_WAIT_S:-300}"
+  until [ -n "$(smoke_piece_version "$domain" "$TEMP_PORT" "$token" "$project" @activepieces/piece-webhook)" ]; do
+    [ "$waited" -lt "$limit" ] || return 1
+    [ "$waited" -gt 0 ] || log_info "staging: waiting for the copy to load Activepieces' piece catalog (up to ${limit}s)"
+    sleep 10
+    waited=$((waited + 10))
+  done
 }
 
 # upgrade_do_stage <id> <state file>
