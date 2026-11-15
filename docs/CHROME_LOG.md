@@ -24,6 +24,37 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 (none)
 
+### T10 — Email sending: Brevo free SMTP (Chrome + Codespace terminal; owner types secrets)
+One SMTP account serves opskit's email alerts/care reports **and** the Threadline flows' emails.
+1. brevo.com → free plan sign-up (owner). Senders, domains & IPs → add and verify a **sender** address the owner controls (an inbox they can open). Note it.
+2. SMTP & API → SMTP → generate an SMTP key; owner copies login + key into the password manager.
+3. Codespace terminal: the owner appends to `opskit/owner/alerts.conf` (hidden prompts, as in T7) `SMTP_URL=smtp://smtp-relay.brevo.com:587`, `SMTP_USER=<login>`, `SMTP_PASSWORD=<SMTP key>`, `SMTP_FROM=<verified sender>`; `chmod 600`.
+4. `opskit/bin/opskit deploy autonyx-staging`, then the test alert from T7 with `--client autonyx-staging` → Telegram **and** an email must arrive. `opskit/bin/opskit registry backup --to b2:autonyx-backups/registry`.
+Report: sender verified yes/no, alert lines, email arrived yes/no.
+
+### T11 — Business profile + watch the watcher (Codespace terminal + Chrome)
+`docs/OPERATOR_GUIDE.md` §4 items 4–5.
+1. `cp opskit/templates/business.example.yaml opskit/owner/business.yaml`; the owner fills name **AutonyxAI**, support email, website `https://autonyxai.shop` (placeholder until the site is live) in the editor; `opskit/bin/opskit validate opskit/owner/business.yaml`.
+2. uptimerobot.com free account (owner) → one HTTP(s) monitor on `https://status.autonyxai.shop`, 5 min, email alert to the owner.
+Report: validate line, monitor created yes/no.
+
+### T12 — New pieces + first template on staging (Codespace terminal + staging builder) — after PR #3 is merged
+1. Codespace: `git pull` on `main` → `opskit/bin/opskit pieces check` must say 15 pieces → `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (installs forms, approval, http, telegram-bot).
+2. `opskit/bin/opskit flows import review-request autonyx-staging --email <admin email> --set BUSINESS_NAME="Threadline BD" --set FROM_EMAIL=<verified sender> --set REPLY_TO=<owner email> --set REVIEW_URL=https://staging-activepiece.autonyxai.shop --set WAIT_AMOUNT=2 --set WAIT_UNIT=minutes`.
+3. *Owner tries, guided:* in the staging builder open the imported flow, step "Send review request" → create the **SMTP** connection (Brevo host `smtp-relay.brevo.com`, port 587, login + key typed by the owner) → Publish and switch the flow on.
+4. Copy the flow's webhook URL; send the sample order with the email changed to the owner's own: `jq '.email = "<owner email>"' opskit/flows/review-request/test/shopify-paid.json` piped to `curl -sS -X POST -H 'Content-Type: application/json' --data @- <webhook URL>` (check the field name in the file first; it may be nested). After ~2 min the review email must arrive. Then send the same payload again → no second email (duplicate ignored).
+5. *Owner tries:* open Runs, read both runs step by step (what each step received and returned).
+Report each step's result and what the owner saw in Runs.
+
+### T13 — Owner builds Threadline flow 1 "Order intake" on staging (teach mode, owner clicks, you explain)
+Design (`docs/practice/threadline-bd.md` #1). Explain every screen in one sentence; the owner does the clicks.
+1. Tables → new table **Orders**: order_no, source (facebook/website), customer, phone, address, items, size, amount, payment (cod/bkash), status, created_at.
+2. New flow "Order intake": trigger **Forms → Form** with fields name, phone, address, items, size, amount, payment, source (this is the form staff fill from inbox orders).
+3. Step **Tables → Create record(s)** in Orders, mapping each form field with the data selector; status `new`.
+4. Step **Telegram → Send message** (connection: the T3 bot token typed by the owner; chat id from the password manager): `New order ৳{amount} — {name}, {items} size {size}, {payment}`.
+5. Test each step, Publish, open the form URL, submit 2 fake orders → 2 rows in Orders, 2 Telegram messages.
+Report: what worked, what confused the owner, screenshots described in words (no secrets).
+
 ## Done
 
 ### T9 — Deploy staging `autonyx-staging` (Codespace terminal on `main`, after T7 and T8)

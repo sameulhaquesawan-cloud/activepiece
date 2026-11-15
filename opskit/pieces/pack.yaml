@@ -1,16 +1,25 @@
 pieces:
+  - name: '@activepieces/piece-approval'
+    version: 0.1.28
+    sha256: 34f7ad9d7ad44b67812ff03efaa08b42ad4c506f459810f8aa6d359ed19cd6de
   - name: '@activepieces/piece-delay'
     version: 0.4.0
     sha256: 94a3ba3de0a089e6e698c6c928f198b5eacc478e60eccb3910a302bc704623b3
   - name: '@activepieces/piece-facebook-leads'
     version: 0.5.1
     sha256: 9870fbfb67555505417eea4fe97850d7cb6505422b3104e1c2befa2970183cf5
+  - name: '@activepieces/piece-forms'
+    version: 0.4.22
+    sha256: 4df5fea947dad3377ebcf4239e8599a4fd840b4719098c516680e080b00fda56
   - name: '@activepieces/piece-gmail'
     version: 0.18.3
     sha256: 06e9c6e4b52ab7591fc18d156c1980b088d070b29c0e3a3583cf30676f6b1fb7
   - name: '@activepieces/piece-google-sheets'
     version: 0.19.3
     sha256: d804678e9d3db11bf239561344a1146079b5629d0391b08e66047078bdc7041a
+  - name: '@activepieces/piece-http'
+    version: 0.12.1
+    sha256: 3010ce13cbfc76f85becef7627ea0022ed7be7940aaa6162abcabe93b942f9b1
   - name: '@activepieces/piece-hubspot'
     version: 0.13.1
     sha256: b741c188d3d886a7f5df9f7059c159ec2de50e70f8c9dcd636acb20105dd8603
@@ -29,6 +38,9 @@ pieces:
   - name: '@activepieces/piece-tables'
     version: 0.6.2
     sha256: ae2a2ea4c7f4282c6211fe8fe057fd860ce68c3a798f1df8dfdbb4b3eb060163
+  - name: '@activepieces/piece-telegram-bot'
+    version: 0.7.0
+    sha256: 208a09668a7a75a5f3b881919a7e15e0514d848114cd82798bb53d6de65216fa
   - name: '@activepieces/piece-webhook'
     version: 0.1.42
     sha256: 18f18909deef3417db33072c3104fd44f561b77509e1d1c351dfa0d5c871d1c4
