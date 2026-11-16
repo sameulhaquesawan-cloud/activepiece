@@ -22,12 +22,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T11 — Business profile + watch the watcher (Codespace terminal + Chrome)
-`docs/OPERATOR_GUIDE.md` §4 items 4–5.
-1. `cp opskit/templates/business.example.yaml opskit/owner/business.yaml`; the owner fills name **AutonyxAI**, support email, website `https://autonyxai.shop` (placeholder until the site is live) in the editor; `opskit/bin/opskit validate opskit/owner/business.yaml`.
-2. uptimerobot.com free account (owner) → one HTTP(s) monitor on `https://status.autonyxai.shop`, 5 min, email alert to the owner.
-Report: validate line, monitor created yes/no.
-
 ### T12 — New pieces + first template on staging (Codespace terminal + staging builder) — after PR #3 is merged
 1. Codespace: `git pull` on `main` → `opskit/bin/opskit pieces check` must say 15 pieces → `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (installs forms, approval, http, telegram-bot).
 2. `opskit/bin/opskit flows import review-request autonyx-staging --email <admin email> --set BUSINESS_NAME="Threadline BD" --set FROM_EMAIL=<verified sender> --set REPLY_TO=<owner email> --set REVIEW_URL=https://staging-activepiece.autonyxai.shop --set WAIT_AMOUNT=2 --set WAIT_UNIT=minutes`.
@@ -46,6 +40,22 @@ Design (`docs/practice/threadline-bd.md` #1). Explain every screen in one senten
 Report: what worked, what confused the owner, screenshots described in words (no secrets).
 
 ## Done
+
+### T11 — Business profile + watch the watcher (Codespace terminal + Chrome)
+`docs/OPERATOR_GUIDE.md` §4 items 4–5.
+1. `cp opskit/templates/business.example.yaml opskit/owner/business.yaml`; the owner fills name **AutonyxAI**, support email, website `https://autonyxai.shop` (placeholder until the site is live) in the editor; `opskit/bin/opskit validate opskit/owner/business.yaml`.
+2. uptimerobot.com free account (owner) → one HTTP(s) monitor on `https://status.autonyxai.shop`, 5 min, email alert to the owner.
+Report: validate line, monitor created yes/no.
+
+**Report (local, 2026-11-16) — done.**
+
+| Step | Result |
+|---|---|
+| 1. `business.yaml` | `opskit/owner/business.yaml` did not exist → copied from the template, `chmod 600`, filled by `yq`: `business_name: AutonyxAI`, `website: https://autonyxai.shop`, `support_hours: Sun–Thu 10:00–18:00 (Asia/Dhaka)` (local's default — owner may change), `signature: Thanks for working with us. — AutonyxAI`; `support_email` typed by the owner at a hidden prompt [stored by owner]. `opskit validate` → **`[ok] business.yaml: valid`**. |
+| 2. UptimeRobot | Owner created a free account (email [stored by owner]). Local typed the URL on the sign-up form. UptimeRobot's sign-up **auto-added 10 extra monitors** (guessed paths `/admin /blog /cart /contact /login /order /pricing /register /search /wp-admin` on status.autonyxai.shop) and **auto-published a public status page**; with the owner's OK local deleted the 10 extras (bulk delete) and that status page. Left: **one HTTP(s) monitor `status.autonyxai.shop`, every 5 min, Up**, "To be notified": the owner's account (email), "Appears on: attached to no status page". Monitor created: **yes**. |
+
+**Note for cloud:** UptimeRobot (Europe region) measures **~5,020 ms** response time for `https://status.autonyxai.shop`
+(avg = min = max over the first checks) — slow for a status page; worth a look (Kuma page weight? IPv6/IPv4 path?).
 
 ### T10 — Email sending: Brevo free SMTP (Chrome + Codespace terminal; owner types secrets)
 One SMTP account serves opskit's email alerts/care reports **and** the Threadline flows' emails.
