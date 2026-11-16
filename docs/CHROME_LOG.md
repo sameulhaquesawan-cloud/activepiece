@@ -32,6 +32,22 @@ One SMTP account serves opskit's email alerts/care reports **and** the Threadlin
 4. `opskit/bin/opskit deploy autonyx-staging`, then the test alert from T7 with `--client autonyx-staging` → Telegram **and** an email must arrive. `opskit/bin/opskit registry backup --to b2:autonyx-backups/registry`.
 Report: sender verified yes/no, alert lines, email arrived yes/no.
 
+**Report (local, 2026-11-16) — stopped at step 4: Brevo SMTP login denied.**
+
+| Step | Result |
+|---|---|
+| 1. Brevo account + sender | Owner signed up (login email [stored by owner], a different address from the staging contact). Brevo had already created and **verified** one sender (a `@gmail.com` address [stored by owner]); owner chose to use it and rename its From name to "AutonyxAI". Brevo shows a red banner: senders not compliant with Google/Yahoo/Microsoft sender rules (DKIM/DMARC) — a `@gmail.com` From sent via Brevo may land in spam; proper fix later = authenticate `autonyxai.shop` in Brevo (DNS records at Spaceship). |
+| 2. SMTP key | Owner generated key `opskit` and saved login + key [stored by owner]. Local did not view the SMTP page. |
+| 3. `alerts.conf` | Codespace `git pull` on `main` → `5746096e96` (PR #3); tree clean. Appended `SMTP_URL=smtp://smtp-relay.brevo.com:587`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` at hidden prompts. First try left `SMTP_USER` empty (paste missed); re-entered → 4 SMTP lines set, 2 Telegram lines intact, file 306 bytes `-rw-------`. |
+| 4a. `deploy autonyx-staging` | all `[ok]`: DNS · cron · rendered (… alerts.conf) · files copied · stack up · `app healthy (0s)` · worker registered · opskit_ro ready · HTTPS published · `HTTPS health OK: https://staging-activepiece.autonyxai.shop` · agents installed, nightly backup (30 2 * * *) · `deployed autonyx-staging`. |
+| 4b. test alert `--client autonyx-staging` | `[ok] alert sent: telegram <chat id>` · **`curl: (67) Login denied`** · `[warn] email <staging contact> alert failed` · exit 1. **Email did not arrive.** |
+| 4c. registry backup | **not run** (stopped at the failure). |
+
+**Likely causes (to check, in order):** (1) a new Brevo account's SMTP is not activated yet (Brevo SMTP page may ask to
+"activate" or the account awaits validation); (2) the login pasted is the account email, not the SMTP login
+(`…@smtp-brevo.com`); (3) an API key (`xkeysib-…`) was pasted instead of the SMTP key (`xsmtpsib-…`). Fix = owner checks the
+SMTP page, then re-enter only the wrong value at a hidden prompt and re-run the test alert.
+
 ### T11 — Business profile + watch the watcher (Codespace terminal + Chrome)
 `docs/OPERATOR_GUIDE.md` §4 items 4–5.
 1. `cp opskit/templates/business.example.yaml opskit/owner/business.yaml`; the owner fills name **AutonyxAI**, support email, website `https://autonyxai.shop` (placeholder until the site is live) in the editor; `opskit/bin/opskit validate opskit/owner/business.yaml`.
