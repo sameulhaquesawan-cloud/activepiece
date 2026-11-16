@@ -22,14 +22,6 @@ Two sessions share the branch named in `docs/PROGRESS.md`:
 
 ## Open tasks
 
-### T12 — New pieces + first template on staging (Codespace terminal + staging builder) — after PR #3 is merged
-1. Codespace: `git pull` on `main` → `opskit/bin/opskit pieces check` must say 15 pieces → `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (installs forms, approval, http, telegram-bot).
-2. `opskit/bin/opskit flows import review-request autonyx-staging --email <admin email> --set BUSINESS_NAME="Threadline BD" --set FROM_EMAIL=<verified sender> --set REPLY_TO=<owner email> --set REVIEW_URL=https://staging-activepiece.autonyxai.shop --set WAIT_AMOUNT=2 --set WAIT_UNIT=minutes`.
-3. *Owner tries, guided:* in the staging builder open the imported flow, step "Send review request" → create the **SMTP** connection (Brevo host `smtp-relay.brevo.com`, port 587, login + key typed by the owner) → Publish and switch the flow on.
-4. Copy the flow's webhook URL; send the sample order with the email changed to the owner's own: `jq '.email = "<owner email>"' opskit/flows/review-request/test/shopify-paid.json` piped to `curl -sS -X POST -H 'Content-Type: application/json' --data @- <webhook URL>` (check the field name in the file first; it may be nested). After ~2 min the review email must arrive. Then send the same payload again → no second email (duplicate ignored).
-5. *Owner tries:* open Runs, read both runs step by step (what each step received and returned).
-Report each step's result and what the owner saw in Runs.
-
 ### T13 — Owner builds Threadline flow 1 "Order intake" on staging (teach mode, owner clicks, you explain)
 Design (`docs/practice/threadline-bd.md` #1). Explain every screen in one sentence; the owner does the clicks.
 1. Tables → new table **Orders**: order_no, source (facebook/website), customer, phone, address, items, size, amount, payment (cod/bkash), status, created_at.
@@ -40,6 +32,30 @@ Design (`docs/practice/threadline-bd.md` #1). Explain every screen in one senten
 Report: what worked, what confused the owner, screenshots described in words (no secrets).
 
 ## Done
+
+### T12 — New pieces + first template on staging (Codespace terminal + staging builder) — after PR #3 is merged
+1. Codespace: `git pull` on `main` → `opskit/bin/opskit pieces check` must say 15 pieces → `opskit/bin/opskit pieces install autonyx-staging --email <admin email>` (installs forms, approval, http, telegram-bot).
+2. `opskit/bin/opskit flows import review-request autonyx-staging --email <admin email> --set BUSINESS_NAME="Threadline BD" --set FROM_EMAIL=<verified sender> --set REPLY_TO=<owner email> --set REVIEW_URL=https://staging-activepiece.autonyxai.shop --set WAIT_AMOUNT=2 --set WAIT_UNIT=minutes`.
+3. *Owner tries, guided:* in the staging builder open the imported flow, step "Send review request" → create the **SMTP** connection (Brevo host `smtp-relay.brevo.com`, port 587, login + key typed by the owner) → Publish and switch the flow on.
+4. Copy the flow's webhook URL; send the sample order with the email changed to the owner's own: `jq '.email = "<owner email>"' opskit/flows/review-request/test/shopify-paid.json` piped to `curl -sS -X POST -H 'Content-Type: application/json' --data @- <webhook URL>` (check the field name in the file first; it may be nested). After ~2 min the review email must arrive. Then send the same payload again → no second email (duplicate ignored).
+5. *Owner tries:* open Runs, read both runs step by step (what each step received and returned).
+Report each step's result and what the owner saw in Runs.
+
+**Report (local, 2026-11-16) — done.** Codespace on `main` `492de1999a`. Emails/password typed by the owner at hidden prompts.
+
+| Step | Result |
+|---|---|
+| 1. `pieces check` | `[ok] piece pack: 15 pieces, files intact, every template pin included` |
+| 1. `pieces install autonyx-staging` | `[ok] signed in … as <admin email>` · `[ok] installed` approval 0.1.28, forms 0.4.22, http 0.12.1, telegram-bot 0.7.0 (all "from our own copy") · `[ok] pieces on https://staging-activepiece.autonyxai.shop: 4 installed, the rest were already there` |
+| 2. `flows import review-request …` | `[ok] review-request: valid` · `[ok] signed in` · `[ok] pieces available: webhook, store, delay, smtp` · `[ok] imported "Review request" (switched off): https://staging-activepiece.autonyxai.shop/flows/lhaWpJit7Cw0o9Oy2PTHO` · steps to finish: "Send review request". BUSINESS_NAME "Threadline BD", FROM_EMAIL = Brevo sender, REPLY_TO = owner's address, REVIEW_URL = staging URL, WAIT 2 minutes. |
+| 3. SMTP connection + Publish | Owner created the SMTP connection (smtp-relay.brevo.com:587, Brevo login + key) on step 8 and published; flow switched **on**. |
+| 4a. Test order | `jq` set both `.email` and `.customer.email` (the file has both) to the owner-typed address → POST to `…/api/v1/webhooks/lhaWpJit7Cw0o9Oy2PTHO` → **HTTP 200** (15:50:58 UTC). Run **Paused** at "7. Wait before asking", then **Succeeded in 2 min 1 s**, all 8 steps green, step 8 SMTP 685 ms. Brevo log: "How did we do?" **Sent + Delivered** 21:53 (local); From rewritten by Brevo to `<sender>@12203703.brevosend.com` (free-mail sender). The owner had typed the Brevo Gmail as test customer, so it landed there (found it after first checking the other inbox). |
+| 4b. Same order again | HTTP 200 (15:57:17 UTC) → run **Succeeded in 167 ms**, steps 1–5 only; 6–8 skipped; **no second email**. |
+| Extra: 2 failed runs | Same minute, **GET** requests with a Windows browser user-agent (someone opened the webhook URL in a browser) → "2. Read order" failed: `Order webhook without an order id` (correct behaviour). opskit's failed-run alert email `[CRITICAL] autonyx-staging: Flow "Review request" failed …` was delivered (Brevo log) — failed-run alerts work. |
+| 5. Owner reads Runs | Owner saw all 4 runs. **Confusion:** local's step descriptions were explanations, not UI text, and the step's data is in the lower half of the right panel (green "Success" bar → Input/Output → Friendly View), easy to miss on a short window. With that, owner saw step 4 Output `send true / duplicate false`. Real outputs: 2 `orderId, email, firstName Jane, paid true, status paid`; 3 `No output`; 4 `send true, duplicate false` (duplicate run: `send false, duplicate true`); 8 `Accepted Recipients <address>, Rejected Recipients []`. |
+
+Flow left **on** with the 2-minute test wait (staging only). `/tmp/order.json` (had the owner's email) removed.
+**Suggestions for cloud:** (1) teaching docs should say where Output lives (green Success bar → Output → Friendly View); (2) review-request README could warn not to open the webhook URL in a browser (creates failed runs + an alert).
 
 ### T11 — Business profile + watch the watcher (Codespace terminal + Chrome)
 `docs/OPERATOR_GUIDE.md` §4 items 4–5.
